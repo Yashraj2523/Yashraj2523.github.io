@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Yashwanth R — Software Engineer | Full-Stack & AI/ML Portfolio</title>
+<meta name="description" content="Portfolio of Yashwanth R — full-stack & AI/ML engineer graduating 2026 from VIT Vellore. Projects, certifications, live GitHub repos, and contact details for recruiters." />
+<meta name="keywords" content="Yashwanth R, software engineer portfolio, full stack developer, AI ML engineer, fresher software engineer, VIT Vellore, Python developer, machine learning projects, hire fresher" />
+<meta name="author" content="Yashwanth R" />
+<link rel="canonical" href="https://yashraj2523.github.io/" />
+<meta name="theme-color" content="#0a0d14" />
+<meta property="og:title" content="Yashwanth R — Software Engineer" />
+<meta property="og:description" content="Full-stack & AI/ML engineer, M.Tech Software Engineering 2026. Projects, certifications, GitHub & more." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://yashraj2523.github.io/" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0d14'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0d14'/%3E%3Ctext x='90' y='118' font-size='80' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
+
+<!-- Google Search Console: replace YOUR_VERIFICATION_CODE then uncomment
+<meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
+-->
+
+<!-- Google Analytics: replace G-XXXXXXXXXX with your GA4 Measurement ID then uncomment both tags
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+-->
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ================= AMBIENT BACKGROUND ================= -->
+<canvas id="constellation"></canvas>
+<div class="grain"></div>
+
+<!-- ================= NAV ================= -->
+<nav class="navbar glass">
+  <span class="logo">YR<span class="logo-dot">.</span></span>
+  <div class="navlinks">
+    <a href="#about">About</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#skills">Skills</a>
+    <a href="#projects">Projects</a>
+    <a href="#repos">GitHub</a>
+    <a href="#certs">Certs</a>
+    <a href="#connect">Connect</a>
+  </div>
+  <div class="nav-actions">
+    <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
+    </button>
+    <a href="admin.html" class="icon-btn" title="Owner sign in / edit dashboard">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+    </a>
+    <a href="#contact" class="navcta">Hire me</a>
+  </div>
+</nav>
+
+<button id="backToTop" class="back-to-top hidden" title="Back to top">↑</button>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero" id="hero">
+    <div class="hero-inner hero-grid">
+      <div class="hero-text">
+        <p class="eyebrow" data-rotate-status>● Open to opportunities — M.Tech Software Engineering, 2026</p>
+        <h1 class="hero-name" data-edit="hero_name">Yashwanth R</h1>
+        <h2 class="hero-role">
+          <span class="role-fixed">I build </span><span id="roleCycler" class="role-cycle">intelligent systems</span>
+        </h2>
+        <p class="hero-sub" data-edit="hero_sub">Full-stack engineer with a deep AI/ML core — I design, train, ship and deploy software that solves problems people actually have. Graduating 2026, looking for my first full-time role.</p>
+        <div class="hero-actions">
+          <a href="#projects" class="btn btn-primary">View work</a>
+          <a href="/Yashwanth_Resume.pdf" download class="btn btn-glass">Download résumé ↓</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Projects shipped</span></div>
+          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Certifications</span></div>
+          <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">Languages spoken</span></div>
+        </div>
+      </div>
+
+      <div class="hero-photo-wrap">
+        <div id="profileSlideshow" class="slideshow glass" tabindex="0" aria-label="Profile photo slideshow, click to advance">
+          <div id="slideshowTrack" class="slideshow-track"></div>
+          <button id="slidePrev" class="slide-arrow prev" aria-label="Previous photo" type="button">‹</button>
+          <button id="slideNext" class="slide-arrow next" aria-label="Next photo" type="button">›</button>
+          <div id="slideshowDots" class="slideshow-dots"></div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-cue"><span></span></div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section class="section" id="about">
+    <div class="section-head">
+      <span class="tag">About</span>
+      <h2>A little about how I think.</h2>
+    </div>
+    <div class="about-grid">
+      <div class="glass panel about-text" data-edit="about_text">
+        <p>I'm a software engineering postgraduate from VIT Vellore (CGPA 7.97), most at home where full-stack engineering meets applied AI. My work ranges from training CNNs for real-time inference to shipping full-stack apps with role-based access control on production infrastructure.</p>
+        <p>I care about clarity — in code, in explanations, and in the systems I design. I've spent the last few years learning DevOps pipelines, cloud deployment, secure database design, and the discipline of agile delivery, alongside the AI/ML stack: TensorFlow, Keras, OpenCV, NLP and transfer learning.</p>
+        <p>Right now I'm looking for a role where I can take a system from prototype to production — and keep learning the entire way there.</p>
+      </div>
+      <div class="glass panel about-edu">
+        <h3>Education</h3>
+        <div id="eduList"></div>
+        <h3 class="lang-head">Languages</h3>
+        <div class="lang-bars" id="langBars"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPERIENCE ================= -->
+  <section class="section" id="experience">
+    <div class="section-head">
+      <span class="tag">Experience</span>
+      <h2>Where I've worked.</h2>
+    </div>
+    <div class="experience-list" id="experienceList"></div>
+  </section>
+
+  <!-- ================= TIMELINE ================= -->
+  <section class="section" id="timeline">
+    <div class="section-head">
+      <span class="tag">Journey</span>
+      <h2>Everything, in order.</h2>
+    </div>
+    <div class="timeline-track" id="timelineTrack"></div>
+  </section>
+
+  <!-- ================= SKILLS ================= -->
+  <section class="section" id="skills">
+    <div class="section-head">
+      <span class="tag">Skills</span>
+      <h2>The stack I reach for.</h2>
+    </div>
+    <div class="skills-grid" id="skillsGrid">
+      <!-- populated by JS from SITE_DATA so it's editable -->
+    </div>
+  </section>
+
+  <!-- ================= PROJECTS ================= -->
+  <section class="section" id="projects">
+    <div class="section-head">
+      <span class="tag">Projects</span>
+      <h2>Things I've shipped.</h2>
+    </div>
+    <div class="projects-grid" id="projectsGrid"></div>
+  </section>
+
+  <!-- ================= GITHUB LIVE ================= -->
+  <section class="section" id="repos">
+    <div class="section-head">
+      <span class="tag">Live from GitHub</span>
+      <h2>Pulled straight from my repositories.</h2>
+    </div>
+    <div id="githubStatus" class="github-status">Fetching latest repositories…</div>
+    <div class="repos-grid" id="reposGrid"></div>
+    <div class="center-row">
+      <a href="https://github.com/Yashraj2523" target="_blank" rel="noopener" class="btn btn-glass">Open full GitHub profile ↗</a>
+    </div>
+  </section>
+
+  <!-- ================= CERTIFICATIONS ================= -->
+  <section class="section" id="certs">
+    <div class="section-head">
+      <span class="tag">Certifications</span>
+      <h2>Credentials that back the skills.</h2>
+    </div>
+    <div class="certs-list" id="certsList"></div>
+  </section>
+
+  <!-- ================= HOBBIES ================= -->
+  <section class="section" id="hobbies">
+    <div class="section-head">
+      <span class="tag">Beyond the screen</span>
+      <h2>Interests & hobbies.</h2>
+    </div>
+    <div class="hobbies-row" id="hobbiesRow"></div>
+  </section>
+
+  <!-- ================= ACHIEVEMENTS & PUBLICATIONS ================= -->
+  <section class="section" id="achievements">
+    <div class="section-head">
+      <span class="tag">Recognition</span>
+      <h2>Achievements & publications.</h2>
+    </div>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+    <div class="publications-list" id="publicationsList"></div>
+  </section>
+
+  <!-- ================= CONNECT ================= -->
+  <section class="section" id="connect">
+    <div class="section-head">
+      <span class="tag">Connect</span>
+      <h2>Find me elsewhere.</h2>
+    </div>
+    <div class="connect-grid">
+
+      <div class="glass panel connect-card">
+        <div class="connect-top">
+          <svg class="connect-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.17c-3.2.69-3.88-1.37-3.88-1.37-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.74.4-1.26.72-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.77.11 3.06.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.16v3.2c0 .31.21.67.8.56 4.56-1.53 7.85-5.84 7.85-10.93C23.5 5.66 18.35.5 12 .5Z"/></svg>
+          <div><h3>GitHub</h3><p>Live repos shown above ↑</p></div>
+        </div>
+        <p class="muted">@Yashraj2523 — code, experiments, AI projects, full-stack builds.</p>
+        <a href="https://github.com/Yashraj2523" target="_blank" rel="noopener" class="btn btn-glass btn-block">Visit GitHub ↗</a>
+      </div>
+
+      <div class="glass panel connect-card" id="linkedinCard">
+        <div class="connect-top">
+          <svg class="connect-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0Z"/></svg>
+          <div><h3>LinkedIn</h3><p>Professional profile</p></div>
+        </div>
+        <p class="muted" data-edit="linkedin_blurb">Experience, recommendations and the full professional timeline — connect with me there.</p>
+        <a href="https://www.linkedin.com/in/yashraj2523/" target="_blank" rel="noopener" class="btn btn-glass btn-block">View LinkedIn ↗</a>
+      </div>
+
+      <div class="glass panel connect-card connect-card-wide" id="youtubeCard">
+        <div class="yt-banner" id="ytBanner">
+          <img id="ytBannerImg" alt="YouTube channel banner" loading="lazy" onerror="this.closest('.yt-banner').classList.add('yt-banner-fallback'); this.style.display='none';" />
+          <div class="yt-banner-overlay"></div>
+        </div>
+        <div class="yt-card-body">
+          <img id="ytLogoImg" class="yt-logo" alt="Channel logo" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 72 72%27%3E%3Crect width=%2772%27 height=%2772%27 rx=%2736%27 fill=%27%23ff0000%27/%3E%3Cpath d=%27M30 24l18 12-18 12V24Z%27 fill=%27%23fff%27/%3E%3C/svg%3E';" />
+          <div class="yt-card-info">
+            <h3>YouTube</h3>
+            <p class="muted">Tutorials, builds &amp; demos</p>
+            <p id="ytSubs" class="yt-subs"></p>
+          </div>
+          <a href="https://youtube.com/@yashwanthrajesh4726" target="_blank" rel="noopener" class="btn btn-primary yt-visit-btn">▶ Visit My YouTube Channel</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="section contact-section" id="contact">
+    <div class="glass panel contact-panel">
+      <span class="tag">Get in touch</span>
+      <h2>Let's build something.</h2>
+      <p class="muted">I'm actively looking for full-time roles in software engineering / AI-ML / full-stack development. Reach out — I reply fast.</p>
+      <div class="contact-row">
+        <a href="mailto:yashwanthriya25@gmail.com" class="contact-pill">✉ yashwanthriya25@gmail.com</a>
+        <button id="copyEmailBtn" class="contact-pill" type="button">⧉ Copy email</button>
+        <a href="tel:+918438772502" class="contact-pill">☎ +91 84387 72502</a>
+      </div>
+      <div class="contact-row">
+        <a href="https://github.com/Yashraj2523" target="_blank" class="icon-pill">GitHub</a>
+        <a href="https://www.linkedin.com/in/yashraj2523/" target="_blank" class="icon-pill">LinkedIn</a>
+        <a href="https://youtube.com/@yashwanthrajesh4726" target="_blank" class="icon-pill">YouTube</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Yashwanth R. Built with intent, not templates.</p>
+  </footer>
+
+</main>
+
+<!-- ================= PROJECT POPUP MODAL ================= -->
+<div id="projectModalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
+  <div class="glass modal-box project-modal-box">
+    <button class="modal-close" id="projModalClose" aria-label="Close">✕</button>
+    <h3 id="projModalTitle"></h3>
+    <p id="projModalDesc" class="muted"></p>
+    <div id="projModalTags" class="project-tags modal-tags"></div>
+    <div id="projModalMetrics" class="metrics-row"></div>
+    <div id="projModalFeaturesWrap">
+      <h4 class="modal-subhead">Features</h4>
+      <ul id="projModalFeatures" class="modal-feature-list"></ul>
+    </div>
+    <div id="projModalShotsWrap" class="modal-shots-wrap">
+      <h4 class="modal-subhead">Screenshots</h4>
+      <div id="projModalShots" class="modal-shots-grid"></div>
+    </div>
+    <div class="modal-link-row">
+      <a id="projModalGithub" href="#" target="_blank" rel="noopener" class="btn btn-glass">GitHub ↗</a>
+      <a id="projModalDemo" href="#" target="_blank" rel="noopener" class="btn btn-primary">Live demo ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CERTIFICATION POPUP MODAL ================= -->
+<div id="certModalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="certModalTitle">
+  <div class="glass modal-box cert-modal-box">
+    <button class="modal-close" id="certModalClose" aria-label="Close">✕</button>
+    <h3 id="certModalTitle"></h3>
+    <p id="certModalMeta" class="muted"></p>
+    <div id="certViewerWrap" class="cert-viewer-wrap">
+      <div id="certViewerCanvas" class="cert-viewer-canvas">
+        <img id="certViewerImg" class="cert-viewer-img hidden" alt="Certificate" />
+        <iframe id="certViewerPdf" class="cert-viewer-pdf hidden" title="Certificate PDF"></iframe>
+        <p id="certViewerEmpty" class="muted cert-viewer-empty">No certificate file added yet — add one via <code>certifications[].file</code> in edit mode or data.js.</p>
+      </div>
+      <div class="cert-viewer-controls">
+        <button id="certZoomOut" title="Zoom out">−</button>
+        <button id="certZoomReset" title="Reset zoom">⤾</button>
+        <button id="certZoomFit" title="Fit to screen">⛶</button>
+        <button id="certZoomIn" title="Zoom in">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase client (only loaded if you fill in config.js) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin — Yashwanth R Portfolio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0d14'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<canvas id="constellation"></canvas>
+<div class="grain"></div>
+
+<nav class="navbar glass">
+  <a href="index.html" class="logo">YR<span class="logo-dot">.</span> <span style="font-size:.7rem; color:var(--ink-2); font-weight:400;">/admin</span></a>
+  <div class="nav-actions">
+    <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
+    </button>
+    <a href="index.html" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">View site ↗</a>
+  </div>
+</nav>
+
+<!-- ================= LOGIN GATE ================= -->
+<div id="loginGate" class="admin-gate">
+  <div class="glass panel admin-login-box">
+    <h2>Owner sign in</h2>
+    <p class="muted" style="margin-bottom:18px; font-size:.85rem;">Sign in with the one account you created in Supabase Authentication. Nobody else can access this page.</p>
+    <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
+    <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
+    <button id="loginSubmitBtn" class="btn btn-primary btn-block">Sign in</button>
+    <p id="loginStatus" class="modal-status"></p>
+    <p class="settings-hint" style="margin-top:16px;">Not configured yet? See <code>README.md</code> for the Supabase setup steps.</p>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD (hidden until signed in) ================= -->
+<div id="dashboard" class="admin-shell hidden">
+  <div class="admin-header">
+    <h1>Edit your portfolio</h1>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span id="saveStatus" class="admin-save-status"></span>
+      <button id="signOutBtn" class="btn btn-glass" style="padding:9px 16px; font-size:.82rem;">Sign out</button>
+    </div>
+  </div>
+
+  <div class="admin-tabs" id="adminTabs">
+    <button class="admin-tab active" data-tab="hero">Hero & About</button>
+    <button class="admin-tab" data-tab="photos">Profile Photos</button>
+    <button class="admin-tab" data-tab="skills">Skills</button>
+    <button class="admin-tab" data-tab="projects">Projects</button>
+    <button class="admin-tab" data-tab="certs">Certifications</button>
+    <button class="admin-tab" data-tab="experience">Experience</button>
+    <button class="admin-tab" data-tab="education">Education</button>
+    <button class="admin-tab" data-tab="achievements">Achievements & Pubs</button>
+    <button class="admin-tab" data-tab="hobbies">Hobbies</button>
+    <button class="admin-tab" data-tab="connect">Connect / YouTube</button>
+    <button class="admin-tab" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- ---- HERO & ABOUT ---- -->
+  <section class="admin-panel-section active" data-panel="hero">
+    <div class="glass panel admin-card">
+      <div class="admin-field"><label>Hero name</label><input id="f_hero_name" type="text" /></div>
+      <div class="admin-field"><label>Hero subtitle</label><textarea id="f_hero_sub"></textarea></div>
+      <div class="admin-field"><label>Rotating role words (one per line)</label><textarea id="f_roles"></textarea></div>
+      <div class="admin-field"><label>About paragraph(s) — one per line, becomes separate paragraphs</label><textarea id="f_about" style="min-height:140px;"></textarea></div>
+      <div class="admin-field"><label>Email</label><input id="f_email" type="email" /></div>
+      <div class="admin-field"><label>Phone</label><input id="f_phone" type="text" /></div>
+    </div>
+  </section>
+
+  <!-- ---- PROFILE PHOTOS ---- -->
+  <section class="admin-panel-section" data-panel="photos">
+    <div class="glass panel admin-card">
+      <p class="settings-hint">Upload photos directly — they'll be stored in Supabase Storage and added to the slideshow automatically. Drag isn't supported yet; use the remove (✕) buttons to reorder by removing and re-adding.</p>
+      <div class="upload-row">
+        <input id="photoUploadInput" type="file" accept="image/*" multiple />
+        <span id="photoUploadStatus" class="settings-hint"></span>
+      </div>
+      <div class="upload-preview" id="photoPreviewList"></div>
+    </div>
+  </section>
+
+  <!-- ---- SKILLS ---- -->
+  <section class="admin-panel-section" data-panel="skills">
+    <div id="skillsRepeatWrap"></div>
+    <button class="admin-add-btn" id="addSkillGroupBtn">+ Add skill category</button>
+  </section>
+
+  <!-- ---- PROJECTS ---- -->
+  <section class="admin-panel-section" data-panel="projects">
+    <div id="projectsRepeatWrap"></div>
+    <button class="admin-add-btn" id="addProjectBtn">+ Add project</button>
+  </section>
+
+  <!-- ---- CERTIFICATIONS ---- -->
+  <section class="admin-panel-section" data-panel="certs">
+    <div id="certsRepeatWrap"></div>
+    <button class="admin-add-btn" id="addCertBtn">+ Add certification</button>
+  </section>
+
+  <!-- ---- EXPERIENCE ---- -->
+  <section class="admin-panel-section" data-panel="experience">
+    <div id="experienceRepeatWrap"></div>
+    <button class="admin-add-btn" id="addExperienceBtn">+ Add experience</button>
+  </section>
+
+  <!-- ---- EDUCATION ---- -->
+  <section class="admin-panel-section" data-panel="education">
+    <div id="educationRepeatWrap"></div>
+    <button class="admin-add-btn" id="addEducationBtn">+ Add education entry</button>
+    <div class="glass panel admin-card" style="margin-top:24px;">
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Languages</h3>
+      <div id="languagesRepeatWrap"></div>
+      <button class="admin-add-btn" id="addLanguageBtn">+ Add language</button>
+    </div>
+  </section>
+
+  <!-- ---- ACHIEVEMENTS & PUBLICATIONS ---- -->
+  <section class="admin-panel-section" data-panel="achievements">
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Achievements</h3>
+      <div id="achievementsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addAchievementBtn">+ Add achievement</button>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Publications</h3>
+      <div id="publicationsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addPublicationBtn">+ Add publication</button>
+    </div>
+  </section>
+
+  <!-- ---- HOBBIES ---- -->
+  <section class="admin-panel-section" data-panel="hobbies">
+    <div id="hobbiesRepeatWrap"></div>
+    <button class="admin-add-btn" id="addHobbyBtn">+ Add hobby</button>
+  </section>
+
+  <!-- ---- CONNECT / YOUTUBE ---- -->
+  <section class="admin-panel-section" data-panel="connect">
+    <div class="glass panel admin-card">
+      <div class="admin-field"><label>GitHub username</label><input id="f_github_username" type="text" /></div>
+      <div class="admin-field"><label>LinkedIn URL</label><input id="f_linkedin_url" type="url" /></div>
+      <div class="admin-field"><label>LinkedIn card blurb</label><textarea id="f_linkedin_blurb"></textarea></div>
+      <div class="admin-field"><label>YouTube channel URL</label><input id="f_youtube_url" type="url" /></div>
+      <div class="admin-field"><label>YouTube subscriber count (text, optional)</label><input id="f_youtube_subs" type="text" placeholder="e.g. 1.2K" /></div>
+
+      <div class="admin-field">
+        <label>YouTube channel banner</label>
+        <div class="upload-row">
+          <input id="ytBannerUploadInput" type="file" accept="image/*" />
+          <span id="ytBannerUploadStatus" class="settings-hint"></span>
+        </div>
+        <div class="upload-preview" id="ytBannerPreview"></div>
+      </div>
+      <div class="admin-field">
+        <label>YouTube channel logo</label>
+        <div class="upload-row">
+          <input id="ytLogoUploadInput" type="file" accept="image/*" />
+          <span id="ytLogoUploadStatus" class="settings-hint"></span>
+        </div>
+        <div class="upload-preview" id="ytLogoPreview"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- SETTINGS ---- -->
+  <section class="admin-panel-section" data-panel="settings">
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>
+      <p class="settings-hint">These control sizes across the live site — change a number and save, no code edits needed.</p>
+      <div class="admin-row">
+        <div class="admin-field"><label>Icon button size (px)</label><input id="s_iconButtonSize" type="number" min="24" max="64" /></div>
+        <div class="admin-field"><label>Profile photo size (px)</label><input id="s_avatarSize" type="number" min="160" max="600" /></div>
+        <div class="admin-field"><label>Card corner radius (px)</label><input id="s_cardRadius" type="number" min="0" max="48" /></div>
+        <div class="admin-field"><label>Glass blur strength (px)</label><input id="s_glassBlur" type="number" min="0" max="40" /></div>
+        <div class="admin-field"><label>Section spacing (px)</label><input id="s_sectionSpacing" type="number" min="40" max="240" /></div>
+      </div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px; color:#f06464;">Danger zone</h3>
+      <p class="settings-hint">This overwrites your live database with whatever is currently written in <code>data.js</code>. Use this only if you want to discard everything and start fresh.</p>
+      <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4); color:#f06464;">Reset to data.js defaults</button>
+    </div>
+  </section>
+
+  <div class="admin-save-bar">
+    <span class="admin-save-status" id="bottomSaveStatus"></span>
+    <button id="saveAllBtn" class="btn btn-primary">Save changes</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
