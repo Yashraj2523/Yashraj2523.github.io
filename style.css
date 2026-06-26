@@ -625,3 +625,88 @@ html[data-theme="light"] .admin-field input, html[data-theme="light"] .admin-fie
   background-repeat:no-repeat; opacity:0; transition:opacity .6s var(--ease);
 }
 #wallpaper.show{opacity:var(--wallpaper-opacity, 0.35);}
+
+/* ============ CUSTOM SECTIONS ============ */
+.custom-section-body{padding:32px;}
+.custom-section-body p{color:var(--ink-1); margin-bottom:14px;}
+.custom-section-body p:last-child{margin-bottom:0;}
+
+/* ============ DRAG REORDER ============ */
+.admin-repeat-item{position:relative;}
+.drag-handle{
+  position:absolute; top:12px; left:12px; cursor:grab; color:var(--ink-2); font-size:1rem;
+  padding:4px 8px; border-radius:6px; transition:.2s;
+}
+.drag-handle:hover{color:var(--accent-1); background:rgba(255,255,255,.05);}
+.admin-repeat-item{padding-left:42px;}
+.admin-repeat-item.dragging{opacity:.4;}
+.admin-repeat-item.drag-over{border-color:var(--accent-1); box-shadow:0 0 0 1px var(--accent-1) inset;}
+
+/* ============ SCROLL PROGRESS BAR ============ */
+.scroll-progress{
+  position:fixed; top:0; left:0; height:3px; width:0%; z-index:500;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+  transition:width .1s linear;
+}
+
+/* ============ GITHUB STATS STRIP ============ */
+.github-stats-strip{display:flex; gap:36px; justify-content:center; flex-wrap:wrap; margin-bottom:30px;}
+.gh-stat{display:flex; flex-direction:column; align-items:center;}
+.gh-stat-num{font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:var(--accent-1);}
+.gh-stat-label{font-size:.76rem; color:var(--ink-2);}
+
+/* ============ SKELETON LOADERS ============ */
+.skeleton-card{
+  height:160px; border-radius:var(--radius-md); background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  background-image:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.06) 50%, transparent 70%);
+  background-size:200% 100%; animation:shimmer 1.6s infinite;
+}
+@keyframes shimmer{ from{background-position:140% 0;} to{background-position:-40% 0;} }
+
+/* ============ TILT + GLOW CARDS ============ */
+.tilt-card{ transition: transform .25s ease-out, box-shadow .3s ease; will-change: transform; position:relative; overflow:hidden; }
+.tilt-card::before{
+  content:''; position:absolute; left:var(--glow-x, 50%); top:var(--glow-y, 50%);
+  width:220px; height:220px; transform:translate(-50%,-50%);
+  background:radial-gradient(circle, rgba(110,231,216,.16), transparent 70%);
+  opacity:0; transition:opacity .3s ease; pointer-events:none;
+}
+.tilt-card:hover::before{ opacity:1; }
+
+/* ============ COMMAND PALETTE ============ */
+.palette-box{ width:min(94%, 560px); padding:18px; text-align:left; }
+.palette-box input{
+  width:100%; padding:14px 16px; border-radius:12px; background:rgba(0,0,0,.2); border:1px solid var(--glass-border);
+  color:var(--ink-0); font-size:1rem; margin-bottom:10px;
+}
+html[data-theme="light"] .palette-box input{ background:rgba(255,255,255,.6); }
+.palette-results{ max-height:50vh; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+.palette-item{
+  display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; cursor:pointer;
+  transition:.15s ease;
+}
+.palette-item.selected, .palette-item:hover{ background:rgba(110,231,216,.1); }
+.palette-type{
+  font-size:.68rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--accent-2);
+  border:1px solid var(--glass-border); padding:2px 7px; border-radius:6px; flex-shrink:0;
+}
+.palette-title{ font-size:.9rem; color:var(--ink-0); }
+.palette-empty{ padding:20px; text-align:center; color:var(--ink-2); font-size:.85rem; }
+.palette-hint{ margin-top:10px; font-size:.72rem; color:var(--ink-2); text-align:center; }
+
+/* ============ RECRUITER MODE TOGGLE ============ */
+.icon-btn.active-toggle{ background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#08090d; border-color:transparent; }
+body.recruiter-mode .hero-stats{ opacity:1; }
+
+/* ============ PRINT VIEW ============ */
+@media print{
+  #wallpaper, #constellation, .grain, .navbar, .back-to-top, .scroll-progress,
+  #paletteOverlay, #projectModalOverlay, #certModalOverlay, .scroll-cue,
+  #connect, #hobbies, .hero-actions a.btn-glass, .footer, .icon-btn { display:none !important; }
+  body{ background:#fff !important; color:#111 !important; }
+  .panel, .glass{ background:#fff !important; border:1px solid #ddd !important; backdrop-filter:none !important; box-shadow:none !important; }
+  .hero{ min-height:auto; padding:20px 0; }
+  .section{ padding:24px 0 0; max-width:100%; }
+  a{ color:#111 !important; }
+}

@@ -37,6 +37,9 @@ async function loadContent(){
 function mergeWithDefaults(content){
   const merged = Object.assign({}, SITE_DATA, content);
   merged.settings = Object.assign({}, SITE_DATA.settings, content.settings || {});
+  merged.sectionVisibility = Object.assign({}, SITE_DATA.sectionVisibility, content.sectionVisibility || {});
+  merged.sectionMeta = Object.assign({}, SITE_DATA.sectionMeta, content.sectionMeta || {});
+  merged.customSections = content.customSections || [];
   return merged;
 }
 
@@ -115,7 +118,7 @@ function renderAll(){
       <div class="edu-item">
         <div class="edu-top"><strong>${esc(e.degree)}</strong><span>${esc(e.period)}</span></div>
         <p>${esc(e.school)}${e.detail ? ' · ' + esc(e.detail) : ''}</p>
-      </div>`).join('') || '<p class="empty-state">No education entries yet.</p>';
+      </div>`).join('') || '';
   }
   const langBars = document.getElementById('langBars');
   if (langBars){
@@ -135,7 +138,7 @@ function renderAll(){
           <p class="exp-meta">${esc(e.period)}</p>
           <p>${esc(e.desc || '')}</p>
         </div>
-      </div>`).join('') : '<p class="empty-state">No experience added yet — add internships or jobs from the admin dashboard.</p>';
+      </div>`).join('') : '';
   }
 
   // Achievements
@@ -146,7 +149,7 @@ function renderAll(){
       <div class="glass achievement-card panel reveal">
         <span class="achievement-icon">🏆</span>
         <div><h4>${esc(a.title)}</h4><p>${esc(a.desc || '')}</p>${a.year ? `<span class="achievement-year">${esc(a.year)}</span>` : ''}</div>
-      </div>`).join('') : '<p class="empty-state">No achievements added yet — add some from the admin dashboard.</p>';
+      </div>`).join('') : '';
   }
 
   // Publications
@@ -157,7 +160,7 @@ function renderAll(){
       <div class="glass publication-item panel reveal">
         <div class="publication-main"><h4>${esc(p.title)}</h4><p>${esc(p.venue || '')}${p.year ? ' · ' + esc(p.year) : ''}</p></div>
         ${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener" class="btn btn-glass">Read ↗</a>` : ''}
-      </div>`).join('') : '<p class="empty-state">No publications added yet.</p>';
+      </div>`).join('') : '';
   }
 
   const resumeBtn = document.getElementById('resumeDownloadBtn');
@@ -165,6 +168,9 @@ function renderAll(){
 
   renderTimeline();
   renderYoutubeCard();
+  renderCustomSections();
+  applySectionVisibility();
+  applySectionMeta();
   initReveal();
 }
 
@@ -185,7 +191,7 @@ function renderTimeline(){
   (liveData.achievements || []).forEach(a => items.push({ tag: 'Achievement', period: a.year || '', title: a.title, desc: a.desc || '' }));
 
   if (!items.length){
-    track.innerHTML = '<p class="empty-state">Nothing on the timeline yet — add education, experience or achievements from the admin dashboard.</p>';
+    track.innerHTML = '';
     return;
   }
   track.innerHTML = items.map(it => `
@@ -333,18 +339,34 @@ const LANG_COLORS = {
 async function loadGithubRepos(){
   const grid = document.getElementById('reposGrid');
   const status = document.getElementById('githubStatus');
+  const statsStrip = document.getElementById('githubStatsStrip');
   const username = liveData.github_username || 'Yashraj2523';
   try{
-    const res = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=8`);
-    if (!res.ok) throw new Error('GitHub API error ' + res.status);
-    const repos = await res.json();
+    const [userRes, reposRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${username}`),
+      fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=8`)
+    ]);
+    const user = userRes.ok ? await userRes.json() : null;
+    const repos = reposRes.ok ? await reposRes.json() : [];
+
+    if (user){
+      const allRepos = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`).then(r => r.ok ? r.json() : []);
+      const totalStars = Array.isArray(allRepos) ? allRepos.reduce((sum, r) => sum + (r.stargazers_count || 0), 0) : 0;
+      statsStrip.innerHTML = `
+        <div class="gh-stat"><span class="gh-stat-num">${user.public_repos ?? '—'}</span><span class="gh-stat-label">Repositories</span></div>
+        <div class="gh-stat"><span class="gh-stat-num">${totalStars}</span><span class="gh-stat-label">Total stars</span></div>
+        <div class="gh-stat"><span class="gh-stat-num">${user.followers ?? '—'}</span><span class="gh-stat-label">Followers</span></div>
+        <div class="gh-stat"><span class="gh-stat-num">${user.following ?? '—'}</span><span class="gh-stat-label">Following</span></div>`;
+    }
+
     if (!Array.isArray(repos) || repos.length === 0){
       status.textContent = 'No public repositories found yet.';
+      grid.innerHTML = '';
       return;
     }
     status.textContent = `Showing ${repos.length} most recently updated public repositories — live from GitHub.`;
     grid.innerHTML = repos.map(r => `
-      <div class="glass repo-card panel reveal">
+      <div class="glass repo-card panel reveal tilt-card">
         <div class="repo-top">
           <span class="repo-name">${esc(r.name)}</span>
           <span style="color:var(--ink-2); font-size:.78rem;">★ ${r.stargazers_count}</span>
@@ -357,8 +379,10 @@ async function loadGithubRepos(){
         <a class="project-link" href="${r.html_url}" target="_blank" rel="noopener">Open repository ↗</a>
       </div>`).join('');
     initReveal();
+    initTiltCards();
   } catch(err){
     status.textContent = 'Could not reach GitHub right now — showing cached project list above instead.';
+    grid.innerHTML = '';
     console.error(err);
   }
 }
@@ -573,8 +597,7 @@ function initCertModal(){
     if (c.file && /\.pdf($|\?)/i.test(c.file)){
       loading.classList.remove('hidden');
       pdf.onload = () => loading.classList.add('hidden');
-      // Google's viewer reliably renders PDFs inline instead of triggering a download
-      pdf.src = `https://docs.google.com/viewer?url=${encodeURIComponent(c.file)}&embedded=true`;
+      pdf.src = c.file;
       pdf.classList.remove('hidden');
     } else if (c.file){
       loading.classList.remove('hidden');
@@ -671,6 +694,202 @@ function initLogoHome(){
 }
 
 /* ====================================================================
+   2d. SECTION VISIBILITY / TITLES / CUSTOM SECTIONS
+   ==================================================================== */
+function applySectionVisibility(){
+  const vis = liveData.sectionVisibility || {};
+  Object.keys(vis).forEach(key => {
+    const el = document.getElementById(key);
+    if (el) el.style.display = vis[key] === false ? 'none' : '';
+  });
+}
+
+function applySectionMeta(){
+  const meta = liveData.sectionMeta || {};
+  Object.keys(meta).forEach(key => {
+    const section = document.getElementById(key);
+    if (!section) return;
+    const tagEl = section.querySelector('.section-head .tag');
+    const headEl = section.querySelector('.section-head h2');
+    if (tagEl && meta[key].tag) tagEl.textContent = meta[key].tag;
+    if (headEl && meta[key].heading) headEl.textContent = meta[key].heading;
+  });
+}
+
+function renderCustomSections(){
+  const container = document.getElementById('customSectionsContainer');
+  if (!container) return;
+  const sections = liveData.customSections || [];
+  container.innerHTML = sections.map(s => `
+    <section class="section reveal" id="${esc(s.id)}">
+      <div class="section-head">
+        <span class="tag">${esc(s.tag || '')}</span>
+        <h2>${esc(s.heading || '')}</h2>
+      </div>
+      <div class="glass panel custom-section-body">
+        ${(s.body || []).map(p => `<p>${esc(p)}</p>`).join('')}
+      </div>
+    </section>`).join('');
+  initReveal();
+}
+
+/* ====================================================================
+   13. SCROLL PROGRESS BAR
+   ==================================================================== */
+function initScrollProgress(){
+  const bar = document.getElementById('scrollProgress');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = pct + '%';
+  });
+}
+
+/* ====================================================================
+   14. MOUSE TILT + GLOW ON CARDS
+   ==================================================================== */
+function initTiltCards(){
+  const cards = document.querySelectorAll('.tilt-card:not([data-tilt-bound])');
+  cards.forEach(card => {
+    card.setAttribute('data-tilt-bound', '1');
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const rotX = ((y / r.height) - 0.5) * -6;
+      const rotY = ((x / r.width) - 0.5) * 6;
+      card.style.transform = `perspective(700px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px)`;
+      card.style.setProperty('--glow-x', x + 'px');
+      card.style.setProperty('--glow-y', y + 'px');
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+}
+function tagTiltCards(){
+  document.querySelectorAll('.project-card, .skill-card, .achievement-card, .repo-card').forEach(c => c.classList.add('tilt-card'));
+  initTiltCards();
+}
+
+/* ====================================================================
+   15. DYNAMIC TIME-BASED GREETING
+   ==================================================================== */
+function applyDynamicGreeting(){
+  const el = document.getElementById('heroEyebrow');
+  if (!el) return;
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? 'Burning the midnight oil too?' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Working late?';
+  el.textContent = `● ${greeting} — open to opportunities, M.Tech Software Engineering 2026`;
+}
+
+/* ====================================================================
+   16. RECRUITER MODE (hides non-essential sections client-side)
+   ==================================================================== */
+const RECRUITER_HIDE = ['hobbies', 'connect', 'achievements', 'timeline'];
+function initRecruiterMode(){
+  const btn = document.getElementById('recruiterModeBtn');
+  function apply(on){
+    document.body.classList.toggle('recruiter-mode', on);
+    RECRUITER_HIDE.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = on ? 'none' : (liveData.sectionVisibility?.[id] === false ? 'none' : '');
+    });
+    btn.classList.toggle('active-toggle', on);
+    localStorage.setItem('recruiter_mode', on ? '1' : '0');
+  }
+  btn.addEventListener('click', () => apply(!document.body.classList.contains('recruiter-mode')));
+  if (localStorage.getItem('recruiter_mode') === '1') apply(true);
+}
+
+/* ====================================================================
+   17. COMMAND PALETTE + GLOBAL SEARCH (Ctrl+K)
+   ==================================================================== */
+function buildSearchIndex(){
+  const idx = [];
+  idx.push({ type: 'Section', title: 'About', action: () => scrollToId('about') });
+  idx.push({ type: 'Section', title: 'Timeline', action: () => scrollToId('timeline') });
+  idx.push({ type: 'Section', title: 'Skills', action: () => scrollToId('skills') });
+  idx.push({ type: 'Section', title: 'Projects', action: () => scrollToId('projects') });
+  idx.push({ type: 'Section', title: 'GitHub repositories', action: () => scrollToId('repos') });
+  idx.push({ type: 'Section', title: 'Certifications', action: () => scrollToId('certs') });
+  idx.push({ type: 'Section', title: 'Connect', action: () => scrollToId('connect') });
+
+  (liveData.projects || []).forEach((p, i) => idx.push({ type: 'Project', title: p.title, sub: p.desc, action: () => { scrollToId('projects'); setTimeout(() => document.querySelector(`#projectsGrid [data-index="${i}"]`)?.click(), 350); } }));
+  (liveData.certifications || []).forEach((c) => idx.push({ type: 'Certification', title: c.name, sub: c.issuer, action: () => scrollToId('certs') }));
+  (liveData.skills || []).forEach(s => idx.push({ type: 'Skill category', title: s.category, sub: (s.items||[]).join(', '), action: () => scrollToId('skills') }));
+  (liveData.experience || []).forEach(e => idx.push({ type: 'Experience', title: `${e.role} · ${e.org}`, sub: e.period, action: () => scrollToId('experience') || scrollToId('timeline') }));
+  (liveData.education || []).forEach(e => idx.push({ type: 'Education', title: e.degree, sub: e.school, action: () => scrollToId('about') }));
+
+  idx.push({ type: 'Command', title: 'Toggle light / dark theme', action: () => document.getElementById('themeToggle').click() });
+  idx.push({ type: 'Command', title: 'Download résumé', action: () => document.getElementById('resumeDownloadBtn')?.click() });
+  idx.push({ type: 'Command', title: 'Print résumé view', action: () => window.print() });
+  idx.push({ type: 'Command', title: 'Copy email address', action: () => document.getElementById('copyEmailBtn')?.click() });
+  idx.push({ type: 'Command', title: 'Toggle Recruiter Mode', action: () => document.getElementById('recruiterModeBtn')?.click() });
+  idx.push({ type: 'Command', title: 'Open GitHub profile', action: () => window.open(`https://github.com/${liveData.github_username}`, '_blank') });
+  idx.push({ type: 'Command', title: 'Open LinkedIn profile', action: () => window.open(liveData.linkedin_url, '_blank') });
+  idx.push({ type: 'Command', title: 'Open YouTube channel', action: () => window.open(liveData.youtube_url, '_blank') });
+  return idx;
+}
+function scrollToId(id){
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+  return true;
+}
+
+let paletteIndex = [];
+let paletteSelected = 0;
+function initCommandPalette(){
+  const overlay = document.getElementById('paletteOverlay');
+  const input = document.getElementById('paletteInput');
+  const results = document.getElementById('paletteResults');
+  const searchBtn = document.getElementById('searchBtn');
+
+  function open(){
+    paletteIndex = buildSearchIndex();
+    showOverlay(overlay);
+    input.value = '';
+    renderResults('');
+    setTimeout(() => input.focus(), 150);
+  }
+  function close(){ hideOverlay(overlay); }
+
+  function renderResults(query){
+    const q = query.trim().toLowerCase();
+    const filtered = q ? paletteIndex.filter(item =>
+      item.title.toLowerCase().includes(q) || (item.sub || '').toLowerCase().includes(q)
+    ) : paletteIndex.slice(0, 10);
+    paletteSelected = 0;
+    results.innerHTML = filtered.length ? filtered.map((item, i) => `
+      <div class="palette-item ${i === 0 ? 'selected' : ''}" data-i="${i}">
+        <span class="palette-type">${esc(item.type)}</span>
+        <span class="palette-title">${esc(item.title)}</span>
+      </div>`).join('') : '<div class="palette-empty">No matches — try another term.</div>';
+    results.dataset.count = filtered.length;
+    results._filtered = filtered;
+    results.querySelectorAll('.palette-item').forEach(el => {
+      el.addEventListener('click', () => { filtered[+el.dataset.i].action(); close(); });
+    });
+  }
+
+  searchBtn.addEventListener('click', open);
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); open(); }
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  input.addEventListener('input', () => renderResults(input.value));
+  input.addEventListener('keydown', e => {
+    const items = results.querySelectorAll('.palette-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown'){ e.preventDefault(); paletteSelected = Math.min(paletteSelected + 1, items.length - 1); updateSelected(items); }
+    if (e.key === 'ArrowUp'){ e.preventDefault(); paletteSelected = Math.max(paletteSelected - 1, 0); updateSelected(items); }
+    if (e.key === 'Enter'){ e.preventDefault(); results._filtered[paletteSelected]?.action(); close(); }
+  });
+  function updateSelected(items){
+    items.forEach((el, i) => el.classList.toggle('selected', i === paletteSelected));
+    items[paletteSelected]?.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+/* ====================================================================
    BOOT
    ==================================================================== */
 (async function boot(){
@@ -685,6 +904,11 @@ function initLogoHome(){
   initBackToTop();
   initCopyEmail();
   initLogoHome();
+  initScrollProgress();
+  initRecruiterMode();
+  initCommandPalette();
+  applyDynamicGreeting();
+  tagTiltCards();
   initProjectModal();
   initCertModal();
   loadGithubRepos();

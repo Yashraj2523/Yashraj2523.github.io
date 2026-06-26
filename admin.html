@@ -61,6 +61,7 @@
     <button class="admin-tab" data-tab="achievements">Achievements & Pubs</button>
     <button class="admin-tab" data-tab="hobbies">Hobbies</button>
     <button class="admin-tab" data-tab="connect">Connect / YouTube</button>
+    <button class="admin-tab" data-tab="sections">Sections</button>
     <button class="admin-tab" data-tab="settings">Settings</button>
   </div>
 
@@ -168,6 +169,26 @@
         </div>
         <div class="upload-preview" id="ytLogoPreview"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- ---- SECTIONS (show/hide, rename, add new) ---- -->
+  <section class="admin-panel-section" data-panel="sections">
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Show / hide sections</h3>
+      <p class="settings-hint">Turn any section off the homepage entirely — instantly, no need for "Save changes".</p>
+      <div id="sectionTogglesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Section titles</h3>
+      <p class="settings-hint">Rewrite the small label and heading shown above each section.</p>
+      <div id="sectionTitlesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Add a brand-new section</h3>
+      <p class="settings-hint">Each one appears on the homepage, just above the Connect section, in the order listed below. Drag the ⠿ handle to reorder them.</p>
+      <div id="customSectionsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addCustomSectionBtn">+ Add new section</button>
     </div>
   </section>
 

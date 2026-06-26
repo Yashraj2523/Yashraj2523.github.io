@@ -173,6 +173,34 @@ const SITE_DATA = {
   background_image: "",
   resume_url: "Yashwanth_Resume.pdf",
 
+  // ---- SECTION CONTROL (admin: Sections tab) ----
+  // Turn any built-in section on/off, or rewrite its small label + heading,
+  // without touching any code.
+  sectionVisibility: {
+    about: true, experience: true, timeline: true, skills: true,
+    projects: true, repos: true, certs: true, achievements: true,
+    hobbies: true, connect: true, contact: true,
+  },
+  sectionMeta: {
+    about: { tag: "About", heading: "A little about how I think." },
+    experience: { tag: "Experience", heading: "Where I've worked." },
+    timeline: { tag: "Journey", heading: "Everything, in order." },
+    skills: { tag: "Skills", heading: "The stack I reach for." },
+    projects: { tag: "Projects", heading: "Things I've shipped." },
+    repos: { tag: "Live from GitHub", heading: "Pulled straight from my repositories." },
+    certs: { tag: "Certifications", heading: "Credentials that back the skills." },
+    achievements: { tag: "Recognition", heading: "Achievements & publications." },
+    hobbies: { tag: "Beyond the screen", heading: "Interests & hobbies." },
+    connect: { tag: "Connect", heading: "Find me elsewhere." },
+  },
+
+  // Add brand-new sections entirely from the admin dashboard — each one
+  // becomes a full section on the homepage, inserted right before "Connect".
+  // body: array of paragraph strings.
+  customSections: [
+    // { id: "custom-1", tag: "Side Projects", heading: "Things I build for fun.", body: ["..."] }
+  ],
+
   // ---- SITE SETTINGS (admin-editable: Settings tab) ----
   // Anything here is applied live as CSS custom properties — change a number,
   // the whole site re-renders with it, no code edits required.

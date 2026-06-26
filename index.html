@@ -16,6 +16,7 @@
 <meta name="twitter:card" content="summary" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0d14'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0d14'/%3E%3Ctext x='90' y='118' font-size='80' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
+<link rel="manifest" href="manifest.json" />
 
 <!-- Google Search Console: replace YOUR_VERIFICATION_CODE then uncomment
 <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
@@ -45,6 +46,8 @@
 <div class="grain"></div>
 
 <!-- ================= NAV ================= -->
+<div id="scrollProgress" class="scroll-progress"></div>
+
 <nav class="navbar glass">
   <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
   <div class="navlinks">
@@ -57,6 +60,12 @@
     <a href="#connect">Connect</a>
   </div>
   <div class="nav-actions">
+    <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+    <button id="recruiterModeBtn" class="icon-btn" title="Recruiter Mode — show only the essentials">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
+    </button>
     <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
@@ -70,13 +79,22 @@
 
 <button id="backToTop" class="back-to-top hidden" title="Back to top">↑</button>
 
+<!-- ================= COMMAND PALETTE / GLOBAL SEARCH (Ctrl+K) ================= -->
+<div id="paletteOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box palette-box">
+    <input id="paletteInput" type="text" placeholder="Search projects, skills, certifications… or type a command" autocomplete="off" />
+    <div id="paletteResults" class="palette-results"></div>
+    <div class="palette-hint">↑↓ to navigate · Enter to select · Esc to close</div>
+  </div>
+</div>
+
 <main>
 
   <!-- ================= HERO ================= -->
   <section class="hero" id="hero">
     <div class="hero-inner hero-grid">
       <div class="hero-text">
-        <p class="eyebrow" data-rotate-status>● Open to opportunities — M.Tech Software Engineering, 2026</p>
+        <p class="eyebrow" id="heroEyebrow" data-rotate-status>● Open to opportunities — M.Tech Software Engineering, 2026</p>
         <h1 class="hero-name" data-edit="hero_name">Yashwanth R</h1>
         <h2 class="hero-role">
           <span class="role-fixed">I build </span><span id="roleCycler" class="role-cycle">intelligent systems</span>
@@ -170,8 +188,11 @@
       <span class="tag">Live from GitHub</span>
       <h2>Pulled straight from my repositories.</h2>
     </div>
+    <div id="githubStatsStrip" class="github-stats-strip"></div>
     <div id="githubStatus" class="github-status">Fetching latest repositories…</div>
-    <div class="repos-grid" id="reposGrid"></div>
+    <div class="repos-grid" id="reposGrid">
+      <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+    </div>
     <div class="center-row">
       <a href="https://github.com/Yashraj2523" target="_blank" rel="noopener" class="btn btn-glass">Open full GitHub profile ↗</a>
     </div>
@@ -204,6 +225,8 @@
     <div class="achievements-grid" id="achievementsGrid"></div>
     <div class="publications-list" id="publicationsList"></div>
   </section>
+
+  <div id="customSectionsContainer"></div>
 
   <!-- ================= CONNECT ================= -->
   <section class="section" id="connect">
@@ -309,7 +332,7 @@
         <div id="certViewerLoading" class="cert-loading hidden">Loading certificate…</div>
         <img id="certViewerImg" class="cert-viewer-img hidden" alt="Certificate" />
         <iframe id="certViewerPdf" class="cert-viewer-pdf hidden" title="Certificate PDF"></iframe>
-        <p id="certViewerEmpty" class="muted cert-viewer-empty hidden">No certificate file added yet — add one via <code>certifications[].file</code> in edit mode or data.js.</p>
+        <p id="certViewerEmpty" class="muted cert-viewer-empty hidden">Certificate file coming soon.</p>
       </div>
       <div class="cert-viewer-controls">
         <button id="certZoomOut" title="Zoom out">−</button>
@@ -326,5 +349,12 @@
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>

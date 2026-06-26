@@ -11,6 +11,9 @@ function supabaseReady(){
 function mergeWithDefaults(content){
   const merged = Object.assign({}, SITE_DATA, content);
   merged.settings = Object.assign({}, SITE_DATA.settings, content.settings || {});
+  merged.sectionVisibility = Object.assign({}, SITE_DATA.sectionVisibility, content.sectionVisibility || {});
+  merged.sectionMeta = Object.assign({}, SITE_DATA.sectionMeta, content.sectionMeta || {});
+  merged.customSections = content.customSections || [];
   return merged;
 }
 
@@ -223,7 +226,8 @@ function makeRepeater(opts){
   function render(){
     const list = liveData[dataKey] || (liveData[dataKey] = []);
     wrap.innerHTML = list.map((item, idx) => `
-      <div class="admin-repeat-item" data-idx="${idx}">
+      <div class="admin-repeat-item" data-idx="${idx}" draggable="true">
+        <span class="drag-handle" title="Drag to reorder">⠿</span>
         <button class="admin-remove-btn" data-action="remove">✕</button>
         ${labelFn ? `<div style="font-size:.78rem; color:var(--accent-2); margin-bottom:10px; font-family:var(--font-mono);">${escapeHtml(labelFn(item, idx))}</div>` : ''}
         ${fields.map(f => fieldHtml(f, item, idx)).join('')}
@@ -253,6 +257,8 @@ function makeRepeater(opts){
         }
       });
     });
+
+    initDragReorder(wrap, list, render);
   }
 
   function fieldHtml(f, item, idx){
@@ -284,6 +290,29 @@ function makeRepeater(opts){
 
   render();
   return render;
+}
+
+function initDragReorder(wrap, list, rerender){
+  let dragIdx = null;
+  wrap.querySelectorAll('.admin-repeat-item').forEach(itemEl => {
+    itemEl.addEventListener('dragstart', () => {
+      dragIdx = +itemEl.dataset.idx;
+      itemEl.classList.add('dragging');
+    });
+    itemEl.addEventListener('dragend', () => itemEl.classList.remove('dragging'));
+    itemEl.addEventListener('dragover', e => { e.preventDefault(); itemEl.classList.add('drag-over'); });
+    itemEl.addEventListener('dragleave', () => itemEl.classList.remove('drag-over'));
+    itemEl.addEventListener('drop', e => {
+      e.preventDefault();
+      itemEl.classList.remove('drag-over');
+      const dropIdx = +itemEl.dataset.idx;
+      if (dragIdx === null || dragIdx === dropIdx) return;
+      const [moved] = list.splice(dragIdx, 1);
+      list.splice(dropIdx, 0, moved);
+      dragIdx = null;
+      rerender();
+    });
+  });
 }
 
 function parseMetrics(text){
@@ -408,6 +437,69 @@ function initRepeaters(){
     await saveContent('Reset to defaults ✓');
     populateForms();
     initRepeaters();
+  });
+
+  initSectionToggles();
+  initSectionTitles();
+  initCustomSections();
+}
+
+const SECTION_LABELS = {
+  about: 'About', experience: 'Experience', timeline: 'Timeline', skills: 'Skills',
+  projects: 'Projects', repos: 'GitHub repos', certs: 'Certifications',
+  achievements: 'Achievements & publications', hobbies: 'Hobbies', connect: 'Connect',
+  contact: 'Contact',
+};
+
+function initSectionToggles(){
+  const wrap = document.getElementById('sectionTogglesWrap');
+  const vis = liveData.sectionVisibility = liveData.sectionVisibility || {};
+  wrap.innerHTML = Object.keys(SECTION_LABELS).map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-section-toggle="${key}" ${vis[key] === false ? '' : 'checked'} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      ${SECTION_LABELS[key]}
+    </label>`).join('');
+  wrap.querySelectorAll('[data-section-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      liveData.sectionVisibility[cb.dataset.sectionToggle] = cb.checked;
+      await saveContent('Saved ✓');
+    });
+  });
+}
+
+function initSectionTitles(){
+  const wrap = document.getElementById('sectionTitlesWrap');
+  const meta = liveData.sectionMeta = liveData.sectionMeta || {};
+  wrap.innerHTML = Object.keys(SECTION_LABELS).filter(k => k !== 'contact').map(key => {
+    const m = meta[key] || {};
+    return `
+    <div class="admin-repeat-item" style="padding-left:18px;">
+      <div style="font-size:.78rem; color:var(--accent-2); margin-bottom:10px; font-family:var(--font-mono);">${SECTION_LABELS[key]}</div>
+      <div class="admin-row">
+        <div class="admin-field"><label>Small label (tag)</label><input type="text" data-meta="${key}-tag" value="${escapeHtml(m.tag || '')}" /></div>
+        <div class="admin-field"><label>Heading</label><input type="text" data-meta="${key}-heading" value="${escapeHtml(m.heading || '')}" /></div>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-meta]').forEach(input => {
+    input.addEventListener('input', () => {
+      const [key, field] = input.dataset.meta.split('-');
+      meta[key] = meta[key] || {};
+      meta[key][field] = input.value;
+    });
+  });
+}
+
+function initCustomSections(){
+  makeRepeater({
+    wrapId: 'customSectionsRepeatWrap', dataKey: 'customSections', addBtnId: 'addCustomSectionBtn',
+    blank: { id: 'custom-' + Date.now(), tag: 'New section', heading: 'New section heading', body: [] },
+    labelFn: (item) => item.heading || 'Custom section',
+    fields: [
+      { key: 'tag', label: 'Small label (tag)', type: 'text' },
+      { key: 'heading', label: 'Heading', type: 'text' },
+      { key: 'body', label: 'Body text (one paragraph per line)', type: 'list' },
+    ]
   });
 }
 
