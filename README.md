@@ -2,7 +2,7 @@
 
 A single-page, glass/iOS-style portfolio + a separate admin dashboard for editing
 everything, with all content stored in a real free database (Supabase).
-
+ 
 ## Where your content actually lives
 **Everything is stored in Supabase**, in a table called `site_content` (one row,
 `id = 'main'`, containing all your text/links/lists as JSON). `data.js` is ONLY
