@@ -12,6 +12,7 @@
 </head>
 <body>
 
+<div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
 <div class="grain"></div>
 
@@ -172,6 +173,29 @@
 
   <!-- ---- SETTINGS ---- -->
   <section class="admin-panel-section" data-panel="settings">
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Résumé</h3>
+      <p class="settings-hint">This is the exact file your "Download résumé" button on the homepage links to. Upload a new version any time you update it — saves immediately, no need to touch "Save changes".</p>
+      <div class="upload-row">
+        <input id="resumeUploadInput" type="file" accept=".pdf" />
+        <span id="resumeUploadStatus" class="settings-hint"></span>
+      </div>
+      <p class="settings-hint" id="resumeCurrentLink"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background wallpaper</h3>
+      <p class="settings-hint">Upload an image to use as the site's background wallpaper (sits behind the animated dots, dimmed for readability). Leave empty to use the default gradient.</p>
+      <div class="upload-row">
+        <input id="wallpaperUploadInput" type="file" accept="image/*" />
+        <span id="wallpaperUploadStatus" class="settings-hint"></span>
+      </div>
+      <div class="upload-preview" id="wallpaperPreview"></div>
+      <div class="admin-field" style="margin-top:14px; max-width:240px;"><label>Wallpaper dimness (0 = invisible, 100 = full image)</label><input id="s_wallpaperOpacity" type="number" min="0" max="100" /></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+        <button id="removeWallpaperBtn" class="btn btn-glass">Reset to default (no wallpaper)</button>
+      </div>
+      <p class="settings-hint" id="wallpaperSaveHint" style="margin-top:8px;"></p>
+    </div>
     <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>
       <p class="settings-hint">These control sizes across the live site — change a number and save, no code edits needed.</p>

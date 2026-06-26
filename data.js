@@ -170,6 +170,8 @@ const SITE_DATA = {
   youtube_subs: "",
   email: "yashwanthriya25@gmail.com",
   phone: "+91-8438772502",
+  background_image: "",
+  resume_url: "Yashwanth_Resume.pdf",
 
   // ---- SITE SETTINGS (admin-editable: Settings tab) ----
   // Anything here is applied live as CSS custom properties — change a number,

@@ -64,7 +64,9 @@ async function initAuth(){
     submitBtn.disabled = true;
     return;
   }
-  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 
   submitBtn.addEventListener('click', async () => {
     status.textContent = 'Signing in…';
@@ -85,11 +87,25 @@ async function initAuth(){
   async function enterDashboard(){
     loginGate.classList.add('hidden');
     dashboard.classList.remove('hidden');
+    showToast('✓ Signed in — you can edit everything below');
     await loadContent();
     populateForms();
     initRepeaters();
     initUploads();
   }
+}
+
+function showToast(msg){
+  let toast = document.getElementById('adminToast');
+  if (!toast){
+    toast = document.createElement('div');
+    toast.id = 'adminToast';
+    toast.className = 'admin-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 /* ====================================================================
@@ -148,6 +164,9 @@ function populateForms(){
   byId('s_cardRadius').value = s.cardRadius || 18;
   byId('s_glassBlur').value = s.glassBlur || 18;
   byId('s_sectionSpacing').value = s.sectionSpacing || 130;
+  byId('s_wallpaperOpacity').value = s.wallpaperOpacity !== undefined ? s.wallpaperOpacity : 35;
+  renderSingleImagePreview('wallpaperPreview', liveData.background_image);
+  byId('resumeCurrentLink').innerHTML = liveData.resume_url ? `Current file: <a href="${liveData.resume_url}" target="_blank">${liveData.resume_url}</a>` : 'No résumé uploaded yet.';
 
   renderUploadPreview('photoPreviewList', liveData.profile_photos || []);
   renderSingleImagePreview('ytBannerPreview', liveData.youtube_banner);
@@ -188,6 +207,7 @@ function collectSimpleFields(){
     cardRadius: +byId('s_cardRadius').value || 18,
     glassBlur: +byId('s_glassBlur').value || 18,
     sectionSpacing: +byId('s_sectionSpacing').value || 130,
+    wallpaperOpacity: +byId('s_wallpaperOpacity').value,
   };
 }
 
@@ -206,7 +226,7 @@ function makeRepeater(opts){
       <div class="admin-repeat-item" data-idx="${idx}">
         <button class="admin-remove-btn" data-action="remove">✕</button>
         ${labelFn ? `<div style="font-size:.78rem; color:var(--accent-2); margin-bottom:10px; font-family:var(--font-mono);">${escapeHtml(labelFn(item, idx))}</div>` : ''}
-        ${fields.map(f => fieldHtml(f, item)).join('')}
+        ${fields.map(f => fieldHtml(f, item, idx)).join('')}
       </div>`).join('') || '<p class="empty-state">Nothing here yet — use the button below to add one.</p>';
 
     wrap.querySelectorAll('.admin-repeat-item').forEach(itemEl => {
@@ -222,15 +242,35 @@ function makeRepeater(opts){
           else if (f.type === 'number') list[idx][f.key] = +input.value;
           else list[idx][f.key] = input.value;
         });
+        if (f.type === 'fileupload'){
+          const fileInput = itemEl.querySelector(`[data-fileupload="${f.key}"]`);
+          fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0]; if (!file) return;
+            const status = itemEl.querySelector(`[data-uploadstatus="${f.key}-${idx}"]`);
+            const url = await uploadFile(file, status);
+            if (url){ list[idx][f.key] = url; render(); }
+          });
+        }
       });
     });
   }
 
-  function fieldHtml(f, item){
+  function fieldHtml(f, item, idx){
     const val = item[f.key];
     const display = f.type === 'list' ? (val || []).join('\n')
       : f.type === 'metrics' ? metricsToText(val)
       : (val !== undefined ? val : '');
+    if (f.type === 'fileupload'){
+      return `<div class="admin-field">
+        <label>${f.label}</label>
+        <div class="upload-row">
+          <input type="text" data-field="${f.key}" value="${escapeHtml(display)}" placeholder="Paste a URL, or upload a file →" style="flex:1; min-width:160px;" />
+          <input type="file" accept="${f.accept || '*'}" data-fileupload="${f.key}" data-idx="${idx}" />
+          <span class="settings-hint" data-uploadstatus="${f.key}-${idx}"></span>
+        </div>
+        ${display ? (/\.pdf($|\?)/i.test(display) ? `<a href="${display}" target="_blank" class="settings-hint">📄 View current PDF</a>` : `<div class="upload-preview-item" style="margin-top:8px;"><img src="${display}" /></div>`) : ''}
+      </div>`;
+    }
     if (f.type === 'textarea' || f.type === 'list' || f.type === 'metrics'){
       return `<div class="admin-field"><label>${f.label}</label><textarea data-field="${f.key}">${escapeHtml(display)}</textarea></div>`;
     }
@@ -291,7 +331,7 @@ function initRepeaters(){
       { key: 'name', label: 'Certificate name', type: 'text' },
       { key: 'issuer', label: 'Issuer', type: 'text' },
       { key: 'year', label: 'Year', type: 'text' },
-      { key: 'file', label: 'Certificate file URL (image or PDF)', type: 'text' },
+      { key: 'file', label: 'Certificate file (image or PDF)', type: 'fileupload', accept: '.pdf,image/*' },
     ]
   });
 
@@ -435,6 +475,42 @@ function initUploads(){
     const url = await uploadFile(file, status);
     if (url){ liveData.youtube_logo = url; renderSingleImagePreview('ytLogoPreview', url); }
     e.target.value = '';
+  });
+
+  document.getElementById('resumeUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('resumeUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.resume_url = url;
+      byId('resumeCurrentLink').innerHTML = `Current file: <a href="${url}" target="_blank">${url}</a>`;
+      await saveContent('Résumé updated ✓ — live on the download button now');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('wallpaperUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('wallpaperUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.background_image = url;
+      renderSingleImagePreview('wallpaperPreview', url);
+      await saveContent('Wallpaper saved ✓');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('removeWallpaperBtn').addEventListener('click', async () => {
+    liveData.background_image = '';
+    renderSingleImagePreview('wallpaperPreview', '');
+    await saveContent('Reset to default ✓');
+  });
+
+  document.getElementById('s_wallpaperOpacity').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.wallpaperOpacity = +byId('s_wallpaperOpacity').value;
+    await saveContent('Wallpaper dimness saved ✓');
   });
 }
 

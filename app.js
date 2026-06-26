@@ -51,6 +51,17 @@ function applySettings(){
   root.setProperty('--card-radius', (s.cardRadius || 18) + 'px');
   root.setProperty('--glass-blur', (s.glassBlur || 18) + 'px');
   root.setProperty('--section-spacing', (s.sectionSpacing || 130) + 'px');
+
+  const wallpaper = document.getElementById('wallpaper');
+  if (wallpaper){
+    if (liveData.background_image){
+      wallpaper.style.backgroundImage = `url("${liveData.background_image}")`;
+      root.setProperty('--wallpaper-opacity', ((s.wallpaperOpacity !== undefined ? s.wallpaperOpacity : 35) / 100));
+      wallpaper.classList.add('show');
+    } else {
+      wallpaper.classList.remove('show');
+    }
+  }
 }
 
 /* ====================================================================
@@ -148,6 +159,9 @@ function renderAll(){
         ${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener" class="btn btn-glass">Read ↗</a>` : ''}
       </div>`).join('') : '<p class="empty-state">No publications added yet.</p>';
   }
+
+  const resumeBtn = document.getElementById('resumeDownloadBtn');
+  if (resumeBtn && liveData.resume_url) resumeBtn.href = liveData.resume_url;
 
   renderTimeline();
   renderYoutubeCard();
@@ -534,6 +548,7 @@ function initCertModal(){
   const img = document.getElementById('certViewerImg');
   const pdf = document.getElementById('certViewerPdf');
   const emptyMsg = document.getElementById('certViewerEmpty');
+  const loading = document.getElementById('certViewerLoading');
   const canvas = document.getElementById('certViewerCanvas');
 
   function setZoom(z, x, y){
@@ -548,16 +563,31 @@ function initCertModal(){
     if (!c) return;
     document.getElementById('certModalTitle').textContent = c.name;
     document.getElementById('certModalMeta').textContent = `${c.issuer} · ${c.year}`;
-    img.classList.add('hidden'); pdf.classList.add('hidden'); emptyMsg.classList.add('hidden');
+
+    // Always clear previous file first so a stale cert never lingers visually
+    img.src = '';
+    pdf.src = 'about:blank';
+    img.classList.add('hidden'); pdf.classList.add('hidden'); emptyMsg.classList.add('hidden'); loading.classList.add('hidden');
     resetZoom();
 
-    if (c.file && /\.pdf($|\?)/i.test(c.file)){ pdf.src = c.file; pdf.classList.remove('hidden'); }
-    else if (c.file){ img.src = c.file; img.classList.remove('hidden'); }
-    else { emptyMsg.classList.remove('hidden'); }
+    if (c.file && /\.pdf($|\?)/i.test(c.file)){
+      loading.classList.remove('hidden');
+      pdf.onload = () => loading.classList.add('hidden');
+      // Google's viewer reliably renders PDFs inline instead of triggering a download
+      pdf.src = `https://docs.google.com/viewer?url=${encodeURIComponent(c.file)}&embedded=true`;
+      pdf.classList.remove('hidden');
+    } else if (c.file){
+      loading.classList.remove('hidden');
+      img.onload = () => loading.classList.add('hidden');
+      img.onerror = () => loading.classList.add('hidden');
+      img.src = c.file; img.classList.remove('hidden');
+    } else {
+      emptyMsg.classList.remove('hidden');
+    }
     activeCertIndex = idx;
     showOverlay(overlay);
   }
-  function close(){ hideOverlay(overlay); activeCertIndex = null; pdf.src = ''; }
+  function close(){ hideOverlay(overlay); activeCertIndex = null; pdf.src = 'about:blank'; img.src = ''; }
 
   list.addEventListener('click', e => {
     const card = e.target.closest('.cert-item'); if (!card) return;
@@ -631,6 +661,15 @@ function hideOverlay(overlay){
   setTimeout(() => overlay.classList.add('hidden'), 250);
 }
 
+function initLogoHome(){
+  const logo = document.getElementById('logoHome');
+  if (!logo) return;
+  logo.addEventListener('click', e => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
 /* ====================================================================
    BOOT
    ==================================================================== */
@@ -645,6 +684,7 @@ function hideOverlay(overlay){
   initCounters();
   initBackToTop();
   initCopyEmail();
+  initLogoHome();
   initProjectModal();
   initCertModal();
   loadGithubRepos();

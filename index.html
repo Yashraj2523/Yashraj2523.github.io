@@ -40,12 +40,13 @@
 <body>
 
 <!-- ================= AMBIENT BACKGROUND ================= -->
+<div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
 <div class="grain"></div>
 
 <!-- ================= NAV ================= -->
 <nav class="navbar glass">
-  <span class="logo">YR<span class="logo-dot">.</span></span>
+  <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
   <div class="navlinks">
     <a href="#about">About</a>
     <a href="#timeline">Timeline</a>
@@ -83,7 +84,7 @@
         <p class="hero-sub" data-edit="hero_sub">Full-stack engineer with a deep AI/ML core — I design, train, ship and deploy software that solves problems people actually have. Graduating 2026, looking for my first full-time role.</p>
         <div class="hero-actions">
           <a href="#projects" class="btn btn-primary">View work</a>
-          <a href="/Yashwanth_Resume.pdf" download class="btn btn-glass">Download résumé ↓</a>
+          <a id="resumeDownloadBtn" href="Yashwanth_Resume.pdf" download class="btn btn-glass">Download résumé ↓</a>
         </div>
         <div class="hero-stats">
           <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Projects shipped</span></div>
@@ -305,9 +306,10 @@
     <p id="certModalMeta" class="muted"></p>
     <div id="certViewerWrap" class="cert-viewer-wrap">
       <div id="certViewerCanvas" class="cert-viewer-canvas">
+        <div id="certViewerLoading" class="cert-loading hidden">Loading certificate…</div>
         <img id="certViewerImg" class="cert-viewer-img hidden" alt="Certificate" />
         <iframe id="certViewerPdf" class="cert-viewer-pdf hidden" title="Certificate PDF"></iframe>
-        <p id="certViewerEmpty" class="muted cert-viewer-empty">No certificate file added yet — add one via <code>certifications[].file</code> in edit mode or data.js.</p>
+        <p id="certViewerEmpty" class="muted cert-viewer-empty hidden">No certificate file added yet — add one via <code>certifications[].file</code> in edit mode or data.js.</p>
       </div>
       <div class="cert-viewer-controls">
         <button id="certZoomOut" title="Zoom out">−</button>
