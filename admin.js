@@ -14,6 +14,7 @@ function mergeWithDefaults(content){
   merged.sectionVisibility = Object.assign({}, SITE_DATA.sectionVisibility, content.sectionVisibility || {});
   merged.sectionMeta = Object.assign({}, SITE_DATA.sectionMeta, content.sectionMeta || {});
   merged.customSections = content.customSections || [];
+  merged.connectLinks = content.connectLinks || [];
   return merged;
 }
 
@@ -167,6 +168,12 @@ function populateForms(){
   byId('s_cardRadius').value = s.cardRadius || 18;
   byId('s_glassBlur').value = s.glassBlur || 18;
   byId('s_sectionSpacing').value = s.sectionSpacing || 130;
+  byId('s_themePalette').value = s.themePalette || 'default';
+  byId('s_themePalette').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.themePalette = byId('s_themePalette').value;
+    await saveContent('Theme palette saved ✓');
+  };
   byId('s_wallpaperOpacity').value = s.wallpaperOpacity !== undefined ? s.wallpaperOpacity : 35;
   renderSingleImagePreview('wallpaperPreview', liveData.background_image);
   byId('resumeCurrentLink').innerHTML = liveData.resume_url ? `Current file: <a href="${liveData.resume_url}" target="_blank">${liveData.resume_url}</a>` : 'No résumé uploaded yet.';
@@ -210,6 +217,7 @@ function collectSimpleFields(){
     cardRadius: +byId('s_cardRadius').value || 18,
     glassBlur: +byId('s_glassBlur').value || 18,
     sectionSpacing: +byId('s_sectionSpacing').value || 130,
+    themePalette: byId('s_themePalette').value || 'default',
     wallpaperOpacity: +byId('s_wallpaperOpacity').value,
   };
 }
@@ -226,18 +234,28 @@ function makeRepeater(opts){
   function render(){
     const list = liveData[dataKey] || (liveData[dataKey] = []);
     wrap.innerHTML = list.map((item, idx) => `
-      <div class="admin-repeat-item" data-idx="${idx}" draggable="true">
-        <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <div class="admin-repeat-item collapsed" data-idx="${idx}" draggable="true">
+        <div class="admin-repeat-header" data-action="toggle">
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <span class="admin-repeat-title">${escapeHtml(labelFn ? labelFn(item, idx) : `Item ${idx + 1}`)}</span>
+          <span class="admin-repeat-chevron">▾</span>
+        </div>
         <button class="admin-remove-btn" data-action="remove">✕</button>
-        ${labelFn ? `<div style="font-size:.78rem; color:var(--accent-2); margin-bottom:10px; font-family:var(--font-mono);">${escapeHtml(labelFn(item, idx))}</div>` : ''}
-        ${fields.map(f => fieldHtml(f, item, idx)).join('')}
+        <div class="admin-repeat-body">
+          ${fields.map(f => fieldHtml(f, item, idx)).join('')}
+        </div>
       </div>`).join('') || '<p class="empty-state">Nothing here yet — use the button below to add one.</p>';
 
     wrap.querySelectorAll('.admin-repeat-item').forEach(itemEl => {
       const idx = +itemEl.dataset.idx;
-      itemEl.querySelector('[data-action="remove"]').addEventListener('click', () => {
+      itemEl.querySelector('[data-action="remove"]').addEventListener('click', (e) => {
+        e.stopPropagation();
         list.splice(idx, 1); render();
       });
+      itemEl.querySelector('[data-action="toggle"]').addEventListener('click', () => {
+        itemEl.classList.toggle('collapsed');
+      });
+      const titleEl = itemEl.querySelector('.admin-repeat-title');
       fields.forEach(f => {
         const input = itemEl.querySelector(`[data-field="${f.key}"]`);
         input.addEventListener('input', () => {
@@ -245,6 +263,7 @@ function makeRepeater(opts){
           else if (f.type === 'metrics') list[idx][f.key] = parseMetrics(input.value);
           else if (f.type === 'number') list[idx][f.key] = +input.value;
           else list[idx][f.key] = input.value;
+          if (labelFn && titleEl) titleEl.textContent = labelFn(list[idx], idx);
         });
         if (f.type === 'fileupload'){
           const fileInput = itemEl.querySelector(`[data-fileupload="${f.key}"]`);
@@ -338,10 +357,11 @@ function initRepeaters(){
 
   makeRepeater({
     wrapId: 'projectsRepeatWrap', dataKey: 'projects', addBtnId: 'addProjectBtn',
-    blank: { title: 'New project', desc: '', tags: [], metrics: [], features: [], github: '', demo: '', screenshots: [] },
+    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [] },
     labelFn: (item) => item.title || 'Project',
     fields: [
       { key: 'title', label: 'Title', type: 'text' },
+      { key: 'date', label: 'Date completed (e.g. "Jun 2025") — used to sort projects latest-first', type: 'text' },
       { key: 'desc', label: 'Description', type: 'textarea' },
       { key: 'tags', label: 'Tags (one per line)', type: 'list' },
       { key: 'metrics', label: 'Metrics — one per line as "Label: Value" (e.g. Accuracy: 95%)', type: 'metrics' },
@@ -428,6 +448,17 @@ function initRepeaters(){
     fields: [
       { key: 'emoji', label: 'Emoji', type: 'text' },
       { key: 'label', label: 'Label', type: 'text' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'connectLinksRepeatWrap', dataKey: 'connectLinks', addBtnId: 'addConnectLinkBtn',
+    blank: { emoji: '🔗', label: 'New link', url: '' },
+    labelFn: (item) => item.label || 'Connect link',
+    fields: [
+      { key: 'emoji', label: 'Emoji icon', type: 'text' },
+      { key: 'label', label: 'Label (e.g. "Twitter / X")', type: 'text' },
+      { key: 'url', label: 'URL', type: 'text' },
     ]
   });
 

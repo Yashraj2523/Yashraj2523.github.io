@@ -41,3 +41,19 @@ create policy "Only signed-in owner can delete portfolio media" on storage.objec
 -- 4. Project Settings -> API -> copy the Project URL + anon public key into
 --    config.js.
 -- ---------------------------------------------------------------------
+
+-- ===== VISITOR LEADS (captured once before games/hints unlock) =====
+create table if not exists visitor_leads (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  contact text not null,
+  page text,
+  created_at timestamp with time zone default now()
+);
+alter table visitor_leads enable row level security;
+
+-- Visitors can submit their info, but can NEVER read back the list —
+-- only you can see it, signed in via the Supabase dashboard's Table Editor
+-- (or by adding a private admin view later).
+create policy "Anyone can submit a visitor lead" on visitor_leads for insert
+  with check ( true );

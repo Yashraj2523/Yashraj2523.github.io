@@ -51,6 +51,7 @@ const SITE_DATA = {
       title: "AI-Based Meat Spoilage Detection System",
       desc: "CNN-based model with a FastAPI backend for real-time freshness prediction, with Grad-CAM integrated for explainable AI — simulating real-world food quality monitoring.",
       tags: ["CNN", "FastAPI", "Grad-CAM", "Computer Vision"],
+      date: "Mar 2025",
       metrics: [{ label: "Accuracy", value: "95%" }, { label: "Inference", value: "50ms" }, { label: "Samples", value: "1000+" }],
       features: [
         "Real-time freshness classification from camera input",
@@ -160,6 +161,12 @@ const SITE_DATA = {
     { name: "English", level: 95 },
     { name: "Hindi", level: 85 },
     { name: "Tamil", level: 100 },
+  ],
+
+  // Extra "ways to connect" cards — shown alongside GitHub/LinkedIn/YouTube
+  // in the Connect section. Each needs a label, url, and an emoji as icon.
+  connectLinks: [
+    // { emoji: "🐦", label: "Twitter / X", url: "https://x.com/yourhandle" }
   ],
 
   github_username: "Yashraj2523",

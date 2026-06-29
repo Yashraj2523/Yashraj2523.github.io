@@ -9,7 +9,7 @@ everything, with all content stored in a real free database (Supabase).
 the one-time seed used the very first time the database is empty — after that,
 editing `data.js` does nothing on the live site. To change content, always use
 **admin.html**, never edit data.js directly once you're live.
-
+  
 ## Files
 ```
 index.html             -- the public site

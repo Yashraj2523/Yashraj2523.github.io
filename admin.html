@@ -170,6 +170,12 @@
         <div class="upload-preview" id="ytLogoPreview"></div>
       </div>
     </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">More ways to connect</h3>
+      <p class="settings-hint">Add Twitter/X, Instagram, personal blog, Discord, Behance — any other link. Each shows as its own card in the Connect section.</p>
+      <div id="connectLinksRepeatWrap"></div>
+      <button class="admin-add-btn" id="addConnectLinkBtn">+ Add connect link</button>
+    </div>
   </section>
 
   <!-- ---- SECTIONS (show/hide, rename, add new) ---- -->
@@ -216,6 +222,18 @@
         <button id="removeWallpaperBtn" class="btn btn-glass">Reset to default (no wallpaper)</button>
       </div>
       <p class="settings-hint" id="wallpaperSaveHint" style="margin-top:8px;"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Theme palette</h3>
+      <p class="settings-hint">Changes the accent colors used across the whole site (independent of light/dark mode). Saves instantly.</p>
+      <select id="s_themePalette" class="admin-field" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="default">Default (Aqua / Violet)</option>
+        <option value="sunset">Sunset</option>
+        <option value="ocean">Ocean</option>
+        <option value="forest">Forest</option>
+        <option value="amber">Amber Gold</option>
+        <option value="rose">Rose Gold</option>
+      </select>
     </div>
     <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>

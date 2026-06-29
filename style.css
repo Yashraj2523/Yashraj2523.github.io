@@ -621,10 +621,11 @@ html[data-theme="light"] .admin-field input, html[data-theme="light"] .admin-fie
 
 /* ============ WALLPAPER LAYER ============ */
 #wallpaper{
-  position:fixed; inset:0; z-index:-4; background-size:cover; background-position:center;
-  background-repeat:no-repeat; opacity:0; transition:opacity .6s var(--ease);
+  position:fixed; top:-4%; left:-2%; right:-2%; bottom:-4%; z-index:-4; background-size:cover; background-position:center;
+  background-repeat:no-repeat; opacity:0; transition:opacity .6s var(--ease), transform .15s linear;
 }
 #wallpaper.show{opacity:var(--wallpaper-opacity, 0.35);}
+#constellation{ transition: transform .15s linear; }
 
 /* ============ CUSTOM SECTIONS ============ */
 .custom-section-body{padding:32px;}
@@ -709,4 +710,153 @@ body.recruiter-mode .hero-stats{ opacity:1; }
   .hero{ min-height:auto; padding:20px 0; }
   .section{ padding:24px 0 0; max-width:100%; }
   a{ color:#111 !important; }
+}
+
+/* ============ MATRIX MODE ============ */
+.matrix-canvas{ position:fixed; inset:0; z-index:-3; }
+.matrix-canvas.hidden{ display:none; }
+
+/* ============ CONFETTI ============ */
+.confetti-piece{
+  position:fixed; top:-20px; width:8px; height:14px; z-index:600; pointer-events:none;
+  animation:confettiFall 2.4s ease-in forwards;
+}
+@keyframes confettiFall{
+  to{ transform:translateY(110vh) rotate(540deg); opacity:0; }
+}
+
+/* ============ BADGE TOAST ============ */
+.badge-toast{
+  position:fixed; bottom:90px; right:18px; z-index:400; max-width:280px;
+  background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#08090d; font-weight:600; font-size:.85rem;
+  padding:14px 18px; border-radius:14px; box-shadow:0 16px 40px -12px rgba(0,0,0,.5);
+  opacity:0; transform:translateY(14px); transition:opacity .35s var(--ease), transform .35s var(--ease);
+}
+.badge-toast.hidden{ display:none; }
+.badge-toast.show{ opacity:1; transform:translateY(0); }
+
+/* ============ COFFEE EASTER EGG ============ */
+#coffeeEgg{ cursor:pointer; user-select:none; transition:transform .2s ease; display:inline-block; }
+#coffeeEgg:hover{ transform:scale(1.3) rotate(-8deg); }
+body.recruiter-mode #coffeeEgg{ opacity:0; pointer-events:none; }
+
+/* ============ MINI-GAME ============ */
+.game-box{ width:min(94%, 480px); text-align:left; }
+.game-hud{ display:flex; gap:18px; font-size:.85rem; color:var(--ink-1); margin-bottom:12px; }
+.game-field{
+  position:relative; width:100%; height:340px; border-radius:var(--radius-md); overflow:hidden;
+  background:linear-gradient(180deg, rgba(110,231,216,.05), rgba(167,139,250,.05));
+  border:1px solid var(--glass-border);
+}
+.game-start-overlay{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(8,10,16,.78); z-index:5; text-align:center; padding:20px; gap:10px;
+}
+.game-start-overlay.hidden{ display:none !important; }
+.game-howto{ font-size:.78rem; color:var(--ink-2); max-width:280px; line-height:1.5; }
+.game-bug{
+  position:absolute; top:-30px; font-size:1.6rem; cursor:pointer; user-select:none;
+  animation:bugFall linear forwards;
+}
+@keyframes bugFall{ to{ top:100%; } }
+
+/* ============ ACCORDION-STYLE REPEATER ITEMS ============ */
+.admin-repeat-item{ padding:0; overflow:hidden; }
+.admin-repeat-header{
+  display:flex; align-items:center; gap:10px; padding:14px 44px 14px 16px; cursor:pointer;
+  transition:background .2s ease;
+}
+.admin-repeat-header:hover{ background:rgba(255,255,255,.03); }
+.admin-repeat-header .drag-handle{ position:static; }
+.admin-repeat-title{ flex:1; font-size:.88rem; font-weight:600; color:var(--ink-0); }
+.admin-repeat-chevron{ color:var(--ink-2); transition:transform .25s var(--ease); font-size:.8rem; }
+.admin-repeat-item:not(.collapsed) .admin-repeat-chevron{ transform:rotate(180deg); }
+.admin-repeat-body{
+  padding:0 18px 18px; max-height:2000px; transition:max-height .3s var(--ease), opacity .25s var(--ease), padding .3s var(--ease);
+  opacity:1;
+}
+.admin-repeat-item.collapsed .admin-repeat-body{
+  max-height:0; opacity:0; padding-top:0; padding-bottom:0; pointer-events:none;
+}
+.admin-repeat-item .admin-remove-btn{ top:10px; }
+
+/* ============ FLOATING GIMMICK BUTTONS ============ */
+.floating-game-btn, .floating-hints-btn{
+  position:fixed; z-index:90; width:50px; height:50px; border-radius:50%; border:1px solid var(--glass-border);
+  background:var(--glass-bg-strong); backdrop-filter:blur(14px); font-size:1.4rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:.35s var(--ease);
+  box-shadow:0 10px 30px -12px rgba(0,0,0,.4);
+}
+.floating-game-btn{ bottom:24px; right:80px; animation:floatPulse 3s ease-in-out infinite; }
+.floating-hints-btn{ bottom:24px; right:140px; }
+.floating-game-btn:hover, .floating-hints-btn:hover{ transform:translateY(-4px) scale(1.08); border-color:var(--accent-1); }
+@keyframes floatPulse{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+body.recruiter-mode .floating-game-btn, body.recruiter-mode .floating-hints-btn,
+body.recruiter-mode .floating-star,
+body.eggs-off .floating-game-btn, body.eggs-off .floating-star, body.eggs-off .firefly-canvas{ display:none !important; }
+.eggs-toggle-row{
+  display:flex; align-items:center; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--glass-border);
+  font-size:.8rem; color:var(--ink-1); cursor:pointer;
+}
+.eggs-toggle-row input{ width:16px; height:16px; accent-color:var(--accent-1); }
+
+/* ============ HINTS PANEL ============ */
+.hints-panel{
+  position:fixed; bottom:84px; right:24px; z-index:200; width:min(300px, 80vw); padding:22px; border-radius:18px;
+  opacity:0; transform:translateY(10px) scale(.97); pointer-events:none; transition:.3s var(--ease);
+}
+.hints-panel:not(.hidden){ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+.hints-panel h3{ font-family:var(--font-display); font-size:1rem; margin-bottom:12px; }
+.hints-list{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.hints-list li{ font-size:.82rem; color:var(--ink-1); padding-left:22px; position:relative; }
+.hints-list li::before{ content:'🔒'; position:absolute; left:0; font-size:.78rem; }
+.hints-list li.found{ color:var(--accent-1); }
+.hints-list li.found::before{ content:'✅'; }
+
+/* ============ GAME HUB ============ */
+.game-box{ width:min(94%, 460px); }
+.game-menu-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.game-menu-card{
+  display:flex; flex-direction:column; align-items:center; gap:6px; padding:18px 8px; border-radius:14px;
+  background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--ink-0); cursor:pointer;
+  font-size:.8rem; transition:.3s var(--ease);
+}
+.game-menu-card span{ font-size:1.8rem; }
+.game-menu-card:hover{ border-color:var(--accent-1); transform:translateY(-3px); }
+.game-panel.hidden, #gameMenu.hidden{ display:none; }
+.game-back-btn{ background:none; border:none; color:var(--accent-2); font-size:.8rem; cursor:pointer; margin-bottom:8px; }
+.game-canvas-wrap{ position:relative; display:flex; justify-content:center; margin-top:10px; }
+.game-canvas-wrap canvas{ background:#0d1117; border-radius:12px; max-width:100%; touch-action:none; }
+
+/* ============ FIREFLY CURSOR TRAIL (dark mode only, decorative) ============ */
+.firefly-canvas{ position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0; transition:opacity .6s; }
+html:not([data-theme="light"]) .firefly-canvas.show{ opacity:1; }
+
+/* ============ FLOATING COLLECTIBLE STAR ============ */
+.floating-star{
+  position:fixed; z-index:80; font-size:1.6rem; cursor:pointer; filter:drop-shadow(0 0 8px rgba(255,209,102,.6));
+  animation:starDrift 6s ease-in-out infinite; transition:opacity .4s;
+}
+.floating-star.hidden{ opacity:0; pointer-events:none; }
+@keyframes starDrift{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-14px) rotate(15deg); } }
+
+/* ============ SCROLL MILESTONE TOAST reuses .badge-toast ============ */
+
+/* ============ LOGO DOUBLE-CLICK RAINBOW BURST ============ */
+body.rainbow-burst{ animation:rainbowBurst 1.8s ease; }
+@keyframes rainbowBurst{
+  0%{ filter:hue-rotate(0deg) saturate(1); }
+  50%{ filter:hue-rotate(180deg) saturate(2); }
+  100%{ filter:hue-rotate(360deg) saturate(1); }
+}
+
+/* ============ DIRECTIONAL SCROLL-REVEAL VARIANTS (immersive entrances) ============ */
+.reveal.reveal-left{ transform:translateX(-50px); }
+.reveal.reveal-left.in{ transform:translateX(0); }
+.reveal.reveal-right{ transform:translateX(50px); }
+.reveal.reveal-right.in{ transform:translateX(0); }
+.reveal.reveal-zoom{ transform:scale(.9); }
+.reveal.reveal-zoom.in{ transform:scale(1); }
+@media (prefers-reduced-motion: reduce){
+  .reveal-left, .reveal-right, .reveal-zoom{ transform:none !important; }
 }

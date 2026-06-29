@@ -40,12 +40,31 @@ function mergeWithDefaults(content){
   merged.sectionVisibility = Object.assign({}, SITE_DATA.sectionVisibility, content.sectionVisibility || {});
   merged.sectionMeta = Object.assign({}, SITE_DATA.sectionMeta, content.sectionMeta || {});
   merged.customSections = content.customSections || [];
+  merged.connectLinks = content.connectLinks || [];
   return merged;
 }
 
 /* ====================================================================
    1. APPLY SETTINGS AS CSS VARIABLES
    ==================================================================== */
+/* ====================================================================
+   1b. THEME PALETTE PRESETS (separate from light/dark — these recolor accents)
+   ==================================================================== */
+const THEME_PALETTES = {
+  default: { name: 'Default (Aqua/Violet)', accent1: '#6ee7d8', accent2: '#a78bfa' },
+  sunset:  { name: 'Sunset',                 accent1: '#ff9966', accent2: '#ff5e8a' },
+  ocean:   { name: 'Ocean',                  accent1: '#38bdf8', accent2: '#6366f1' },
+  forest:  { name: 'Forest',                 accent1: '#34d399', accent2: '#0d9488' },
+  amber:   { name: 'Amber Gold',             accent1: '#fbbf24', accent2: '#d97706' },
+  rose:    { name: 'Rose Gold',              accent1: '#f7b9c4', accent2: '#c2410c' },
+};
+function applyThemePalette(){
+  const key = (liveData.settings && liveData.settings.themePalette) || 'default';
+  const palette = THEME_PALETTES[key] || THEME_PALETTES.default;
+  document.documentElement.style.setProperty('--accent-1', palette.accent1);
+  document.documentElement.style.setProperty('--accent-2', palette.accent2);
+}
+
 function applySettings(){
   const s = liveData.settings || SITE_DATA.settings;
   const root = document.documentElement.style;
@@ -54,6 +73,7 @@ function applySettings(){
   root.setProperty('--card-radius', (s.cardRadius || 18) + 'px');
   root.setProperty('--glass-blur', (s.glassBlur || 18) + 'px');
   root.setProperty('--section-spacing', (s.sectionSpacing || 130) + 'px');
+  applyThemePalette();
 
   const wallpaper = document.getElementById('wallpaper');
   if (wallpaper){
@@ -79,15 +99,16 @@ function renderAll(){
   // Skills
   const skillsGrid = document.getElementById('skillsGrid');
   skillsGrid.innerHTML = liveData.skills.map(group => `
-    <div class="glass skill-card panel reveal">
+    <div class="glass skill-card panel reveal reveal-zoom tilt-card">
       <h4>${esc(group.category)}</h4>
       <div class="skill-tags">${group.items.map(i => `<span class="skill-tag">${esc(i)}</span>`).join('')}</div>
     </div>`).join('');
 
-  // Projects
+  // Projects — sorted by date (latest first); undated ones keep their relative order at the end
   const projectsGrid = document.getElementById('projectsGrid');
-  projectsGrid.innerHTML = liveData.projects.map((p, idx) => `
-    <div class="glass project-card panel reveal" data-index="${idx}" tabindex="0" role="button" aria-haspopup="dialog">
+  const sortedProjects = sortByDateDesc(liveData.projects, p => p.date);
+  projectsGrid.innerHTML = sortedProjects.map(({ item: p, idx }, i) => `
+    <div class="glass project-card panel reveal tilt-card ${i % 2 === 0 ? 'reveal-left' : 'reveal-right'}" data-index="${idx}" tabindex="0" role="button" aria-haspopup="dialog">
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.desc)}</p>
       <div class="project-tags">${(p.tags||[]).map(t => `<span>${esc(t)}</span>`).join('')}</div>
@@ -95,9 +116,10 @@ function renderAll(){
       <span class="project-link">View details ↗</span>
     </div>`).join('');
 
-  // Certifications
+  // Certifications — sorted by year (latest first)
   const certsList = document.getElementById('certsList');
-  certsList.innerHTML = liveData.certifications.map((c, idx) => `
+  const sortedCerts = sortByDateDesc(liveData.certifications, c => c.year);
+  certsList.innerHTML = sortedCerts.map(({ item: c, idx }) => `
     <div class="glass cert-item panel reveal" data-index="${idx}" tabindex="0" role="button" aria-haspopup="dialog">
       <div class="cert-main">
         <div class="cert-badge">✓</div>
@@ -111,10 +133,11 @@ function renderAll(){
   hobbiesRow.innerHTML = liveData.hobbies.map(h => `
     <div class="hobby-chip reveal"><span class="hobby-emoji">${h.emoji}</span>${esc(h.label)}</div>`).join('');
 
-  // Education + Languages
+  // Education + Languages — education sorted latest-first
   const eduList = document.getElementById('eduList');
   if (eduList){
-    eduList.innerHTML = (liveData.education || []).map(e => `
+    const sortedEdu = sortByDateDesc(liveData.education, e => e.period).map(x => x.item);
+    eduList.innerHTML = sortedEdu.map(e => `
       <div class="edu-item">
         <div class="edu-top"><strong>${esc(e.degree)}</strong><span>${esc(e.period)}</span></div>
         <p>${esc(e.school)}${e.detail ? ' · ' + esc(e.detail) : ''}</p>
@@ -126,11 +149,11 @@ function renderAll(){
       <div class="lang-row"><span>${esc(l.name)}</span><div class="bar"><div style="width:${l.level}%"></div></div></div>`).join('');
   }
 
-  // Experience
+  // Experience — sorted latest-first
   const expList = document.getElementById('experienceList');
   if (expList){
-    const exp = liveData.experience || [];
-    expList.innerHTML = exp.length ? exp.map(e => `
+    const sortedExp = sortByDateDesc(liveData.experience, e => e.period).map(x => x.item);
+    expList.innerHTML = sortedExp.length ? sortedExp.map(e => `
       <div class="experience-item reveal">
         <span class="experience-dot"></span>
         <div class="experience-body">
@@ -146,7 +169,7 @@ function renderAll(){
   if (achGrid){
     const achievements = liveData.achievements || [];
     achGrid.innerHTML = achievements.length ? achievements.map(a => `
-      <div class="glass achievement-card panel reveal">
+      <div class="glass achievement-card panel reveal reveal-zoom tilt-card">
         <span class="achievement-icon">🏆</span>
         <div><h4>${esc(a.title)}</h4><p>${esc(a.desc || '')}</p>${a.year ? `<span class="achievement-year">${esc(a.year)}</span>` : ''}</div>
       </div>`).join('') : '';
@@ -168,6 +191,7 @@ function renderAll(){
 
   renderTimeline();
   renderYoutubeCard();
+  renderConnectLinks();
   renderCustomSections();
   applySectionVisibility();
   applySectionMeta();
@@ -177,6 +201,29 @@ function renderAll(){
 function esc(str){
   if (str === undefined || str === null) return '';
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Parses freeform date text like "Jun 2025 – Aug 2025", "2021 – 2026",
+// "Jul 2024", "Present" into a sortable number (bigger = more recent).
+// Uses the LAST date mentioned (the end of a range) so ongoing/ranges sort correctly.
+function parseDateKey(text){
+  if (!text) return -1;
+  const t = String(text).toLowerCase();
+  if (/present|current|ongoing|\bnow\b/.test(t)) return 999999;
+  const monthMap = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+  const matches = [...t.matchAll(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(\d{4})|(\d{4})/g)];
+  if (!matches.length) return -1;
+  const last = matches[matches.length - 1];
+  if (last[3]) return (+last[3]) * 100;
+  return (+last[2]) * 100 + (monthMap[last[1].slice(0,3)] || 0);
+}
+
+// Sorts an array by date (descending, latest first) without mutating the
+// original — returns [{item, idx}] where idx is the ORIGINAL array index,
+// so popups/admin edits referencing that index still work correctly.
+function sortByDateDesc(arr, getText){
+  return (arr || []).map((item, idx) => ({ item, idx }))
+    .sort((a, b) => parseDateKey(getText(b.item)) - parseDateKey(getText(a.item)));
 }
 
 /* ====================================================================
@@ -194,8 +241,9 @@ function renderTimeline(){
     track.innerHTML = '';
     return;
   }
+  items.sort((a, b) => parseDateKey(b.period) - parseDateKey(a.period));
   track.innerHTML = items.map(it => `
-    <div class="timeline-node reveal">
+    <div class="timeline-node reveal reveal-left">
       <span class="tl-tag">${esc(it.tag)}</span>
       <div class="tl-period">${esc(it.period)}</div>
       <h4>${esc(it.title)}</h4>
@@ -310,6 +358,14 @@ function initReveal(){
 }
 
 function initCounters(){
+  // Pull real counts from the actual content instead of hardcoded numbers
+  const statProjects = document.getElementById('statProjects');
+  const statCerts = document.getElementById('statCerts');
+  const statLangs = document.getElementById('statLangs');
+  if (statProjects) statProjects.dataset.count = (liveData.projects || []).length;
+  if (statCerts) statCerts.dataset.count = (liveData.certifications || []).length;
+  if (statLangs) statLangs.dataset.count = (liveData.languages || []).length;
+
   document.querySelectorAll('.stat-num').forEach(el => {
     const target = parseInt(el.dataset.count, 10);
     let current = 0;
@@ -826,6 +882,9 @@ function buildSearchIndex(){
   idx.push({ type: 'Command', title: 'Open GitHub profile', action: () => window.open(`https://github.com/${liveData.github_username}`, '_blank') });
   idx.push({ type: 'Command', title: 'Open LinkedIn profile', action: () => window.open(liveData.linkedin_url, '_blank') });
   idx.push({ type: 'Command', title: 'Open YouTube channel', action: () => window.open(liveData.youtube_url, '_blank') });
+  if (eggsAllowed()){
+    idx.push({ type: '🎮 Games', title: 'Play a mini-game (Bug Squash / Snake / Dino)', action: () => window.__openGameHub && window.__openGameHub() });
+  }
   return idx;
 }
 function scrollToId(id){
@@ -889,6 +948,568 @@ function initCommandPalette(){
   }
 }
 
+function renderConnectLinks(){
+  const grid = document.getElementById('connectGrid');
+  if (!grid) return;
+  grid.querySelectorAll('.connect-card-custom').forEach(el => el.remove());
+  (liveData.connectLinks || []).forEach(link => {
+    const card = document.createElement('div');
+    card.className = 'glass panel connect-card connect-card-custom';
+    card.innerHTML = `
+      <div class="connect-top">
+        <span style="font-size:1.6rem; line-height:1;">${esc(link.emoji || '🔗')}</span>
+        <div><h3>${esc(link.label || 'Link')}</h3></div>
+      </div>
+      <a href="${esc(link.url || '#')}" target="_blank" rel="noopener" class="btn btn-glass btn-block">Visit ↗</a>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ====================================================================
+   18. EASTER EGGS, BADGES & MINI-GAME (disabled in Recruiter Mode)
+   ==================================================================== */
+function eggsAllowed(){
+  return !document.body.classList.contains('recruiter-mode') && localStorage.getItem('eggs_disabled') !== '1';
+}
+function initEggsToggle(){
+  const checkbox = document.getElementById('eggsToggleCheckbox');
+  if (!checkbox) return;
+  function applyState(disabled){
+    document.body.classList.toggle('eggs-off', disabled);
+    localStorage.setItem('eggs_disabled', disabled ? '1' : '0');
+    checkbox.checked = !disabled;
+  }
+  applyState(localStorage.getItem('eggs_disabled') === '1');
+  checkbox.addEventListener('change', () => applyState(!checkbox.checked));
+}
+
+function consoleWelcome(){
+  console.log('%c👋 Hey, curious developer.', 'color:#6ee7d8; font-size:16px; font-weight:bold;');
+  console.log('%cSince you\'re here — try the Konami code (↑ ↑ ↓ ↓ ← → ← → B A), or click the ☕ in the footer a few times.', 'color:#a78bfa; font-size:12px;');
+  console.log('%cWant to talk instead? yashwanthriya25@gmail.com', 'color:#aab2c5; font-size:12px;');
+}
+
+function getBadges(){ try { return JSON.parse(localStorage.getItem('portfolio_badges') || '[]'); } catch(e){ return []; } }
+function awardBadge(name){
+  const badges = getBadges();
+  if (badges.includes(name)) return;
+  badges.push(name);
+  localStorage.setItem('portfolio_badges', JSON.stringify(badges));
+  showBadgeToast(`🏆 Badge unlocked: ${name}`);
+}
+function showBadgeToast(msg){
+  const toast = document.getElementById('badgeToast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.classList.add('hidden'), 400); }, 3200);
+}
+
+// ---- Coffee cup easter egg (footer): 5 clicks within 3s -> confetti + badge ----
+function initCoffeeEgg(){
+  const egg = document.getElementById('coffeeEgg');
+  if (!egg) return;
+  let clicks = 0, timer = null;
+  egg.addEventListener('click', () => {
+    if (!eggsAllowed()) return;
+    clicks++;
+    clearTimeout(timer);
+    timer = setTimeout(() => clicks = 0, 3000);
+    if (clicks >= 5){
+      clicks = 0;
+      fireConfetti();
+      awardBadge('Caffeine Detective ☕');
+    }
+  });
+}
+
+function fireConfetti(){
+  const colors = ['#6ee7d8', '#a78bfa', '#f0a8d0', '#ffd166'];
+  for (let i = 0; i < 60; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = (Math.random() * 0.4) + 's';
+    piece.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 2600);
+  }
+}
+
+// ---- Konami code -> Matrix Mode ----
+function initKonami(){
+  const seq = ['ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ArrowUp','ArrowDown'];
+  let pos = 0;
+  document.addEventListener('keydown', e => {
+    if (!eggsAllowed()) return;
+    const key = e.key;
+    if (key === seq[pos]) pos++; else pos = (key === seq[0]) ? 1 : 0;
+    if (pos === seq.length){
+      pos = 0;
+      toggleMatrixMode();
+      awardBadge('Konami Master 🕹️');
+    }
+  });
+}
+
+let matrixAnimFrame = null;
+function toggleMatrixMode(){
+  const on = !document.body.classList.contains('matrix-mode');
+  document.body.classList.toggle('matrix-mode', on);
+  const canvas = document.getElementById('matrixCanvas');
+  if (on){
+    canvas.classList.remove('hidden');
+    runMatrixRain(canvas);
+    showBadgeToast('🟢 Developer Mode: Matrix rain activated — press the code again to exit');
+  } else {
+    canvas.classList.add('hidden');
+    cancelAnimationFrame(matrixAnimFrame);
+  }
+}
+function runMatrixRain(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  const chars = '01アイウエオカキクケコ<>{}[]/;=+-'.split('');
+  const cols = Math.floor(canvas.width / 16);
+  const drops = new Array(cols).fill(0);
+  function tick(){
+    ctx.fillStyle = 'rgba(10,13,20,0.08)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#6ee7d8';
+    ctx.font = '14px monospace';
+    drops.forEach((y, i) => {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(char, i * 16, y * 16);
+      drops[i] = (y * 16 > canvas.height && Math.random() > 0.975) ? 0 : y + 1;
+    });
+    if (document.body.classList.contains('matrix-mode')) matrixAnimFrame = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// ---- GAME HUB: menu switching between Bug Squash / Snake / Dino ----
+function initGameHub(){
+  const overlay = document.getElementById('gameOverlay');
+  const closeBtn = document.getElementById('gameCloseBtn');
+  const menu = document.getElementById('gameMenu');
+  const panels = { bugsquash: document.getElementById('gameBugSquash'), snake: document.getElementById('gameSnake'), dino: document.getElementById('gameDino') };
+
+  function showMenu(){
+    menu.classList.remove('hidden');
+    Object.values(panels).forEach(p => p.classList.add('hidden'));
+    stopAllGames();
+  }
+  function showPanel(key){
+    menu.classList.add('hidden');
+    Object.entries(panels).forEach(([k, p]) => p.classList.toggle('hidden', k !== key));
+  }
+  function openHub(){ showOverlay(overlay); showMenu(); }
+  function closeHub(){ stopAllGames(); hideOverlay(overlay); }
+
+  document.getElementById('gameLauncherBtn').addEventListener('click', () => {
+    if (!eggsAllowed()) return;
+    requireVisitorGate(openHub);
+  });
+  closeBtn.addEventListener('click', closeHub);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeHub(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeHub(); });
+
+  menu.querySelectorAll('.game-menu-card').forEach(card => {
+    card.addEventListener('click', () => showPanel(card.dataset.game));
+  });
+  overlay.querySelectorAll('[data-back]').forEach(btn => btn.addEventListener('click', showMenu));
+
+  window.__openGameHub = openHub;
+  initBugSquashGame();
+  initSnakeGame();
+  initDinoGame();
+}
+function stopAllGames(){
+  if (window.__stopBugSquash) window.__stopBugSquash();
+  if (window.__stopSnake) window.__stopSnake();
+  if (window.__stopDino) window.__stopDino();
+}
+
+// ---- Bug Squash mini-game ----
+let gameInterval = null, gameTimerInterval = null, gameScore = 0, gameRunning = false;
+function initBugSquashGame(){
+  const startBtn = document.getElementById('gameStartBtn');
+  const startOverlay = document.getElementById('gameStartOverlay');
+  const field = document.getElementById('gameField');
+  const scoreEl = document.getElementById('gameScore');
+  const timeEl = document.getElementById('gameTime');
+  const bestEl = document.getElementById('gameBest');
+  bestEl.textContent = localStorage.getItem('bug_squash_best') || 0;
+  startBtn.addEventListener('click', startGame);
+
+  function startGame(){
+    startOverlay.classList.add('hidden');
+    gameScore = 0; scoreEl.textContent = 0;
+    let timeLeft = 30; timeEl.textContent = timeLeft;
+    gameRunning = true;
+    field.querySelectorAll('.game-bug').forEach(b => b.remove());
+    gameInterval = setInterval(spawnBug, 650);
+    gameTimerInterval = setInterval(() => { timeLeft--; timeEl.textContent = timeLeft; if (timeLeft <= 0) endGame(); }, 1000);
+  }
+  function spawnBug(){
+    if (!gameRunning) return;
+    const bug = document.createElement('div');
+    bug.className = 'game-bug';
+    bug.textContent = '🐛';
+    bug.style.left = Math.random() * 88 + '%';
+    bug.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+    bug.addEventListener('click', () => { gameScore += 10; scoreEl.textContent = gameScore; bug.remove(); });
+    bug.addEventListener('animationend', () => bug.remove());
+    field.appendChild(bug);
+  }
+  function endGame(){
+    stop();
+    const best = +(localStorage.getItem('bug_squash_best') || 0);
+    if (gameScore > best){ localStorage.setItem('bug_squash_best', gameScore); bestEl.textContent = gameScore; }
+    if (gameScore >= 100) awardBadge('Bug Squasher Pro 🐛');
+    startOverlay.classList.remove('hidden');
+    startOverlay.querySelector('button').textContent = `Game over — scored ${gameScore}. Play again?`;
+  }
+  function stop(){
+    gameRunning = false;
+    clearInterval(gameInterval); clearInterval(gameTimerInterval);
+    field.querySelectorAll('.game-bug').forEach(b => b.remove());
+  }
+  window.__stopBugSquash = stop;
+}
+
+// ---- Snake mini-game ----
+function initSnakeGame(){
+  const canvas = document.getElementById('snakeCanvas');
+  const ctx = canvas.getContext('2d');
+  const startBtn = document.getElementById('snakeStartBtn');
+  const startOverlay = document.getElementById('snakeStartOverlay');
+  const scoreEl = document.getElementById('snakeScore');
+  const bestEl = document.getElementById('snakeBest');
+  bestEl.textContent = localStorage.getItem('snake_best') || 0;
+
+  const grid = 18, size = canvas.width / grid;
+  let snake, dir, food, score, loop, running = false;
+
+  function reset(){
+    snake = [{x:9,y:9},{x:8,y:9},{x:7,y:9}];
+    dir = {x:1,y:0};
+    food = randFood();
+    score = 0; scoreEl.textContent = 0;
+  }
+  function randFood(){ return { x: Math.floor(Math.random()*grid), y: Math.floor(Math.random()*grid) }; }
+  function draw(){
+    ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.font = (size*0.9) + 'px serif';
+    ctx.fillText('🐛', food.x*size, food.y*size + size*0.85);
+    snake.forEach((s,i) => {
+      ctx.fillStyle = i === 0 ? '#6ee7d8' : '#a78bfa';
+      ctx.fillRect(s.x*size+1, s.y*size+1, size-2, size-2);
+    });
+  }
+  function tick(){
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x < 0 || head.x >= grid || head.y < 0 || head.y >= grid || snake.some(s => s.x===head.x && s.y===head.y)){
+      return endGame();
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y){
+      score += 10; scoreEl.textContent = score;
+      food = randFood();
+      if (score >= 150) awardBadge('Snake Charmer 🐍');
+    } else snake.pop();
+    draw();
+  }
+  function startGame(){
+    startOverlay.classList.add('hidden');
+    reset(); draw(); running = true;
+    clearInterval(loop); loop = setInterval(tick, 130);
+  }
+  function endGame(){
+    stop();
+    const best = +(localStorage.getItem('snake_best') || 0);
+    if (score > best){ localStorage.setItem('snake_best', score); bestEl.textContent = score; }
+    startOverlay.classList.remove('hidden');
+    startOverlay.querySelector('button').textContent = `Game over — scored ${score}. Play again?`;
+  }
+  function stop(){ running = false; clearInterval(loop); }
+
+  startBtn.addEventListener('click', startGame);
+  document.addEventListener('keydown', e => {
+    if (!running) return;
+    const map = { ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0} };
+    const next = map[e.key]; if (!next) return;
+    if (next.x === -dir.x && next.y === -dir.y) return; // no reverse
+    dir = next;
+  });
+  // simple swipe support
+  let touchStart = null;
+  canvas.addEventListener('touchstart', e => { touchStart = e.touches[0]; });
+  canvas.addEventListener('touchend', e => {
+    if (!touchStart || !running) return;
+    const dx = e.changedTouches[0].clientX - touchStart.clientX;
+    const dy = e.changedTouches[0].clientY - touchStart.clientY;
+    if (Math.abs(dx) > Math.abs(dy)) dir = dx > 0 ? {x:1,y:0} : {x:-1,y:0};
+    else dir = dy > 0 ? {x:0,y:1} : {x:0,y:-1};
+  });
+  window.__stopSnake = stop;
+}
+
+// ---- Dino Runner mini-game ----
+function initDinoGame(){
+  const canvas = document.getElementById('dinoCanvas');
+  const ctx = canvas.getContext('2d');
+  const startBtn = document.getElementById('dinoStartBtn');
+  const startOverlay = document.getElementById('dinoStartOverlay');
+  const scoreEl = document.getElementById('dinoScore');
+  const bestEl = document.getElementById('dinoBest');
+  bestEl.textContent = localStorage.getItem('dino_best') || 0;
+
+  const groundY = 150;
+  let dino, obstacles, speed, score, frame, running = false, raf;
+
+  function reset(){
+    dino = { y: groundY, vy: 0, jumping: false };
+    obstacles = [];
+    speed = 4; score = 0; frame = 0; scoreEl.textContent = 0;
+  }
+  function jump(){
+    if (!running || dino.jumping) return;
+    dino.jumping = true; dino.vy = -9;
+  }
+  function tick(){
+    frame++;
+    ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = '#30363d'; ctx.beginPath(); ctx.moveTo(0, groundY+24); ctx.lineTo(canvas.width, groundY+24); ctx.stroke();
+
+    dino.vy += 0.55; dino.y += dino.vy;
+    if (dino.y >= groundY){ dino.y = groundY; dino.vy = 0; dino.jumping = false; }
+    ctx.save();
+    ctx.font = '28px serif';
+    ctx.translate(30 + 26, dino.y + 22);
+    ctx.scale(-1, 1);
+    ctx.fillText('🦖', 0, 0);
+    ctx.restore();
+
+    if (frame % Math.max(30, 70 - Math.floor(speed*3)) === 0) obstacles.push({ x: canvas.width, hit:false });
+    obstacles.forEach(o => o.x -= speed);
+    obstacles = obstacles.filter(o => o.x > -30);
+    obstacles.forEach(o => {
+      ctx.font = '24px serif'; ctx.fillText('🐛', o.x, groundY + 20);
+      const dinoBox = { x: 30, y: dino.y, w: 26, h: 26 };
+      const bugBox = { x: o.x, y: groundY, w: 22, h: 22 };
+      if (dinoBox.x < bugBox.x + bugBox.w && dinoBox.x + dinoBox.w > bugBox.x && dinoBox.y < bugBox.y + bugBox.h && dinoBox.y + dinoBox.h > bugBox.y){
+        return endGame();
+      }
+    });
+
+    score++; scoreEl.textContent = Math.floor(score/5);
+    if (score % 300 === 0) speed += 0.6;
+    if (Math.floor(score/5) >= 100) awardBadge('Deadline Dodger 🦖');
+    if (running) raf = requestAnimationFrame(tick);
+  }
+  function startGame(){
+    startOverlay.classList.add('hidden');
+    reset(); running = true; raf = requestAnimationFrame(tick);
+  }
+  function endGame(){
+    stop();
+    const finalScore = Math.floor(score/5);
+    const best = +(localStorage.getItem('dino_best') || 0);
+    if (finalScore > best){ localStorage.setItem('dino_best', finalScore); bestEl.textContent = finalScore; }
+    startOverlay.classList.remove('hidden');
+    startOverlay.querySelector('button').textContent = `Game over — scored ${finalScore}. Play again?`;
+  }
+  function stop(){ running = false; cancelAnimationFrame(raf); }
+
+  startBtn.addEventListener('click', startGame);
+  document.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'ArrowUp'){ e.preventDefault(); jump(); } });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); });
+  canvas.addEventListener('click', jump);
+  window.__stopDino = stop;
+}
+
+/* ====================================================================
+   19. EASTER EGG HINTS PANEL
+   ==================================================================== */
+const HINT_LIST = [
+  { id: 'konami', text: 'A classic cheat-code rhythm (← → ← → ↑ ↓ ↑ ↓) does something here. Same code turns it off.' },
+  { id: 'coffee', text: 'The footer has a tiny ☕ — it might like being clicked. Repeatedly.' },
+  { id: 'games', text: 'Bored? There\'s a 🎮 floating around for exactly that.' },
+  { id: 'star', text: 'Keep an eye out for something shiny drifting across the screen.' },
+  { id: 'scroll', text: 'Scrolling the whole page has its own small reward.' },
+  { id: 'console', text: 'Open your browser console (F12) — someone left a note.' },
+  { id: 'logo', text: 'Double-clicking the logo does something a single click doesn\'t.' },
+];
+function initHintsPanel(){
+  const btn = document.getElementById('hintsBtn');
+  const panel = document.getElementById('hintsPanel');
+  const closeBtn = document.getElementById('hintsCloseBtn');
+  const list = document.getElementById('hintsList');
+  const progress = document.getElementById('hintsProgress');
+
+  function render(){
+    const found = getBadges();
+    const map = { 'konami': 'Konami Master 🕹️', 'coffee': 'Caffeine Detective ☕', 'games': 'Bug Squasher Pro 🐛', 'star': 'Star Catcher ⭐', 'scroll': 'Full Scroll 📜', 'logo': 'Rainbow Finder 🌈' };
+    list.innerHTML = HINT_LIST.map(h => {
+      const isFound = h.id === 'console' ? false : found.includes(map[h.id]);
+      return `<li class="${isFound ? 'found' : ''}">${esc(h.text)}</li>`;
+    }).join('');
+    const trackable = HINT_LIST.length - 1; // console hint has no badge to track
+    const foundCount = HINT_LIST.filter(h => h.id !== 'console' && found.includes(map[h.id])).length;
+    progress.textContent = `${foundCount} / ${trackable} found`;
+  }
+
+  btn.addEventListener('click', () => {
+    requireVisitorGate(() => {
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) render();
+    });
+  });
+  closeBtn.addEventListener('click', () => panel.classList.add('hidden'));
+}
+
+/* ====================================================================
+   20. SCROLL MILESTONES (25/50/75/100% scrolled)
+   ==================================================================== */
+function initScrollMilestones(){
+  const hit = new Set();
+  window.addEventListener('scroll', () => {
+    if (!eggsAllowed()) return;
+    const h = document.documentElement;
+    const pct = Math.round((h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100);
+    [25, 50, 75].forEach(m => { if (pct >= m && !hit.has(m)){ hit.add(m); showBadgeToast(`📜 ${m}% explored…`); } });
+    if (pct >= 99 && !hit.has(100)){
+      hit.add(100);
+      awardBadge('Full Scroll 📜');
+      fireConfetti();
+    }
+  });
+}
+
+/* ====================================================================
+   21. FLOATING COLLECTIBLE STAR (random drift + click to catch)
+   ==================================================================== */
+function initFloatingStar(){
+  const star = document.getElementById('floatingStar');
+  function relocate(){
+    if (!eggsAllowed()){ star.classList.add('hidden'); return; }
+    star.style.top = (10 + Math.random() * 70) + 'vh';
+    star.style.left = (5 + Math.random() * 85) + 'vw';
+    star.classList.remove('hidden');
+  }
+  star.addEventListener('click', () => {
+    awardBadge('Star Catcher ⭐');
+    fireConfetti();
+    star.classList.add('hidden');
+    setTimeout(relocate, 15000 + Math.random()*15000);
+  });
+  setTimeout(relocate, 8000);
+  setInterval(() => { if (!star.classList.contains('hidden')) return; if (Math.random() < 0.5) relocate(); }, 25000);
+}
+
+/* ====================================================================
+   22. FIREFLY CURSOR TRAIL (decorative, dark mode only)
+   ==================================================================== */
+function initFireflyTrail(){
+  const canvas = document.getElementById('fireflyCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => {
+    if (document.documentElement.getAttribute('data-theme') === 'light') return;
+    canvas.classList.add('show');
+    particles.push({ x: e.clientX, y: e.clientY, life: 1 });
+    if (particles.length > 40) particles.shift();
+  });
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      p.life -= 0.025;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.4 * p.life, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(110,231,216,${Math.max(p.life,0)*0.5})`;
+      ctx.fill();
+    });
+    particles = particles.filter(p => p.life > 0);
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+/* ====================================================================
+   23. LOGO DOUBLE-CLICK -> RAINBOW BURST EASTER EGG
+   ==================================================================== */
+function initLogoEasterEgg(){
+  const logo = document.getElementById('logoHome');
+  if (!logo) return;
+  logo.addEventListener('dblclick', e => {
+    e.preventDefault();
+    if (!eggsAllowed()) return;
+    document.body.classList.add('rainbow-burst');
+    fireConfetti();
+    awardBadge('Rainbow Finder 🌈');
+    setTimeout(() => document.body.classList.remove('rainbow-burst'), 1800);
+  });
+}
+
+/* ====================================================================
+   24. PARALLAX BACKGROUND ON SCROLL
+   ==================================================================== */
+function initParallaxBackground(){
+  const wallpaper = document.getElementById('wallpaper');
+  const canvas = document.getElementById('constellation');
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      if (wallpaper) wallpaper.style.transform = `translateY(${y * 0.08}px) scale(1.04)`;
+      if (canvas) canvas.style.transform = `translateY(${y * 0.04}px)`;
+      ticking = false;
+    });
+  }, { passive: true });
+}
+
+/* ====================================================================
+   25. VISITOR INFO GATE (asks name + contact once before games/hints)
+   ==================================================================== */
+function visitorGateSatisfied(){
+  return localStorage.getItem('visitor_info_submitted') === '1';
+}
+function requireVisitorGate(onUnlocked){
+  if (visitorGateSatisfied()){ onUnlocked(); return; }
+  const overlay = document.getElementById('visitorGateOverlay');
+  const nameInput = document.getElementById('visitorName');
+  const contactInput = document.getElementById('visitorContact');
+  const submitBtn = document.getElementById('visitorGateSubmit');
+  const status = document.getElementById('visitorGateStatus');
+  const closeBtn = document.getElementById('visitorGateClose');
+
+  showOverlay(overlay);
+  const handler = async () => {
+    const name = nameInput.value.trim();
+    const contact = contactInput.value.trim();
+    if (!name || !contact){ status.textContent = 'Please fill in both fields.'; return; }
+    status.textContent = 'Saving…';
+    try{
+      if (supa) await supa.from('visitor_leads').insert({ name, contact, page: location.href });
+    } catch(err){ console.warn('Visitor lead save skipped:', err); }
+    localStorage.setItem('visitor_info_submitted', '1');
+    status.textContent = '';
+    hideOverlay(overlay);
+    submitBtn.removeEventListener('click', handler);
+    onUnlocked();
+  };
+  submitBtn.addEventListener('click', handler);
+  closeBtn.addEventListener('click', () => hideOverlay(overlay), { once: true });
+}
+
 /* ====================================================================
    BOOT
    ==================================================================== */
@@ -909,6 +1530,17 @@ function initCommandPalette(){
   initCommandPalette();
   applyDynamicGreeting();
   tagTiltCards();
+  consoleWelcome();
+  initCoffeeEgg();
+  initKonami();
+  initGameHub();
+  initHintsPanel();
+  initEggsToggle();
+  initScrollMilestones();
+  initFloatingStar();
+  initFireflyTrail();
+  initParallaxBackground();
+  initLogoEasterEgg();
   initProjectModal();
   initCertModal();
   loadGithubRepos();

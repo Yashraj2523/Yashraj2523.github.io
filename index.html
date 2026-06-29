@@ -43,6 +43,7 @@
 <!-- ================= AMBIENT BACKGROUND ================= -->
 <div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
+<canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
 <div class="grain"></div>
 
 <!-- ================= NAV ================= -->
@@ -105,9 +106,9 @@
           <a id="resumeDownloadBtn" href="Yashwanth_Resume.pdf" download class="btn btn-glass">Download résumé ↓</a>
         </div>
         <div class="hero-stats">
-          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Projects shipped</span></div>
-          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Certifications</span></div>
-          <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">Languages spoken</span></div>
+          <div class="stat"><span class="stat-num" id="statProjects" data-count="0">0</span><span class="stat-label">Projects shipped</span></div>
+          <div class="stat"><span class="stat-num" id="statCerts" data-count="0">0</span><span class="stat-label">Certifications</span></div>
+          <div class="stat"><span class="stat-num" id="statLangs" data-count="0">0</span><span class="stat-label">Languages spoken</span></div>
         </div>
       </div>
 
@@ -234,7 +235,7 @@
       <span class="tag">Connect</span>
       <h2>Find me elsewhere.</h2>
     </div>
-    <div class="connect-grid">
+    <div class="connect-grid" id="connectGrid">
 
       <div class="glass panel connect-card">
         <div class="connect-top">
@@ -293,10 +294,91 @@
   </section>
 
   <footer class="footer">
-    <p>© <span id="year"></span> Yashwanth R. Built with intent, not templates.</p>
+    <p>© <span id="year"></span> Yashwanth R. Built with intent, not templates. <span id="coffeeEgg" title="" style="cursor:default;">☕</span></p>
   </footer>
 
 </main>
+
+<!-- ================= FLOATING GIMMICK CONTROLS ================= -->
+<canvas id="fireflyCanvas" class="firefly-canvas"></canvas>
+<div id="floatingStar" class="floating-star hidden" title="Catch me!">⭐</div>
+<button id="gameLauncherBtn" class="floating-game-btn" title="Play a mini-game">🎮</button>
+<button id="hintsBtn" class="floating-hints-btn" title="Easter egg hints">💡</button>
+<div id="hintsPanel" class="glass hints-panel hidden">
+  <button id="hintsCloseBtn" class="modal-close" aria-label="Close">✕</button>
+  <h3>🔍 Things to find</h3>
+  <ul id="hintsList" class="hints-list"></ul>
+  <p class="settings-hint" id="hintsProgress" style="margin-top:10px;"></p>
+  <label class="eggs-toggle-row">
+    <input type="checkbox" id="eggsToggleCheckbox" checked />
+    Enable easter eggs &amp; mini-games
+  </label>
+</div>
+
+<!-- ================= VISITOR INFO GATE (before games/hints) ================= -->
+<div id="visitorGateOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box">
+    <button id="visitorGateClose" class="modal-close" aria-label="Close">✕</button>
+    <h3>👋 Quick intro before you play</h3>
+    <p class="muted modal-sub">Tell me who's stopping by — takes 10 seconds, then the games and hidden extras unlock.</p>
+    <input id="visitorName" type="text" placeholder="Your name" autocomplete="name" />
+    <input id="visitorContact" type="text" placeholder="Email, mobile, or Instagram handle" autocomplete="email" />
+    <button id="visitorGateSubmit" class="btn btn-primary btn-block">Unlock & continue</button>
+    <p id="visitorGateStatus" class="modal-status"></p>
+  </div>
+</div>
+
+<!-- ================= GAME HUB (Bug Squash / Snake / Dino) ================= -->
+<div id="gameOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box game-box">
+    <button id="gameCloseBtn" class="modal-close" aria-label="Close">✕</button>
+
+    <div id="gameMenu">
+      <h3>🎮 Mini-games</h3>
+      <p class="muted" style="margin-bottom:14px;">Take a break. High scores are saved on this device.</p>
+      <div class="game-menu-grid">
+        <button class="game-menu-card" data-game="bugsquash"><span>🐛</span>Bug Squash</button>
+        <button class="game-menu-card" data-game="snake"><span>🐍</span>Snake</button>
+        <button class="game-menu-card" data-game="dino"><span>🦖</span>Dino Runner</button>
+      </div>
+    </div>
+
+    <div id="gameBugSquash" class="game-panel hidden">
+      <button class="game-back-btn" data-back>← Games</button>
+      <h3>🐛 Bug Squash</h3>
+      <p class="muted">Squash bugs before they reach the bottom.</p>
+      <div class="game-hud"><span>Score: <strong id="gameScore">0</strong></span><span>Time: <strong id="gameTime">30</strong>s</span><span>Best: <strong id="gameBest">0</strong></span></div>
+      <div id="gameField" class="game-field">
+        <div id="gameStartOverlay" class="game-start-overlay"><p class="game-howto">🐛 Click bugs before they reach the bottom. Faster reflexes = higher score. 30 seconds on the clock.</p><button id="gameStartBtn" class="btn btn-primary">Start game</button></div>
+      </div>
+    </div>
+
+    <div id="gameSnake" class="game-panel hidden">
+      <button class="game-back-btn" data-back>← Games</button>
+      <h3>🐍 Snake</h3>
+      <p class="muted">Arrow keys or swipe. Eat the 🐛, don't bite yourself.</p>
+      <div class="game-hud"><span>Score: <strong id="snakeScore">0</strong></span><span>Best: <strong id="snakeBest">0</strong></span></div>
+      <div class="game-canvas-wrap">
+        <canvas id="snakeCanvas" width="360" height="360"></canvas>
+        <div id="snakeStartOverlay" class="game-start-overlay"><p class="game-howto">🐍 Use arrow keys (or swipe on mobile) to steer. Eat the 🐛 to grow — don't run into yourself or the walls.</p><button id="snakeStartBtn" class="btn btn-primary">Start game</button></div>
+      </div>
+    </div>
+
+    <div id="gameDino" class="game-panel hidden">
+      <button class="game-back-btn" data-back>← Games</button>
+      <h3>🦖 Dino Runner</h3>
+      <p class="muted">Space, ↑, or tap to jump over the bugs.</p>
+      <div class="game-hud"><span>Score: <strong id="dinoScore">0</strong></span><span>Best: <strong id="dinoBest">0</strong></span></div>
+      <div class="game-canvas-wrap">
+        <canvas id="dinoCanvas" width="360" height="200"></canvas>
+        <div id="dinoStartOverlay" class="game-start-overlay"><p class="game-howto">🦖 Press Space, ↑, or tap to jump over the bugs. It speeds up the longer you survive.</p><button id="dinoStartBtn" class="btn btn-primary">Start game</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BADGE TOAST ================= -->
+<div id="badgeToast" class="badge-toast hidden"></div>
 
 <!-- ================= PROJECT POPUP MODAL ================= -->
 <div id="projectModalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
