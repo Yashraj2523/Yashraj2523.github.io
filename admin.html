@@ -23,7 +23,7 @@
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
-    <a href="index.html" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">View site ↗</a>
+    <a href="index.html?nointro=1" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">View site ↗</a>
   </div>
 </nav>
 
@@ -210,13 +210,25 @@
       <p class="settings-hint" id="resumeCurrentLink"></p>
     </div>
     <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background style</h3>
+      <p class="settings-hint">Choose the animated background behind the whole site. "Space" gives a drifting starfield/galaxy feel; "Dots" is the original constellation look.</p>
+      <select id="s_bgStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="dots">Dots (constellation)</option>
+        <option value="space">Space / Galaxy drift</option>
+        <option value="nebula">Nebula clouds</option>
+      </select>
+      <p class="settings-hint" id="bgStyleSavedLabel" style="margin-top:8px;"></p>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background wallpaper</h3>
-      <p class="settings-hint">Upload an image to use as the site's background wallpaper (sits behind the animated dots, dimmed for readability). Leave empty to use the default gradient.</p>
+      <p class="settings-hint">Upload your own image, or pick a ready-made preset below. Leave empty to use just the animated background style above.</p>
       <div class="upload-row">
         <input id="wallpaperUploadInput" type="file" accept="image/*" />
         <span id="wallpaperUploadStatus" class="settings-hint"></span>
       </div>
       <div class="upload-preview" id="wallpaperPreview"></div>
+      <p class="settings-hint" style="margin-top:14px;">Or pick a preset:</p>
+      <div id="wallpaperPresetsRow" class="wallpaper-presets-row"></div>
       <div class="admin-field" style="margin-top:14px; max-width:240px;"><label>Wallpaper dimness (0 = invisible, 100 = full image)</label><input id="s_wallpaperOpacity" type="number" min="0" max="100" /></div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
         <button id="removeWallpaperBtn" class="btn btn-glass">Reset to default (no wallpaper)</button>
@@ -224,27 +236,64 @@
       <p class="settings-hint" id="wallpaperSaveHint" style="margin-top:8px;"></p>
     </div>
     <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Quiz reward video</h3>
+      <p class="settings-hint">The video shown when a visitor answers the tech quiz correctly. Upload your own .mp4/.webm/.mov to play it as a local file, in-panel — this is the fix if a YouTube video ever refuses to autoplay/embed in the popup. Leave empty for the default YouTube video.</p>
+      <div class="upload-row">
+        <input id="quizVideoUploadInput" type="file" accept="video/mp4,video/webm,video/quicktime" />
+        <span id="quizVideoUploadStatus" class="settings-hint"></span>
+      </div>
+      <p class="settings-hint" id="quizVideoCurrent"></p>
+      <div class="admin-field" style="margin-top:10px; max-width:420px;">
+        <label>...or paste a YouTube URL / video ID instead</label>
+        <input id="s_quizRewardVideoUrl" type="text" placeholder="https://youtube.com/watch?v=..." />
+      </div>
+      <button id="clearQuizVideoBtn" class="btn btn-glass" style="margin-top:8px;">Reset to default video</button>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Cursor style</h3>
+      <p class="settings-hint">Site-wide custom cursor + optional particle trail. Both are automatically switched off whenever a visitor turns on Recruiter Mode, so the site always looks clean and professional for that audience.</p>
+      <select id="s_cursorStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="default">Default (browser cursor)</option>
+        <option value="dot">Minimal dot</option>
+        <option value="ring">Glowing ring</option>
+        <option value="crosshair">Crosshair</option>
+        <option value="diamond">Diamond</option>
+        <option value="comet">Comet</option>
+        <option value="pixel">Retro pixel</option>
+        <option value="ghost">Soft ghost blur</option>
+        <option value="target">Target lock</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px;">
+        <input type="checkbox" id="s_cursorTrail" style="width:18px; height:18px; accent-color:var(--accent-1);" />
+        Enable particle trail following the cursor
+      </label>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Easter eggs &amp; mini-games</h3>
+      <p class="settings-hint">Site-wide on/off switch for every easter egg, gimmick, and mini-game. Visitors never see this control — only you do, here.</p>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+        <input type="checkbox" id="s_eggsEnabled" style="width:18px; height:18px; accent-color:var(--accent-1);" />
+        Enable easter eggs, gimmicks &amp; mini-games for visitors
+      </label>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Theme palette</h3>
       <p class="settings-hint">Changes the accent colors used across the whole site (independent of light/dark mode). Saves instantly.</p>
-      <select id="s_themePalette" class="admin-field" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
-        <option value="default">Default (Aqua / Violet)</option>
-        <option value="sunset">Sunset</option>
-        <option value="ocean">Ocean</option>
-        <option value="forest">Forest</option>
-        <option value="amber">Amber Gold</option>
-        <option value="rose">Rose Gold</option>
-      </select>
+      <div id="themePaletteRow" class="theme-palette-row"></div>
     </div>
     <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>
       <p class="settings-hint">These control sizes across the live site — change a number and save, no code edits needed.</p>
-      <div class="admin-row">
-        <div class="admin-field"><label>Icon button size (px)</label><input id="s_iconButtonSize" type="number" min="24" max="64" /></div>
-        <div class="admin-field"><label>Profile photo size (px)</label><input id="s_avatarSize" type="number" min="160" max="600" /></div>
-        <div class="admin-field"><label>Card corner radius (px)</label><input id="s_cardRadius" type="number" min="0" max="48" /></div>
-        <div class="admin-field"><label>Glass blur strength (px)</label><input id="s_glassBlur" type="number" min="0" max="40" /></div>
-        <div class="admin-field"><label>Section spacing (px)</label><input id="s_sectionSpacing" type="number" min="40" max="240" /></div>
+      <p class="settings-hint">Drag any slider — the live site animates smoothly to the new size instead of snapping (once you save).</p>
+      <div class="admin-row appearance-slider-row">
+        <div class="admin-field slider-field"><label>Icon button size <span class="slider-val" id="v_iconButtonSize"></span></label><input id="s_iconButtonSize" type="range" min="24" max="64" /></div>
+        <div class="admin-field slider-field"><label>Profile photo size <span class="slider-val" id="v_avatarSize"></span></label><input id="s_avatarSize" type="range" min="160" max="600" /></div>
+        <div class="admin-field slider-field"><label>Card corner radius <span class="slider-val" id="v_cardRadius"></span></label><input id="s_cardRadius" type="range" min="0" max="48" /></div>
+        <div class="admin-field slider-field"><label>Glass blur strength <span class="slider-val" id="v_glassBlur"></span></label><input id="s_glassBlur" type="range" min="0" max="40" /></div>
+        <div class="admin-field slider-field"><label>Section spacing <span class="slider-val" id="v_sectionSpacing"></span></label><input id="s_sectionSpacing" type="range" min="40" max="240" /></div>
       </div>
+      <button id="resetAppearanceBtn" class="btn btn-glass" style="margin-top:12px;">↺ Reset appearance to default</button>
+      <p class="settings-hint" style="margin-top:6px;">Only resets sizes/blur/spacing/cursor/background style above — your projects, certs, bio and everything else stay untouched.</p>
     </div>
     <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px; color:#f06464;">Danger zone</h3>

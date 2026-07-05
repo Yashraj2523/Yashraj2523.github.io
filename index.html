@@ -40,14 +40,32 @@
 </head>
 <body>
 
+<!-- ================= INTRO SPLASH ================= -->
+<div id="introSplash" class="intro-splash">
+  <div class="intro-splash-inner">
+    <span class="intro-logo">YR<span class="logo-dot">.</span></span>
+    <p>For the full experience — animations, parallax &amp; all the little details —<br><strong>view this on a desktop.</strong></p>
+    <div class="intro-progress"><div class="intro-progress-bar"></div></div>
+  </div>
+</div>
+
 <!-- ================= AMBIENT BACKGROUND ================= -->
 <div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
 <canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
 <div class="grain"></div>
 
+<!-- ================= LIVE CLOCK ================= -->
+<div id="liveClock" class="live-clock" title="Local time"></div>
+
+<!-- ================= FONT SIZE CONTROL (always visible) ================= -->
+<div id="fontSizeControl" class="font-size-control" role="group" aria-label="Adjust text size">
+  <button id="fontSizeDown" type="button" aria-label="Decrease text size">A−</button>
+  <button id="fontSizeReset" type="button" aria-label="Reset text size" title="Reset">100%</button>
+  <button id="fontSizeUp" type="button" aria-label="Increase text size">A+</button>
+</div>
+
 <!-- ================= NAV ================= -->
-<div id="scrollProgress" class="scroll-progress"></div>
 
 <nav class="navbar glass">
   <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
@@ -64,9 +82,11 @@
     <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     </button>
-    <button id="recruiterModeBtn" class="icon-btn" title="Recruiter Mode — show only the essentials">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
+    <button id="recruiterModeBtn" class="recruiter-mode-pill" aria-pressed="false" title="Recruiter Mode — see only the essentials: projects, skills, experience, certs, contact">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
+      <span class="recruiter-label">Recruiter Mode</span>
     </button>
+    <button id="soundToggleBtn" class="icon-btn" title="Toggle sound">🔊</button>
     <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
@@ -74,7 +94,7 @@
     <a href="admin.html" class="icon-btn" title="Owner sign in / edit dashboard">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
     </a>
-    <a href="#contact" class="navcta">Hire me</a>
+    <button id="hireMeBtn" type="button" class="navcta">Hire me</button>
   </div>
 </nav>
 
@@ -113,11 +133,23 @@
       </div>
 
       <div class="hero-photo-wrap">
-        <div id="profileSlideshow" class="slideshow glass" tabindex="0" aria-label="Profile photo slideshow, click to advance">
-          <div id="slideshowTrack" class="slideshow-track"></div>
-          <button id="slidePrev" class="slide-arrow prev" aria-label="Previous photo" type="button">‹</button>
-          <button id="slideNext" class="slide-arrow next" aria-label="Next photo" type="button">›</button>
-          <div id="slideshowDots" class="slideshow-dots"></div>
+        <div id="avatarFlip" class="avatar-flip" role="button" tabindex="0" aria-label="Click to reveal a QR code for this site" title="Click to flip: photo ↔ QR code">
+          <div class="avatar-flip-inner">
+            <div class="avatar-flip-front">
+              <div id="profileSlideshow" class="slideshow glass" tabindex="0" aria-label="Profile photo slideshow">
+                <div id="slideshowTrack" class="slideshow-track"></div>
+                <button id="slidePrev" class="slide-arrow prev" aria-label="Previous photo" type="button">‹</button>
+                <button id="slideNext" class="slide-arrow next" aria-label="Next photo" type="button">›</button>
+                <div id="slideshowDots" class="slideshow-dots"></div>
+              </div>
+            </div>
+            <div class="avatar-flip-back glass">
+              <img id="qrImage" alt="QR code linking to this site" />
+              <p>Scan to share this page</p>
+              <button id="qrCopyBtn" class="btn btn-glass" type="button">Copy link instead</button>
+            </div>
+          </div>
+          <span class="avatar-flip-hint" aria-hidden="true">▦ tap for QR</span>
         </div>
       </div>
     </div>
@@ -255,7 +287,7 @@
         <a href="https://www.linkedin.com/in/yashraj2523/" target="_blank" rel="noopener" class="btn btn-glass btn-block">View LinkedIn ↗</a>
       </div>
 
-      <div class="glass panel connect-card connect-card-wide" id="youtubeCard">
+      <div class="glass panel connect-card connect-card-youtube" id="youtubeCard">
         <div class="yt-banner" id="ytBanner">
           <img id="ytBannerImg" alt="YouTube channel banner" loading="lazy" onerror="this.closest('.yt-banner').classList.add('yt-banner-fallback'); this.style.display='none';" />
           <div class="yt-banner-overlay"></div>
@@ -299,6 +331,55 @@
 
 </main>
 
+<button id="quizLauncherBtn" class="floating-quiz-btn" title="Quick tech quiz">🧠</button>
+
+<!-- ================= TECH QUIZ ================= -->
+<div id="quizOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box quiz-box">
+    <button id="quizCloseBtn" class="modal-close" aria-label="Close">✕</button>
+    <div id="quizQuestionView">
+      <h3>🧠 Quick tech quiz</h3>
+      <p class="muted" id="quizQuestionText" style="margin:10px 0 16px;"></p>
+      <div id="quizOptions" class="quiz-options"></div>
+    </div>
+    <div id="quizCorrectView" class="quiz-result hidden">
+      <h3>🎉 Nailed it!</h3>
+      <p class="muted">Here's a little reward for getting it right.</p>
+      <div class="quiz-video-wrap">
+        <iframe id="quizRewardVideoFrame" class="hidden" src="" title="Reward video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        <video id="quizRewardVideoLocal" class="hidden" controls playsinline></video>
+      </div>
+      <button id="quizPlayAgainBtn" class="btn btn-glass" style="margin-top:14px;">Try another question</button>
+    </div>
+    <div id="quizWrongView" class="quiz-result hidden">
+      <h3>Close, but not quite!</h3>
+      <p class="muted">No worries — there's still a small gift waiting for you. Want another shot at it?</p>
+      <div class="quiz-retry-row">
+        <button id="quizRetryBtn" class="btn btn-primary">Yes, try again</button>
+        <button id="quizSkipBtn" class="btn btn-glass">Maybe later</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= AVATAR ASSISTANT ================= -->
+<button id="avatarAssistantBtn" class="avatar-assistant-btn" title="Ask me something">
+  <img src="images/profile/me1.jpg" alt="Chat with Yashwanth's avatar" />
+</button>
+<div id="avatarAssistantPanel" class="avatar-assistant-panel hidden">
+  <div class="avatar-assistant-head">
+    <img src="images/profile/me1.jpg" alt="" />
+    <div><strong>Ask me anything</strong><span>Scripted assistant — not live, but tries to help</span></div>
+    <button id="avatarAssistantClose" aria-label="Close">✕</button>
+  </div>
+  <div id="avatarAssistantMessages" class="avatar-assistant-messages"></div>
+  <div class="avatar-assistant-quick" id="avatarAssistantQuick"></div>
+  <div class="avatar-assistant-input-row">
+    <input id="avatarAssistantInput" type="text" placeholder="Type a question…" />
+    <button id="avatarAssistantSend" aria-label="Send">➤</button>
+  </div>
+</div>
+
 <!-- ================= FLOATING GIMMICK CONTROLS ================= -->
 <canvas id="fireflyCanvas" class="firefly-canvas"></canvas>
 <div id="floatingStar" class="floating-star hidden" title="Catch me!">⭐</div>
@@ -309,10 +390,21 @@
   <h3>🔍 Things to find</h3>
   <ul id="hintsList" class="hints-list"></ul>
   <p class="settings-hint" id="hintsProgress" style="margin-top:10px;"></p>
-  <label class="eggs-toggle-row">
-    <input type="checkbox" id="eggsToggleCheckbox" checked />
-    Enable easter eggs &amp; mini-games
-  </label>
+</div>
+
+<!-- ================= HIRE ME ================= -->
+<div id="hireMeOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box hire-me-box">
+    <button id="hireMeClose" class="modal-close" aria-label="Close">✕</button>
+    <h3>💼 Let's talk.</h3>
+    <p class="muted modal-sub">Drop your details and what you have in mind — I get notified right away and reply personally.</p>
+    <input id="hireName" type="text" placeholder="Your name" autocomplete="name" required />
+    <input id="hireCompany" type="text" placeholder="Company / organization (optional)" autocomplete="organization" />
+    <input id="hireContact" type="text" placeholder="Email or phone number" autocomplete="email" required />
+    <textarea id="hireMessage" rows="4" placeholder="Role, project, timeline — whatever's useful"></textarea>
+    <button id="hireMeSubmit" class="btn btn-primary btn-block">Send</button>
+    <p id="hireMeStatus" class="modal-status"></p>
+  </div>
 </div>
 
 <!-- ================= VISITOR INFO GATE (before games/hints) ================= -->
@@ -428,6 +520,7 @@
 
 <!-- Supabase client (only loaded if you fill in config.js) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>

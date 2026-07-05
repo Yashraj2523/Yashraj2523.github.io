@@ -217,5 +217,15 @@ const SITE_DATA = {
     cardRadius: 18,         // px, corner roundness of cards/panels
     glassBlur: 18,          // px, backdrop blur strength on glass panels
     sectionSpacing: 130,    // px, top padding between major sections
+
+    // Quiz reward video (shown when a visitor answers the tech quiz correctly).
+    // Leave empty to use the built-in YouTube video. Upload an .mp4/.webm/.mov via
+    // admin.html → Settings to play a LOCAL file instead — this is the fix for YouTube
+    // videos that refuse to embed/autoplay in a popup (owner-disabled embedding, region
+    // locks, etc). A local file always plays reliably since there's no third-party embed.
+    quizRewardVideoUrl: "",
+
+    cursorStyle: "default",  // see CURSOR_STYLES in app.js for the full list of presets
+    cursorTrail: false,      // particle trail following the pointer — auto-disabled in recruiter mode
   },
 };

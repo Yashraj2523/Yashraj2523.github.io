@@ -92,6 +92,7 @@ async function initAuth(){
     loginGate.classList.add('hidden');
     dashboard.classList.remove('hidden');
     showToast('✓ Signed in — you can edit everything below');
+    dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await loadContent();
     populateForms();
     initRepeaters();
@@ -163,19 +164,37 @@ function populateForms(){
   byId('f_youtube_subs').value = liveData.youtube_subs || '';
 
   const s = liveData.settings || {};
-  byId('s_iconButtonSize').value = s.iconButtonSize || 36;
-  byId('s_avatarSize').value = s.avatarSize || 320;
-  byId('s_cardRadius').value = s.cardRadius || 18;
-  byId('s_glassBlur').value = s.glassBlur || 18;
-  byId('s_sectionSpacing').value = s.sectionSpacing || 130;
-  byId('s_themePalette').value = s.themePalette || 'default';
-  byId('s_themePalette').onchange = async () => {
-    liveData.settings = liveData.settings || {};
-    liveData.settings.themePalette = byId('s_themePalette').value;
-    await saveContent('Theme palette saved ✓');
-  };
+  bindSlider('s_iconButtonSize', 'v_iconButtonSize', s.iconButtonSize || 36, 'px');
+  bindSlider('s_avatarSize', 'v_avatarSize', s.avatarSize || 320, 'px');
+  bindSlider('s_cardRadius', 'v_cardRadius', s.cardRadius || 18, 'px');
+  bindSlider('s_glassBlur', 'v_glassBlur', s.glassBlur || 18, 'px');
+  bindSlider('s_sectionSpacing', 'v_sectionSpacing', s.sectionSpacing || 130, 'px');
+  renderThemePaletteSwatches(s.themePalette || 'default');
   byId('s_wallpaperOpacity').value = s.wallpaperOpacity !== undefined ? s.wallpaperOpacity : 35;
   renderSingleImagePreview('wallpaperPreview', liveData.background_image);
+  byId('s_bgStyle').value = s.bgStyle || 'dots';
+  const bgSavedLabel = byId('bgStyleSavedLabel');
+  function updateBgSavedLabel(){
+    bgSavedLabel.textContent = `Currently saved & live on the site: "${(liveData.settings && liveData.settings.bgStyle) || 'dots'}". If it looks unchanged after saving, hard-refresh the site tab (Ctrl/Cmd+Shift+R) — browsers cache background images.`;
+  }
+  updateBgSavedLabel();
+  byId('s_bgStyle').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.bgStyle = byId('s_bgStyle').value;
+    await saveContent('Background style saved ✓');
+    updateBgSavedLabel();
+  };
+  byId('s_eggsEnabled').checked = s.eggsEnabled !== false;
+  byId('s_eggsEnabled').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.eggsEnabled = byId('s_eggsEnabled').checked;
+    await saveContent('Easter eggs setting saved ✓');
+  };
+  byId('s_quizRewardVideoUrl').value = s.quizRewardVideoUrl || '';
+  byId('quizVideoCurrent').textContent = s.quizRewardVideoUrl ? `Current: ${s.quizRewardVideoUrl}` : 'Using the default built-in video.';
+  byId('s_cursorStyle').value = s.cursorStyle || 'default';
+  byId('s_cursorTrail').checked = !!s.cursorTrail;
+  renderWallpaperPresets();
   byId('resumeCurrentLink').innerHTML = liveData.resume_url ? `Current file: <a href="${liveData.resume_url}" target="_blank">${liveData.resume_url}</a>` : 'No résumé uploaded yet.';
 
   renderUploadPreview('photoPreviewList', liveData.profile_photos || []);
@@ -197,6 +216,15 @@ function escapeHtml(str){
 }
 function byId(id){ return document.getElementById(id); }
 
+// Keeps a slider's little value-badge in sync live while dragging, so the number
+// isn't just a static thing you type — you can see it move as you drag.
+function bindSlider(inputId, labelId, initial, unit){
+  const input = byId(inputId), label = byId(labelId);
+  input.value = initial;
+  label.textContent = initial + unit;
+  input.addEventListener('input', () => { label.textContent = input.value + unit; });
+}
+
 function collectSimpleFields(){
   liveData.hero_name = byId('f_hero_name').value;
   liveData.hero_sub = byId('f_hero_sub').value;
@@ -217,8 +245,13 @@ function collectSimpleFields(){
     cardRadius: +byId('s_cardRadius').value || 18,
     glassBlur: +byId('s_glassBlur').value || 18,
     sectionSpacing: +byId('s_sectionSpacing').value || 130,
-    themePalette: byId('s_themePalette').value || 'default',
+    themePalette: (liveData.settings && liveData.settings.themePalette) || 'default',
     wallpaperOpacity: +byId('s_wallpaperOpacity').value,
+    bgStyle: (liveData.settings && liveData.settings.bgStyle) || 'dots',
+    eggsEnabled: (liveData.settings && liveData.settings.eggsEnabled) !== false,
+    quizRewardVideoUrl: byId('s_quizRewardVideoUrl').value.trim(),
+    cursorStyle: byId('s_cursorStyle').value,
+    cursorTrail: byId('s_cursorTrail').checked,
   };
 }
 
@@ -462,6 +495,13 @@ function initRepeaters(){
     ]
   });
 
+  document.getElementById('resetAppearanceBtn').addEventListener('click', async () => {
+    if (!confirm('Reset all appearance settings (sizes, blur, spacing, cursor, background style) to default? Your content is not affected.')) return;
+    liveData.settings = JSON.parse(JSON.stringify(SITE_DATA.settings));
+    await saveContent('Appearance reset to default ✓');
+    populateForms();
+  });
+
   document.getElementById('resetDefaultsBtn').addEventListener('click', async () => {
     if (!confirm('This will overwrite your live database with the contents of data.js. Continue?')) return;
     liveData = mergeWithDefaults(SITE_DATA);
@@ -537,6 +577,77 @@ function initCustomSections(){
 /* ====================================================================
    UPLOADS (Supabase Storage bucket "portfolio-media")
    ==================================================================== */
+const THEME_PALETTES = {
+  default:{accent1:'#6ee7d8',accent2:'#a78bfa'}, sunset:{accent1:'#ff9966',accent2:'#ff5e8a'},
+  ocean:{accent1:'#38bdf8',accent2:'#6366f1'}, forest:{accent1:'#34d399',accent2:'#0d9488'},
+  amber:{accent1:'#fbbf24',accent2:'#d97706'}, rose:{accent1:'#f7b9c4',accent2:'#c2410c'},
+  lavender:{accent1:'#c4b5fd',accent2:'#8b5cf6'}, mint:{accent1:'#6ee7b7',accent2:'#10b981'},
+  coral:{accent1:'#fb923c',accent2:'#f43f5e'}, slate:{accent1:'#94a3b8',accent2:'#475569'},
+  cherry:{accent1:'#fda4af',accent2:'#e11d48'}, emerald:{accent1:'#34d399',accent2:'#059669'},
+  cyberpunk:{accent1:'#f0abfc',accent2:'#22d3ee'}, autumn:{accent1:'#f59e0b',accent2:'#b91c1c'},
+  arctic:{accent1:'#a5f3fc',accent2:'#0891b2'}, berry:{accent1:'#f472b6',accent2:'#7e22ce'},
+  citrus:{accent1:'#fde047',accent2:'#ea580c'}, steel:{accent1:'#7dd3fc',accent2:'#1e3a8a'},
+  terracotta:{accent1:'#fdba74',accent2:'#9a3412'}, monochrome:{accent1:'#e5e7eb',accent2:'#6b7280'},
+};
+function renderThemePaletteSwatches(active){
+  const row = document.getElementById('themePaletteRow');
+  row.innerHTML = Object.keys(THEME_PALETTES).map(key => {
+    const p = THEME_PALETTES[key];
+    return `<button type="button" class="theme-swatch-btn ${key === active ? 'active' : ''}" data-key="${key}" title="${key}"
+      style="background:linear-gradient(135deg, ${p.accent1}, ${p.accent2});"></button>`;
+  }).join('');
+  row.querySelectorAll('.theme-swatch-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      liveData.settings = liveData.settings || {};
+      liveData.settings.themePalette = btn.dataset.key;
+      row.querySelectorAll('.theme-swatch-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      await saveContent('Theme palette saved ✓');
+    });
+  });
+}
+
+const WALLPAPER_PRESETS = [
+  { id: 'none', label: 'None', url: '' },
+  { id: 'galaxy', label: 'Galaxy', url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&q=40' },
+  { id: 'nebula', label: 'Nebula', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&q=40' },
+  { id: 'aurora', label: 'Aurora', url: 'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=300&q=40' },
+  { id: 'mountains', label: 'Mountains', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=40' },
+  { id: 'abstract', label: 'Abstract waves', url: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=300&q=40' },
+  { id: 'forest', label: 'Forest', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=40' },
+  { id: 'ocean', label: 'Ocean', url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&q=40' },
+  { id: 'desert', label: 'Desert dunes', url: 'https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=300&q=40' },
+  { id: 'city', label: 'City skyline', url: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=300&q=40' },
+  { id: 'minimal', label: 'Minimal gray', url: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=300&q=40' },
+  { id: 'gradient1', label: 'Gradient blue', url: 'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=300&q=40' },
+  { id: 'gradient2', label: 'Gradient pink', url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300&q=40' },
+  { id: 'circuit', label: 'Circuit board', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=40' },
+  { id: 'code', label: 'Code close-up', url: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&q=40' },
+  { id: 'paper', label: 'Paper texture', url: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&q=40' },
+  { id: 'marble', label: 'Marble', url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=40' },
+  { id: 'rain', label: 'Rainy window', url: 'https://images.unsplash.com/photo-1428592953211-077101b2021b?w=300&q=40' },
+  { id: 'snow', label: 'Snowy peaks', url: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=300&q=40' },
+  { id: 'autumn', label: 'Autumn leaves', url: 'https://images.unsplash.com/photo-1507783548227-544c3b8fc065?w=300&q=40' },
+  { id: 'sunset2', label: 'Sunset clouds', url: 'https://images.unsplash.com/photo-1500817487388-039e623edc21?w=300&q=40' },
+];
+function presetFullUrl(thumbUrl){
+  return thumbUrl ? thumbUrl.replace('w=300&q=40', 'w=1600&q=65') : '';
+}
+function renderWallpaperPresets(){
+  const row = document.getElementById('wallpaperPresetsRow');
+  row.innerHTML = WALLPAPER_PRESETS.map(p => `
+    <button type="button" class="wallpaper-preset-btn" data-url="${p.url}" title="${p.label}">
+      ${p.url ? `<img src="${p.url}" alt="${p.label}" loading="lazy" />` : '<span class="preset-none">✕</span>'}
+    </button>`).join('');
+  row.querySelectorAll('.wallpaper-preset-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const fullUrl = presetFullUrl(btn.dataset.url);
+      liveData.background_image = fullUrl;
+      renderSingleImagePreview('wallpaperPreview', fullUrl);
+      await saveContent(fullUrl ? 'Wallpaper preset applied ✓' : 'Wallpaper removed ✓');
+    });
+  });
+}
 function renderUploadPreview(containerId, urls){
   const container = document.getElementById(containerId);
   container.innerHTML = (urls || []).map((url, i) => `
@@ -610,6 +721,47 @@ function initUploads(){
       await saveContent('Résumé updated ✓ — live on the download button now');
     }
     e.target.value = '';
+  });
+
+  document.getElementById('quizVideoUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('quizVideoUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.settings = liveData.settings || {};
+      liveData.settings.quizRewardVideoUrl = url;
+      byId('s_quizRewardVideoUrl').value = url;
+      byId('quizVideoCurrent').textContent = `Current: ${url}`;
+      await saveContent('Quiz reward video updated ✓ — plays locally now, no YouTube embed needed');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('clearQuizVideoBtn').addEventListener('click', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.quizRewardVideoUrl = '';
+    byId('s_quizRewardVideoUrl').value = '';
+    byId('quizVideoCurrent').textContent = 'Using the default built-in video.';
+    await saveContent('Reset to default reward video ✓');
+  });
+
+  byId('s_quizRewardVideoUrl').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.quizRewardVideoUrl = byId('s_quizRewardVideoUrl').value.trim();
+    byId('quizVideoCurrent').textContent = liveData.settings.quizRewardVideoUrl ? `Current: ${liveData.settings.quizRewardVideoUrl}` : 'Using the default built-in video.';
+    await saveContent('Reward video URL saved ✓');
+  });
+
+  byId('s_cursorStyle').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.cursorStyle = byId('s_cursorStyle').value;
+    await saveContent('Cursor style saved ✓');
+  });
+
+  byId('s_cursorTrail').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.cursorTrail = byId('s_cursorTrail').checked;
+    await saveContent('Cursor trail setting saved ✓');
   });
 
   document.getElementById('wallpaperUploadInput').addEventListener('change', async (e) => {

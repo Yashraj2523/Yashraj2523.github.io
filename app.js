@@ -32,6 +32,21 @@ async function loadContent(){
   liveData = cached ? mergeWithDefaults(JSON.parse(cached)) : SITE_DATA;
 }
 
+// Live sync: whenever admin.html saves, this pushes the update to any open
+// index.html tab within ~1 second, no reload needed. Requires realtime enabled
+// on the site_content table (see supabase_schema.sql — one-time setup).
+function initLiveSync(){
+  if (!supa) return;
+  supa.channel('site_content_live')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'site_content', filter: 'id=eq.main' }, (payload) => {
+      if (!payload.new || !payload.new.content) return;
+      liveData = mergeWithDefaults(payload.new.content);
+      applySettings();
+      renderAll();
+    })
+    .subscribe();
+}
+
 // Ensures older saved content (from before new fields existed) doesn't break
 // rendering — anything missing falls back to the data.js seed shape.
 function mergeWithDefaults(content){
@@ -51,12 +66,26 @@ function mergeWithDefaults(content){
    1b. THEME PALETTE PRESETS (separate from light/dark — these recolor accents)
    ==================================================================== */
 const THEME_PALETTES = {
-  default: { name: 'Default (Aqua/Violet)', accent1: '#6ee7d8', accent2: '#a78bfa' },
-  sunset:  { name: 'Sunset',                 accent1: '#ff9966', accent2: '#ff5e8a' },
-  ocean:   { name: 'Ocean',                  accent1: '#38bdf8', accent2: '#6366f1' },
-  forest:  { name: 'Forest',                 accent1: '#34d399', accent2: '#0d9488' },
-  amber:   { name: 'Amber Gold',             accent1: '#fbbf24', accent2: '#d97706' },
-  rose:    { name: 'Rose Gold',              accent1: '#f7b9c4', accent2: '#c2410c' },
+  default:   { name: 'Default (Aqua/Violet)', accent1: '#6ee7d8', accent2: '#a78bfa' },
+  sunset:    { name: 'Sunset',                 accent1: '#ff9966', accent2: '#ff5e8a' },
+  ocean:     { name: 'Ocean',                  accent1: '#38bdf8', accent2: '#6366f1' },
+  forest:    { name: 'Forest',                 accent1: '#34d399', accent2: '#0d9488' },
+  amber:     { name: 'Amber Gold',             accent1: '#fbbf24', accent2: '#d97706' },
+  rose:      { name: 'Rose Gold',              accent1: '#f7b9c4', accent2: '#c2410c' },
+  lavender:  { name: 'Lavender',               accent1: '#c4b5fd', accent2: '#8b5cf6' },
+  mint:      { name: 'Mint Fresh',             accent1: '#6ee7b7', accent2: '#10b981' },
+  coral:     { name: 'Coral Reef',             accent1: '#fb923c', accent2: '#f43f5e' },
+  slate:     { name: 'Slate Mono',             accent1: '#94a3b8', accent2: '#475569' },
+  cherry:    { name: 'Cherry Blossom',         accent1: '#fda4af', accent2: '#e11d48' },
+  emerald:   { name: 'Emerald',                accent1: '#34d399', accent2: '#059669' },
+  cyberpunk: { name: 'Cyberpunk',              accent1: '#f0abfc', accent2: '#22d3ee' },
+  autumn:    { name: 'Autumn Leaves',          accent1: '#f59e0b', accent2: '#b91c1c' },
+  arctic:    { name: 'Arctic',                 accent1: '#a5f3fc', accent2: '#0891b2' },
+  berry:     { name: 'Berry',                  accent1: '#f472b6', accent2: '#7e22ce' },
+  citrus:    { name: 'Citrus',                 accent1: '#fde047', accent2: '#ea580c' },
+  steel:     { name: 'Steel Blue',             accent1: '#7dd3fc', accent2: '#1e3a8a' },
+  terracotta:{ name: 'Terracotta',             accent1: '#fdba74', accent2: '#9a3412' },
+  monochrome:{ name: 'Monochrome',             accent1: '#e5e7eb', accent2: '#6b7280' },
 };
 function applyThemePalette(){
   const key = (liveData.settings && liveData.settings.themePalette) || 'default';
@@ -65,15 +94,57 @@ function applyThemePalette(){
   document.documentElement.style.setProperty('--accent-2', palette.accent2);
 }
 
+/* ====================================================================
+   CURSOR STYLES (admin-configurable, always off in Recruiter Mode)
+   ==================================================================== */
+let cursorEl = null, cursorRAF = null, cursorTargetX = 0, cursorTargetY = 0, cursorX = 0, cursorY = 0;
+function ensureCursorEl(){
+  if (cursorEl) return cursorEl;
+  cursorEl = document.createElement('div');
+  cursorEl.id = 'customCursor';
+  document.body.appendChild(cursorEl);
+  window.addEventListener('mousemove', e => { cursorTargetX = e.clientX; cursorTargetY = e.clientY; });
+  function loop(){
+    // Lerp toward the pointer — gives every style a smooth, slightly trailing feel
+    // instead of snapping frame-to-frame.
+    cursorX += (cursorTargetX - cursorX) * 0.25;
+    cursorY += (cursorTargetY - cursorY) * 0.25;
+    if (cursorEl) cursorEl.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+    cursorRAF = requestAnimationFrame(loop);
+  }
+  loop();
+  return cursorEl;
+}
+function applyCursorSettings(){
+  const s = liveData.settings || {};
+  const recruiterOn = document.body.classList.contains('recruiter-mode');
+  const style = (!recruiterOn && s.cursorStyle) || 'default';
+  document.body.classList.remove('custom-cursor-active');
+  document.body.classList.toggle('custom-cursor-active', style !== 'default');
+  if (style !== 'default'){
+    const el = ensureCursorEl();
+    el.className = `cursor-style-${style}`;
+  } else if (cursorEl){
+    cursorEl.className = '';
+  }
+}
+
 function applySettings(){
+  window.__liveDataRef = liveData;
   const s = liveData.settings || SITE_DATA.settings;
   const root = document.documentElement.style;
+
+  // bg-style body class for CSS aurora variants
+  document.body.classList.remove('bg-space','bg-nebula');
+  if (s.bgStyle === 'space') document.body.classList.add('bg-space');
+  if (s.bgStyle === 'nebula') document.body.classList.add('bg-nebula');
   root.setProperty('--icon-btn-size', (s.iconButtonSize || 36) + 'px');
   root.setProperty('--avatar-size', (s.avatarSize || 320) + 'px');
   root.setProperty('--card-radius', (s.cardRadius || 18) + 'px');
   root.setProperty('--glass-blur', (s.glassBlur || 18) + 'px');
   root.setProperty('--section-spacing', (s.sectionSpacing || 130) + 'px');
   applyThemePalette();
+  applyCursorSettings();
 
   const wallpaper = document.getElementById('wallpaper');
   if (wallpaper){
@@ -108,24 +179,35 @@ function renderAll(){
   const projectsGrid = document.getElementById('projectsGrid');
   const sortedProjects = sortByDateDesc(liveData.projects, p => p.date);
   projectsGrid.innerHTML = sortedProjects.map(({ item: p, idx }, i) => `
-    <div class="glass project-card panel reveal tilt-card ${i % 2 === 0 ? 'reveal-left' : 'reveal-right'}" data-index="${idx}" tabindex="0" role="button" aria-haspopup="dialog">
-      <h3>${esc(p.title)}</h3>
-      <p>${esc(p.desc)}</p>
-      <div class="project-tags">${(p.tags||[]).map(t => `<span>${esc(t)}</span>`).join('')}</div>
-      ${p.metrics && p.metrics.length ? `<div class="metrics-row">${p.metrics.map(m => `<span class="metric-badge">${esc(m.label)}: ${esc(m.value)}</span>`).join('')}</div>` : ''}
-      <span class="project-link">View details ↗</span>
+    <div class="glass project-card panel reveal tilt-card card-clickable ${i % 2 === 0 ? 'reveal-left' : 'reveal-right'}" data-index="${idx}" tabindex="0" role="button" aria-label="Open full details for ${esc(p.title)}">
+      <div class="project-card-top">
+        <h3>${esc(p.title)}</h3>
+        <span class="cert-arrow" aria-hidden="true">→</span>
+      </div>
+      <p class="card-preview-desc">${esc(p.desc)}</p>
+      <div class="project-tags">${(p.tags||[]).slice(0,4).map(t => `<span>${esc(t)}</span>`).join('')}</div>
     </div>`).join('');
 
-  // Certifications — sorted by year (latest first)
+  // Certifications — grouped by issuer, each group sorted by year (latest first)
   const certsList = document.getElementById('certsList');
   const sortedCerts = sortByDateDesc(liveData.certifications, c => c.year);
-  certsList.innerHTML = sortedCerts.map(({ item: c, idx }) => `
-    <div class="glass cert-item panel reveal" data-index="${idx}" tabindex="0" role="button" aria-haspopup="dialog">
-      <div class="cert-main">
-        <div class="cert-badge">✓</div>
-        <div><div class="cert-name">${esc(c.name)}</div><div class="cert-issuer">${esc(c.issuer)}</div></div>
+  const certGroups = {};
+  sortedCerts.forEach(({ item: c, idx }) => {
+    const key = c.issuer || 'Other';
+    (certGroups[key] = certGroups[key] || []).push({ item: c, idx });
+  });
+  certsList.innerHTML = Object.keys(certGroups).map(issuer => `
+    <div class="cert-issuer-group">
+      <h4 class="cert-issuer-heading">${esc(issuer)} <span class="cert-issuer-count">${certGroups[issuer].length}</span></h4>
+      <div class="cert-issuer-items">
+        ${certGroups[issuer].map(({ item: c, idx }) => `
+          <div class="glass cert-item panel reveal card-clickable" data-index="${idx}" tabindex="0" role="button" aria-label="View certificate for ${esc(c.name)}">
+            <div class="cert-badge">✓</div>
+            <div class="cert-name">${esc(c.name)}</div>
+            <span class="cert-year">${esc(c.year)}</span>
+            <span class="cert-arrow" aria-hidden="true">→</span>
+          </div>`).join('')}
       </div>
-      <div class="cert-year">${esc(c.year)}</div>
     </div>`).join('');
 
   // Hobbies
@@ -194,6 +276,7 @@ function renderAll(){
   renderConnectLinks();
   renderCustomSections();
   applySectionVisibility();
+  applyEggsVisibility();
   applySectionMeta();
   initReveal();
 }
@@ -290,8 +373,8 @@ function startRoleCycler(){
 function initConstellation(){
   const canvas = document.getElementById('constellation');
   const ctx = canvas.getContext('2d');
-  let w, h, nodes = [];
-  const COUNT = window.innerWidth < 760 ? 35 : 70;
+  let w, h, nodes = [], stars = [], nebulae = [];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function getThemeColors(){
     const styles = getComputedStyle(document.documentElement);
@@ -303,20 +386,43 @@ function initConstellation(){
   let colors = getThemeColors();
   window.addEventListener('themechange', () => { colors = getThemeColors(); });
 
+  function style(){ return (window.__liveDataRef && window.__liveDataRef.settings && window.__liveDataRef.settings.bgStyle) || 'dots'; }
+
   function resize(){ w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
-  function makeNodes(){
+  function makeDots(){
+    const COUNT = window.innerWidth < 760 ? 35 : 70;
     nodes = Array.from({length: COUNT}, () => ({
       x: Math.random()*w, y: Math.random()*h,
       vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25,
       r: Math.random()*1.6 + 0.6
     }));
   }
-  resize(); makeNodes();
-  window.addEventListener('resize', () => { resize(); makeNodes(); });
+  function makeStars(){
+    // 3 depth layers -> real parallax feel as scrollY shifts them at different rates
+    stars = [];
+    const layers = [
+      { count: 90, r: [0.5,1.1], speed: 0.02, parallax: 0.05 },
+      { count: 50, r: [1.0,1.8], speed: 0.05, parallax: 0.12 },
+      { count: 25, r: [1.6,2.6], speed: 0.09, parallax: 0.22 },
+    ];
+    layers.forEach((layer, li) => {
+      for (let i=0;i<layer.count;i++){
+        stars.push({ x: Math.random()*w, y: Math.random()*h, r: layer.r[0]+Math.random()*(layer.r[1]-layer.r[0]),
+          twinkle: Math.random()*Math.PI*2, layer: li, parallax: layer.parallax, drift: layer.speed });
+      }
+    });
+  }
+  function makeNebulae(){
+    nebulae = Array.from({length: 4}, () => ({
+      x: Math.random()*w, y: Math.random()*h, r: 180 + Math.random()*220,
+      hue: [170, 260, 320, 200][Math.floor(Math.random()*4)],
+      parallax: 0.03 + Math.random()*0.05
+    }));
+  }
+  resize(); makeDots(); makeStars(); makeNebulae();
+  window.addEventListener('resize', () => { resize(); makeDots(); makeStars(); makeNebulae(); });
 
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function tick(){
+  function drawDots(){
     ctx.clearRect(0,0,w,h);
     for (const n of nodes){
       if (!reduceMotion){ n.x += n.vx; n.y += n.vy; }
@@ -326,8 +432,7 @@ function initConstellation(){
     for (let i=0; i<nodes.length; i++){
       for (let j=i+1; j<nodes.length; j++){
         const a = nodes[i], b = nodes[j];
-        const dx = a.x-b.x, dy = a.y-b.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.hypot(a.x-b.x, a.y-b.y);
         if (dist < 150){
           ctx.strokeStyle = `rgba(${colors.line},${0.12 * (1 - dist/150)})`;
           ctx.lineWidth = 1;
@@ -336,11 +441,46 @@ function initConstellation(){
       }
     }
     for (const n of nodes){
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(${colors.node},0.6)`;
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${colors.node},0.6)`; ctx.fill();
     }
+  }
+  function drawSpace(t){
+    ctx.clearRect(0,0,w,h);
+    const scrollY = window.scrollY || 0;
+    stars.forEach(s => {
+      if (!reduceMotion) s.x -= s.drift;
+      if (s.x < -5) s.x = w + 5;
+      const yOffset = scrollY * s.parallax * 0.5;
+      const y = (s.y + yOffset) % (h + 40) - 20;
+      const tw = 0.5 + 0.5 * Math.sin(t/500 + s.twinkle);
+      ctx.beginPath();
+      ctx.arc(s.x, y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${colors.node},${0.35 + tw*0.5})`;
+      ctx.fill();
+    });
+  }
+  function drawNebula(t){
+    ctx.clearRect(0,0,w,h);
+    const scrollY = window.scrollY || 0;
+    nebulae.forEach((n, i) => {
+      const yOffset = scrollY * n.parallax;
+      const y = n.y + yOffset * 0.4 + Math.sin(t/4000 + i) * 12;
+      const x = n.x + Math.cos(t/5000 + i) * 16;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, n.r);
+      grad.addColorStop(0, `hsla(${n.hue},70%,65%,0.10)`);
+      grad.addColorStop(1, 'hsla(0,0%,0%,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(x, y, n.r, 0, Math.PI*2); ctx.fill();
+    });
+    drawSpace(t);
+  }
+
+  function tick(t){
+    const s = style();
+    if (s === 'space') drawSpace(t || 0);
+    else if (s === 'nebula') drawNebula(t || 0);
+    else drawDots();
     requestAnimationFrame(tick);
   }
   tick();
@@ -352,7 +492,13 @@ function initConstellation(){
 function initReveal(){
   const els = document.querySelectorAll('.reveal:not(.in)');
   const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); } });
+    entries.forEach(e => {
+      if (e.isIntersecting){
+        e.target.classList.add('in');
+        obs.unobserve(e.target);
+        if (Math.random() < 0.015) fireGimmick(); // rare ambient surprise, ~1.5%
+      }
+    });
   }, { threshold: 0.12 });
   els.forEach(el => obs.observe(el));
 }
@@ -521,11 +667,6 @@ function initSlideshow(){
   restartTimer();
 
   if (photos.length > 1){
-    root.addEventListener('click', e => {
-      if (e.target.closest('.slide-arrow') || e.target.closest('.slide-dot')) return;
-      next(); restartTimer();
-    });
-    root.addEventListener('mouseenter', () => { next(); restartTimer(); });
     root.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight'){ next(); restartTimer(); }
       if (e.key === 'ArrowLeft'){ prev(); restartTimer(); }
@@ -600,21 +741,30 @@ function initProjectModal(){
   function close(){ hideOverlay(overlay); activeProjectIndex = null; }
 
   grid.addEventListener('click', e => {
-    const card = e.target.closest('.project-card'); if (!card) return;
-    const idx = +card.dataset.index;
-    if (activeProjectIndex === idx && !overlay.classList.contains('hidden')) close();
-    else open(idx);
+    const card = e.target.closest('.project-card');
+    if (!card) return;
+    open(+card.dataset.index);
   });
   grid.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const card = e.target.closest('.project-card'); if (!card) return;
-    e.preventDefault(); open(+card.dataset.index);
+    const card = e.target.closest('.project-card');
+    if (!card) return;
+    e.preventDefault();
+    open(+card.dataset.index);
   });
 
   closeBtn.addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.addEventListener('click', e => {
+    // Closes on a click anywhere in the popup, including its content — except on
+    // an actual link/button, which needs its click to do its own thing first.
+    if (e.target.closest('a, button')) return;
+    close();
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
 }
+
+
+
 
 /* ====================================================================
    12. CERTIFICATION POPUP MODAL + ZOOM/PAN IMAGE VIEWER
@@ -669,19 +819,25 @@ function initCertModal(){
   function close(){ hideOverlay(overlay); activeCertIndex = null; pdf.src = 'about:blank'; img.src = ''; }
 
   list.addEventListener('click', e => {
-    const card = e.target.closest('.cert-item'); if (!card) return;
-    const idx = +card.dataset.index;
-    if (activeCertIndex === idx && !overlay.classList.contains('hidden')) close();
-    else open(idx);
+    const item = e.target.closest('.cert-item');
+    if (!item) return;
+    open(+item.dataset.index);
   });
   list.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const card = e.target.closest('.cert-item'); if (!card) return;
-    e.preventDefault(); open(+card.dataset.index);
+    const item = e.target.closest('.cert-item');
+    if (!item) return;
+    e.preventDefault();
+    open(+item.dataset.index);
   });
 
   closeBtn.addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.addEventListener('click', e => {
+    // Same click-anywhere-closes behavior — except the zoom/pan certificate viewer
+    // itself (dragging/zooming it shouldn't also close the popup) and real controls.
+    if (e.target.closest('a, button, #certViewerCanvas, #certViewerImg, #certViewerPdf')) return;
+    close();
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
 
   document.getElementById('certZoomIn').addEventListener('click', () => setZoom(certZoom + 0.3, certPanX, certPanY));
@@ -733,6 +889,7 @@ function showOverlay(overlay){
   overlay.classList.remove('hidden');
   requestAnimationFrame(() => overlay.classList.add('show'));
   document.body.style.overflow = 'hidden';
+  sfxOpen();
 }
 function hideOverlay(overlay){
   overlay.classList.remove('show');
@@ -792,15 +949,6 @@ function renderCustomSections(){
 /* ====================================================================
    13. SCROLL PROGRESS BAR
    ==================================================================== */
-function initScrollProgress(){
-  const bar = document.getElementById('scrollProgress');
-  window.addEventListener('scroll', () => {
-    const h = document.documentElement;
-    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-    bar.style.width = pct + '%';
-  });
-}
-
 /* ====================================================================
    14. MOUSE TILT + GLOW ON CARDS
    ==================================================================== */
@@ -837,11 +985,203 @@ function applyDynamicGreeting(){
 }
 
 /* ====================================================================
+   AVATAR ASSISTANT — a lightweight, zero-cost scripted FAQ bot.
+   Not a real AI chat (that needs a paid API + backend); this answers
+   from the site's own content with keyword matching + quick-reply chips.
+   Upgrade path if you ever want real AI chat: swap answerFor() below for
+   a fetch() to an LLM API from your own backend (never expose an API key
+   in this client-side file).
+   ==================================================================== */
+function initAvatarWidget(){
+  const btn = document.getElementById('avatarAssistantBtn');
+  const panel = document.getElementById('avatarAssistantPanel');
+  const closeBtn = document.getElementById('avatarAssistantClose');
+  const messages = document.getElementById('avatarAssistantMessages');
+  const quick = document.getElementById('avatarAssistantQuick');
+  const input = document.getElementById('avatarAssistantInput');
+  const sendBtn = document.getElementById('avatarAssistantSend');
+  if (!btn) return;
+
+  const name = (liveData.hero_name || 'Yashwanth').split(' ')[0];
+  const QUICK = [
+    { label: 'About him', kw: 'about' },
+    { label: 'Top projects', kw: 'projects' },
+    { label: 'Skills', kw: 'skills' },
+    { label: 'How to hire', kw: 'hire' },
+    { label: 'Contact', kw: 'contact' },
+  ];
+
+  function addMsg(text, who){
+    const el = document.createElement('div');
+    el.className = `aa-msg ${who}`;
+    el.textContent = text;
+    messages.appendChild(el);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function answerFor(raw){
+    const q = raw.toLowerCase();
+    if (/hire|job|opportunit|recruit/.test(q)){
+      setTimeout(() => document.getElementById('hireMeBtn')?.click(), 900);
+      return `Click "💼 Hire Me" up top — I'll open that for you now. It sends straight to ${name}.`;
+    }
+    if (/project/.test(q)){
+      scrollToId('projects');
+      return `Scrolling you to the Projects section — that has all of ${name}'s shipped work with details on click.`;
+    }
+    if (/skill|tech|stack|language/.test(q)){
+      scrollToId('skills');
+      return `Heading to the Skills section now — covers the full stack ${name} works with.`;
+    }
+    if (/contact|email|reach|phone/.test(q)){
+      scrollToId('contact');
+      return `Scrolling to Contact — you'll find email and other ways to reach ${name} directly there.`;
+    }
+    if (/about|who|background/.test(q)){
+      scrollToId('about');
+      return `Here's the About section — a quick summary of ${name}'s background.`;
+    }
+    if (/certif|badge/.test(q)){
+      scrollToId('certifications');
+      return `Certifications section coming up — click any card for the full certificate.`;
+    }
+    return `I'm a simple scripted assistant, so I can only point you around the site — try one of the quick options below, or use the "Hire Me" button for anything specific.`;
+  }
+
+  function handle(text){
+    addMsg(text, 'user');
+    const reply = answerFor(text);
+    setTimeout(() => addMsg(reply, 'bot'), 350);
+  }
+
+  QUICK.forEach(q => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = q.label;
+    b.addEventListener('click', () => handle(q.label));
+    quick.appendChild(b);
+  });
+
+  btn.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden') && !messages.children.length){
+      addMsg(`Hey, I'm ${name}'s avatar 👋 — ask me about projects, skills, or how to get in touch.`, 'bot');
+    }
+  });
+  closeBtn.addEventListener('click', () => panel.classList.add('hidden'));
+  sendBtn.addEventListener('click', () => { if (input.value.trim()){ handle(input.value.trim()); input.value=''; } });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && input.value.trim()){ handle(input.value.trim()); input.value=''; } });
+}
+function initHireMe(){
+  const overlay = document.getElementById('hireMeOverlay');
+  const btn = document.getElementById('hireMeBtn');
+  const status = document.getElementById('hireMeStatus');
+  if (!btn) return;
+
+  if (window.emailjs && typeof EMAILJS_PUBLIC_KEY === 'string' && EMAILJS_PUBLIC_KEY){
+    try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e){}
+  }
+
+  btn.addEventListener('click', () => showOverlay(overlay));
+  document.getElementById('hireMeClose').addEventListener('click', () => hideOverlay(overlay));
+  overlay.addEventListener('click', e => { if (e.target === overlay) hideOverlay(overlay); });
+
+  document.getElementById('hireMeSubmit').addEventListener('click', async () => {
+    const name = document.getElementById('hireName').value.trim();
+    const company = document.getElementById('hireCompany').value.trim();
+    const contact = document.getElementById('hireContact').value.trim();
+    const message = document.getElementById('hireMessage').value.trim();
+    if (!name || !contact){ status.textContent = 'Name and email/phone are required.'; return; }
+
+    status.textContent = 'Sending…';
+    let emailed = false;
+    const hasEmailJs = window.emailjs && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY;
+    if (hasEmailJs){
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          from_name: name, from_contact: contact, company: company || '—', message: message || '(no message)',
+        });
+        emailed = true;
+      } catch(e){ console.warn('EmailJS send failed', e); }
+    }
+    if (supa){
+      try { await supa.from('hire_inquiries').insert({ name, company, contact, message, page: location.href }); }
+      catch(e){ console.warn('Supabase insert failed', e); }
+    }
+    if (emailed){
+      status.textContent = '✓ Sent — I\'ll be in touch soon.';
+    } else if (supa){
+      status.textContent = '✓ Received — saved for me to follow up on.' + (hasEmailJs ? '' : ' (Email notifications aren\'t configured yet.)');
+    } else {
+      status.textContent = 'Could not send — please email yashwanthriya25@gmail.com directly instead.';
+    }
+    sfxSuccess();
+    setTimeout(() => {
+      hideOverlay(overlay);
+      document.getElementById('hireName').value = '';
+      document.getElementById('hireCompany').value = '';
+      document.getElementById('hireContact').value = '';
+      document.getElementById('hireMessage').value = '';
+      status.textContent = '';
+    }, 1800);
+  });
+}
+function initIntroSplash(){
+  const el = document.getElementById('introSplash');
+  if (!el) return;
+  const skipIntro = new URLSearchParams(location.search).get('nointro') === '1';
+  if (skipIntro){ el.remove(); return; }
+  function dismiss(){ el.classList.add('hide'); setTimeout(() => el.remove(), 650); }
+  setTimeout(dismiss, 3600);
+  el.addEventListener('click', dismiss);
+}
+
+/* ====================================================================
+   LIVE DIGITAL CLOCK
+   ==================================================================== */
+function initLiveClock(){
+  const el = document.getElementById('liveClock');
+  if (!el) return;
+  function tick(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    el.textContent = `${hh}:${mm}:${ss}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ====================================================================
+   FONT SIZE CONTROL (persistent A-/A+ button, always visible)
+   ==================================================================== */
+function initFontSizeControl(){
+  const MIN = 85, MAX = 130, STEP = 10;
+  let pct = +(localStorage.getItem('font_size_pct')) || 100;
+  const resetBtn = document.getElementById('fontSizeReset');
+  function apply(){
+    document.documentElement.style.fontSize = pct + '%';
+    resetBtn.textContent = pct + '%';
+    localStorage.setItem('font_size_pct', pct);
+  }
+  document.getElementById('fontSizeUp').addEventListener('click', () => { pct = Math.min(MAX, pct + STEP); apply(); });
+  document.getElementById('fontSizeDown').addEventListener('click', () => { pct = Math.max(MIN, pct - STEP); apply(); });
+  resetBtn.addEventListener('click', () => { pct = 100; apply(); });
+  apply();
+}
+
+/* ====================================================================
    16. RECRUITER MODE (hides non-essential sections client-side)
    ==================================================================== */
 const RECRUITER_HIDE = ['hobbies', 'connect', 'achievements', 'timeline'];
 function initRecruiterMode(){
   const btn = document.getElementById('recruiterModeBtn');
+  const label = btn.querySelector('.recruiter-label') || (() => {
+    const span = document.createElement('span');
+    span.className = 'recruiter-label';
+    btn.appendChild(span);
+    return span;
+  })();
   function apply(on){
     document.body.classList.toggle('recruiter-mode', on);
     RECRUITER_HIDE.forEach(id => {
@@ -849,10 +1189,26 @@ function initRecruiterMode(){
       if (el) el.style.display = on ? 'none' : (liveData.sectionVisibility?.[id] === false ? 'none' : '');
     });
     btn.classList.toggle('active-toggle', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    label.textContent = on ? 'Recruiter Mode: ON' : 'Recruiter Mode';
     localStorage.setItem('recruiter_mode', on ? '1' : '0');
+    // Cursor styling + trail are gimmicks — always off while recruiter mode is on, no matter what's saved.
+    applyCursorSettings();
   }
   btn.addEventListener('click', () => apply(!document.body.classList.contains('recruiter-mode')));
   if (localStorage.getItem('recruiter_mode') === '1') apply(true);
+
+  if (!localStorage.getItem('recruiter_callout_seen')){
+    setTimeout(() => {
+      const callout = document.createElement('div');
+      callout.className = 'recruiter-callout';
+      callout.innerHTML = `👀 Hiring? Try <strong>Recruiter Mode</strong> ↑ for a no-clutter view — just projects, skills, experience &amp; contact.`;
+      document.body.appendChild(callout);
+      requestAnimationFrame(() => callout.classList.add('show'));
+      setTimeout(() => { callout.classList.remove('show'); setTimeout(() => callout.remove(), 400); }, 7000);
+      localStorage.setItem('recruiter_callout_seen', '1');
+    }, 2500);
+  }
 }
 
 /* ====================================================================
@@ -969,18 +1325,8 @@ function renderConnectLinks(){
    18. EASTER EGGS, BADGES & MINI-GAME (disabled in Recruiter Mode)
    ==================================================================== */
 function eggsAllowed(){
-  return !document.body.classList.contains('recruiter-mode') && localStorage.getItem('eggs_disabled') !== '1';
-}
-function initEggsToggle(){
-  const checkbox = document.getElementById('eggsToggleCheckbox');
-  if (!checkbox) return;
-  function applyState(disabled){
-    document.body.classList.toggle('eggs-off', disabled);
-    localStorage.setItem('eggs_disabled', disabled ? '1' : '0');
-    checkbox.checked = !disabled;
-  }
-  applyState(localStorage.getItem('eggs_disabled') === '1');
-  checkbox.addEventListener('change', () => applyState(!checkbox.checked));
+  const adminEnabled = liveData && liveData.settings && liveData.settings.eggsEnabled !== false;
+  return adminEnabled && !document.body.classList.contains('recruiter-mode');
 }
 
 function consoleWelcome(){
@@ -996,6 +1342,7 @@ function awardBadge(name){
   badges.push(name);
   localStorage.setItem('portfolio_badges', JSON.stringify(badges));
   showBadgeToast(`🏆 Badge unlocked: ${name}`);
+  sfxBadge();
 }
 function showBadgeToast(msg){
   const toast = document.getElementById('badgeToast');
@@ -1018,7 +1365,7 @@ function initCoffeeEgg(){
     timer = setTimeout(() => clicks = 0, 3000);
     if (clicks >= 5){
       clicks = 0;
-      fireConfetti();
+      fireGimmick();
       awardBadge('Caffeine Detective ☕');
     }
   });
@@ -1340,7 +1687,6 @@ const HINT_LIST = [
   { id: 'coffee', text: 'The footer has a tiny ☕ — it might like being clicked. Repeatedly.' },
   { id: 'games', text: 'Bored? There\'s a 🎮 floating around for exactly that.' },
   { id: 'star', text: 'Keep an eye out for something shiny drifting across the screen.' },
-  { id: 'scroll', text: 'Scrolling the whole page has its own small reward.' },
   { id: 'console', text: 'Open your browser console (F12) — someone left a note.' },
   { id: 'logo', text: 'Double-clicking the logo does something a single click doesn\'t.' },
 ];
@@ -1375,21 +1721,6 @@ function initHintsPanel(){
 /* ====================================================================
    20. SCROLL MILESTONES (25/50/75/100% scrolled)
    ==================================================================== */
-function initScrollMilestones(){
-  const hit = new Set();
-  window.addEventListener('scroll', () => {
-    if (!eggsAllowed()) return;
-    const h = document.documentElement;
-    const pct = Math.round((h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100);
-    [25, 50, 75].forEach(m => { if (pct >= m && !hit.has(m)){ hit.add(m); showBadgeToast(`📜 ${m}% explored…`); } });
-    if (pct >= 99 && !hit.has(100)){
-      hit.add(100);
-      awardBadge('Full Scroll 📜');
-      fireConfetti();
-    }
-  });
-}
-
 /* ====================================================================
    21. FLOATING COLLECTIBLE STAR (random drift + click to catch)
    ==================================================================== */
@@ -1403,7 +1734,7 @@ function initFloatingStar(){
   }
   star.addEventListener('click', () => {
     awardBadge('Star Catcher ⭐');
-    fireConfetti();
+    fireGimmick();
     star.classList.add('hidden');
     setTimeout(relocate, 15000 + Math.random()*15000);
   });
@@ -1421,7 +1752,9 @@ function initFireflyTrail(){
   function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
   resize(); window.addEventListener('resize', resize);
   window.addEventListener('mousemove', e => {
-    if (document.documentElement.getAttribute('data-theme') === 'light') return;
+    // Admin-controlled (Settings → Cursor style) — and always off in Recruiter Mode.
+    const enabled = (liveData.settings && liveData.settings.cursorTrail) && !document.body.classList.contains('recruiter-mode');
+    if (!enabled){ canvas.classList.remove('show'); particles = []; return; }
     canvas.classList.add('show');
     particles.push({ x: e.clientX, y: e.clientY, life: 1 });
     if (particles.length > 40) particles.shift();
@@ -1462,15 +1795,20 @@ function initLogoEasterEgg(){
    ==================================================================== */
 function initParallaxBackground(){
   const wallpaper = document.getElementById('wallpaper');
-  const canvas = document.getElementById('constellation');
   let ticking = false;
   window.addEventListener('scroll', () => {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
       const y = window.scrollY;
-      if (wallpaper) wallpaper.style.transform = `translateY(${y * 0.08}px) scale(1.04)`;
-      if (canvas) canvas.style.transform = `translateY(${y * 0.04}px)`;
+      const totalH = document.documentElement.scrollHeight - window.innerHeight;
+      // pan background-position from 50%/40% to 50%/60% as user scrolls top-to-bottom
+      // — this moves the *visible crop* within the image, never reveals empty space
+      if (wallpaper && wallpaper.classList.contains('show')){
+        const pct = totalH > 0 ? y / totalH : 0;
+        const vPos = 40 + pct * 20; // 40% → 60%
+        wallpaper.style.backgroundPosition = `center ${vPos}%`;
+      }
       ticking = false;
     });
   }, { passive: true });
@@ -1510,23 +1848,268 @@ function requireVisitorGate(onUnlocked){
   closeBtn.addEventListener('click', () => hideOverlay(overlay), { once: true });
 }
 
+function applyEggsVisibility(){
+  document.body.classList.toggle('eggs-off', !eggsAllowed());
+}
+
+/* ====================================================================
+   26. SOUND SYSTEM (WebAudio-generated short SFX only — no ambient hum)
+   ==================================================================== */
+let audioCtx = null;
+function getAudioCtx(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function soundEnabled(){ return localStorage.getItem('sound_off') !== '1'; }
+
+function playTone(freq, dur, type, vol){
+  if (!soundEnabled()) return;
+  try{
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e){}
+}
+function sfxClick(){ playTone(740, 0.08, 'sine', 0.045); }
+function sfxSuccess(){ playTone(660,0.1,'sine',0.05); setTimeout(()=>playTone(880,0.16,'sine',0.05),90); }
+function sfxFail(){ playTone(220,0.22,'sawtooth',0.04); }
+function sfxBadge(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'sine',0.05), i*80)); }
+function sfxOpen(){ playTone(420,0.07,'triangle',0.04); }
+
+function initSoundToggle(){
+  const btn = document.getElementById('soundToggleBtn');
+  if (!btn) return;
+  function applyIcon(){ btn.textContent = soundEnabled() ? '🔊' : '🔇'; }
+  applyIcon();
+  btn.addEventListener('click', () => {
+    localStorage.setItem('sound_off', soundEnabled() ? '1' : '0');
+    if (soundEnabled()) getAudioCtx().resume();
+    applyIcon();
+  });
+  // browsers require a user gesture before audio starts — first click anywhere arms it
+  document.addEventListener('click', function armAudio(){
+    if (soundEnabled()) getAudioCtx().resume();
+    document.removeEventListener('click', armAudio);
+  }, { once: true });
+
+  // light click sound on buttons/cards site-wide
+  document.addEventListener('click', e => {
+    if (e.target.closest('.btn, .icon-btn, .project-card, .cert-item, .skill-tag, .game-menu-card, .palette-item')) sfxClick();
+  });
+}
+
+/* ====================================================================
+   27. QR SHARE
+   ==================================================================== */
+function initQrShare(){
+  const img = document.getElementById('qrImage');
+  const copyBtn = document.getElementById('qrCopyBtn');
+  const flipWrap = document.getElementById('avatarFlip');
+  if (!img) return;
+  const url = location.href.split('#')[0];
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  copyBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(url);
+    if (navigator.share){ try{ await navigator.share({ title: document.title, url }); } catch(e){} }
+    copyBtn.textContent = '✓ Link copied';
+    setTimeout(() => copyBtn.textContent = 'Copy link instead', 2000);
+  });
+  if (flipWrap){
+    function toggleFlip(){
+      const flipping = flipWrap.classList.toggle('flipped');
+      flipWrap.setAttribute('aria-label', flipping ? 'Click to go back to the profile photo' : 'Click to reveal a QR code for this site');
+      sfxClick();
+    }
+    flipWrap.addEventListener('click', e => {
+      // Ignore clicks on the slideshow's own controls (arrows/dots) and the copy button —
+      // only a click on the photo/QR itself flips the card.
+      if (e.target.closest('.slide-arrow, .slide-dot, #qrCopyBtn')) return;
+      toggleFlip();
+    });
+    flipWrap.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === flipWrap){ e.preventDefault(); toggleFlip(); }
+    });
+  }
+}
+
+/* ====================================================================
+   28. TECH QUIZ (funny/educational, gated, YouTube reward on correct)
+   ==================================================================== */
+const QUIZ_QUESTIONS = [
+  { q: "Python's famous import joke — `import antigravity` actually opens what?", options: ["A flight simulator", "An XKCD comic in your browser", "A NASA API", "Nothing, it's a myth"], correct: 1 },
+  { q: "In Git, what does `git blame` actually do?", options: ["Emails your manager", "Shows who last edited each line", "Deletes the repo", "Reverts your last commit"], correct: 1 },
+  { q: "What does CNN stand for in 'AI-Based Meat Spoilage Detection'?", options: ["Cable News Network", "Convolutional Neural Network", "Central Node Network", "Custom Numeric Notation"], correct: 1 },
+  { q: "FastAPI is built on top of which Python standard for async speed?", options: ["WSGI", "ASGI", "CGI", "REST"], correct: 1 },
+  { q: "What's the classic developer joke ending in '...0 or 1'?", options: ["There are 10 kinds of people: those who understand binary and those who don't", "Why did the chicken cross the road", "It compiles, ship it", "404 joke not found"], correct: 0 },
+  { q: "In React/JS, what does NaN === NaN evaluate to?", options: ["true", "false", "undefined", "Throws an error"], correct: 1 },
+  { q: "TensorFlow and Keras are mainly used for…", options: ["Styling websites", "Deep learning models", "Database indexing", "Network routing"], correct: 1 },
+];
+let quizAttempt = null;
+function pickQuizQuestion(){ return QUIZ_QUESTIONS[Math.floor(Math.random()*QUIZ_QUESTIONS.length)]; }
+function initTechQuiz(){
+  const overlay = document.getElementById('quizOverlay');
+  const launcher = document.getElementById('quizLauncherBtn');
+  const qView = document.getElementById('quizQuestionView');
+  const correctView = document.getElementById('quizCorrectView');
+  const wrongView = document.getElementById('quizWrongView');
+  const qText = document.getElementById('quizQuestionText');
+  const optsWrap = document.getElementById('quizOptions');
+  const frame = document.getElementById('quizRewardVideoFrame');
+  const localVideo = document.getElementById('quizRewardVideoLocal');
+
+  function open(){ showOverlay(overlay); newQuestion(); }
+  function close(){
+    frame.src = ''; frame.classList.add('hidden');
+    localVideo.pause(); localVideo.removeAttribute('src'); localVideo.load(); localVideo.classList.add('hidden');
+    hideOverlay(overlay);
+  }
+  // Plays whichever reward video the owner has configured in admin.html → Settings → "Quiz reward video".
+  // If it's a local file (uploaded via admin, ends in a video extension) it plays inline with <video>,
+  // which sidesteps YouTube's embed restrictions entirely. Falls back to the YouTube embed otherwise.
+  function playRewardVideo(){
+    const url = (liveData.settings && liveData.settings.quizRewardVideoUrl) || '';
+    const isLocalFile = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+    if (url && isLocalFile){
+      localVideo.src = url;
+      localVideo.classList.remove('hidden');
+      localVideo.play().catch(() => {});
+    } else {
+      const id = url ? extractYouTubeId(url) : 'QDia3e12czc';
+      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+      frame.classList.remove('hidden');
+    }
+  }
+  function extractYouTubeId(url){
+    const m = url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : url;
+  }
+  function newQuestion(){
+    qView.classList.remove('hidden'); correctView.classList.add('hidden'); wrongView.classList.add('hidden');
+    quizAttempt = pickQuizQuestion();
+    qText.textContent = quizAttempt.q;
+    optsWrap.innerHTML = quizAttempt.options.map((o, i) => `<button class="quiz-opt" data-i="${i}">${esc(o)}</button>`).join('');
+    optsWrap.querySelectorAll('.quiz-opt').forEach(btn => btn.addEventListener('click', () => answer(+btn.dataset.i)));
+  }
+  function answer(i){
+    if (i === quizAttempt.correct){
+      sfxSuccess(); fireConfetti();
+      qView.classList.add('hidden');
+      correctView.classList.remove('hidden');
+      playRewardVideo();
+      awardBadge('Quiz Whiz 🧠');
+    } else {
+      sfxFail();
+      qView.classList.add('hidden');
+      wrongView.classList.remove('hidden');
+    }
+  }
+
+  launcher.addEventListener('click', () => {
+    if (!eggsAllowed()) return;
+    requireVisitorGate(open);
+  });
+  document.getElementById('quizCloseBtn').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.getElementById('quizPlayAgainBtn').addEventListener('click', newQuestion);
+  document.getElementById('quizRetryBtn').addEventListener('click', newQuestion);
+  document.getElementById('quizSkipBtn').addEventListener('click', close);
+}
+
+/* ====================================================================
+   29. VARIED RANDOM GIMMICKS (10-15 distinct micro-interactions, not
+   the same confetti every time) — triggered on scroll milestones, the
+   floating star, badges, etc. via fireGimmick() instead of always confetti.
+   ==================================================================== */
+const GIMMICKS = [
+  () => fireConfetti(),
+  () => screenShake(),
+  () => emojiBurst(['✨','⭐','💫']),
+  () => emojiBurst(['🐛','🪲','🦋']),
+  () => rippleFlash(),
+  () => colorPulseBorder(),
+  () => emojiBurst(['☕','💻','⌨️']),
+  () => floatingTextPopup(['Nice find!','+10 curiosity','Achievement unlocked','Keep exploring']),
+  () => spinLogo(),
+  () => emojiBurst(['🚀','🛰️','🌟']),
+  () => emojiBurst(['🎉','🎊','🥳']),
+];
+function fireGimmick(){ if (!eggsAllowed()) return; GIMMICKS[Math.floor(Math.random()*GIMMICKS.length)](); }
+
+function screenShake(){
+  document.body.classList.add('gimmick-shake');
+  setTimeout(() => document.body.classList.remove('gimmick-shake'), 400);
+}
+function emojiBurst(emojis){
+  for (let i=0;i<10;i++){
+    const el = document.createElement('span');
+    el.className = 'gimmick-emoji';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.animationDuration = (1.6 + Math.random()) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2600);
+  }
+}
+function rippleFlash(){
+  const el = document.createElement('div');
+  el.className = 'gimmick-ripple';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+function colorPulseBorder(){
+  document.body.classList.add('gimmick-border-pulse');
+  setTimeout(() => document.body.classList.remove('gimmick-border-pulse'), 1200);
+}
+function floatingTextPopup(msgs){
+  const el = document.createElement('div');
+  el.className = 'gimmick-float-text';
+  el.textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  el.style.left = (20 + Math.random()*60) + 'vw';
+  el.style.top = (30 + Math.random()*40) + 'vh';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+function spinLogo(){
+  const logo = document.getElementById('logoHome');
+  if (!logo) return;
+  logo.classList.add('gimmick-spin');
+  setTimeout(() => logo.classList.remove('gimmick-spin'), 800);
+}
+
+/* ====================================================================
+   30. SECTION ACCORDION (homepage sections collapse to title-only)
+   ==================================================================== */
+function initSectionAccordion(){
+  // No-op: per-card accordions (projects, certifications) are handled
+  // directly inside renderAll() now instead of collapsing whole sections.
+}
+
 /* ====================================================================
    BOOT
    ==================================================================== */
 (async function boot(){
+  initIntroSplash();
+  initFontSizeControl();
+  initLiveClock();
   initTheme();
   initConstellation();
   await loadContent();
   applySettings();
   renderAll();
+  initLiveSync();
   initSlideshow();
   startRoleCycler();
   initCounters();
   initBackToTop();
   initCopyEmail();
   initLogoHome();
-  initScrollProgress();
   initRecruiterMode();
+  initSoundToggle();
   initCommandPalette();
   applyDynamicGreeting();
   tagTiltCards();
@@ -1535,13 +2118,17 @@ function requireVisitorGate(onUnlocked){
   initKonami();
   initGameHub();
   initHintsPanel();
-  initEggsToggle();
-  initScrollMilestones();
+  applyEggsVisibility();
   initFloatingStar();
   initFireflyTrail();
   initParallaxBackground();
   initLogoEasterEgg();
+  initQrShare();
+  initTechQuiz();
+  initSectionAccordion();
   initProjectModal();
   initCertModal();
+  initHireMe();
+  initAvatarWidget();
   loadGithubRepos();
 })();
