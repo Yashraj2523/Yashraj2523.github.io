@@ -483,6 +483,26 @@ function initConstellation(){
     else drawDots();
     requestAnimationFrame(tick);
   }
+
+  // Click a star/comet/nebula cloud (only visible in the Space/Nebula background styles) to trigger a surprise.
+  canvas.addEventListener('click', e => {
+    const s = style();
+    if (s !== 'space' && s !== 'nebula') return;
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    const scrollY = window.scrollY || 0;
+    if (s === 'space'){
+      for (const st of stars){
+        const y = (st.y + scrollY * st.parallax * 0.5) % (h + 40) - 20;
+        if (Math.hypot(st.x - cx, y - cy) < Math.max(14, st.r * 5)){ fireGimmick(); return; }
+      }
+    } else {
+      for (const n of nebulae){
+        const y = n.y + scrollY * n.parallax * 0.4;
+        if (Math.hypot(n.x - cx, y - cy) < n.r * 0.5){ fireGimmick(); return; }
+      }
+    }
+  });
   tick();
 }
 
@@ -496,7 +516,6 @@ function initReveal(){
       if (e.isIntersecting){
         e.target.classList.add('in');
         obs.unobserve(e.target);
-        if (Math.random() < 0.015) fireGimmick(); // rare ambient surprise, ~1.5%
       }
     });
   }, { threshold: 0.12 });
@@ -981,7 +1000,7 @@ function applyDynamicGreeting(){
   if (!el) return;
   const hour = new Date().getHours();
   const greeting = hour < 5 ? 'Burning the midnight oil too?' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Working late?';
-  el.textContent = `● ${greeting} — open to opportunities, M.Tech Software Engineering 2026`;
+  el.innerHTML = `● <span class="eyebrow-wish">${greeting}</span> — open to opportunities, M.Tech Software Engineering 2026`;
 }
 
 /* ====================================================================
@@ -1130,7 +1149,23 @@ function initIntroSplash(){
   if (!el) return;
   const skipIntro = new URLSearchParams(location.search).get('nointro') === '1';
   if (skipIntro){ el.remove(); return; }
-  function dismiss(){ el.classList.add('hide'); setTimeout(() => el.remove(), 650); }
+  const sound = document.getElementById('introSound');
+  function tryPlaySound(){
+    if (!sound) return;
+    sound.volume = 0.5;
+    sound.play().catch(() => {
+      // Autoplay-with-sound was blocked — plays on the visitor's very first
+      // click/tap anywhere instead (still while the splash is up, if they're quick).
+      const resume = () => { sound.play().catch(()=>{}); document.removeEventListener('pointerdown', resume); };
+      document.addEventListener('pointerdown', resume, { once: true });
+    });
+  }
+  tryPlaySound();
+  function dismiss(){
+    el.classList.add('hide');
+    if (sound){ sound.pause(); sound.currentTime = 0; }
+    setTimeout(() => el.remove(), 650);
+  }
   setTimeout(dismiss, 3600);
   el.addEventListener('click', dismiss);
 }
@@ -1168,6 +1203,42 @@ function initFontSizeControl(){
   document.getElementById('fontSizeDown').addEventListener('click', () => { pct = Math.max(MIN, pct - STEP); apply(); });
   resetBtn.addEventListener('click', () => { pct = 100; apply(); });
   apply();
+}
+
+/* ====================================================================
+   NAV SCROLLSPY — glows the nav link for whichever section is in view
+   ==================================================================== */
+function initNavScrollSpy(){
+  const links = Array.from(document.querySelectorAll('.navlinks a[href^="#"]'));
+  if (!links.length) return;
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const label = document.getElementById('scrollSectionLabel');
+  let currentTitle = '';
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const link = map.get(e.target.id);
+      if (!link) return;
+      if (e.isIntersecting){
+        links.forEach(l => l.classList.toggle('nav-active', l === link));
+        currentTitle = link.textContent.trim();
+      }
+    });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+  map.forEach((_, id) => { const el = document.getElementById(id); if (el) obs.observe(el); });
+
+  if (label){
+    let hideTimer = null;
+    window.addEventListener('scroll', () => {
+      if (!currentTitle) return;
+      label.textContent = currentTitle;
+      const h = document.documentElement;
+      const pct = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+      label.style.top = `${10 + pct * 80}%`;
+      label.classList.add('visible');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => label.classList.remove('visible'), 900);
+    }, { passive: true });
+  }
 }
 
 /* ====================================================================
@@ -1721,6 +1792,19 @@ function initHintsPanel(){
 /* ====================================================================
    20. SCROLL MILESTONES (25/50/75/100% scrolled)
    ==================================================================== */
+function initBottomGimmick(){
+  let fired = false;
+  window.addEventListener('scroll', () => {
+    if (fired || !eggsAllowed()) return;
+    const h = document.documentElement;
+    if (h.scrollTop + h.clientHeight >= h.scrollHeight - 4){
+      fired = true;
+      awardBadge('Full Scroll 📜');
+      fireGimmick();
+    }
+  }, { passive: true });
+}
+
 /* ====================================================================
    21. FLOATING COLLECTIBLE STAR (random drift + click to catch)
    ==================================================================== */
@@ -1819,6 +1903,19 @@ function initParallaxBackground(){
    ==================================================================== */
 function visitorGateSatisfied(){
   return localStorage.getItem('visitor_info_submitted') === '1';
+}
+
+/* Single "✨" launcher by default; once the visitor fills the info gate once,
+   it's replaced by the 3 individual icons (game/hints/quiz) from then on. */
+function initFunLauncher(){
+  const combo = document.getElementById('funLauncherBtn');
+  const gated = document.querySelectorAll('.gated-icon');
+  function reveal(){
+    combo.classList.add('hidden');
+    gated.forEach(el => el.classList.remove('hidden'));
+  }
+  if (visitorGateSatisfied()){ reveal(); return; }
+  combo.addEventListener('click', () => requireVisitorGate(reveal));
 }
 function requireVisitorGate(onUnlocked){
   if (visitorGateSatisfied()){ onUnlocked(); return; }
@@ -2109,6 +2206,7 @@ function initSectionAccordion(){
   initCopyEmail();
   initLogoHome();
   initRecruiterMode();
+  initNavScrollSpy();
   initSoundToggle();
   initCommandPalette();
   applyDynamicGreeting();
@@ -2118,8 +2216,10 @@ function initSectionAccordion(){
   initKonami();
   initGameHub();
   initHintsPanel();
+  initFunLauncher();
   applyEggsVisibility();
   initFloatingStar();
+  initBottomGimmick();
   initFireflyTrail();
   initParallaxBackground();
   initLogoEasterEgg();

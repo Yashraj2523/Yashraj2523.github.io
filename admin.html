@@ -50,6 +50,7 @@
     </div>
   </div>
 
+  <div class="admin-layout">
   <div class="admin-tabs" id="adminTabs">
     <button class="admin-tab active" data-tab="hero">Hero & About</button>
     <button class="admin-tab" data-tab="photos">Profile Photos</button>
@@ -64,6 +65,8 @@
     <button class="admin-tab" data-tab="sections">Sections</button>
     <button class="admin-tab" data-tab="settings">Settings</button>
   </div>
+
+  <div class="admin-panel-content">
 
   <!-- ---- HERO & ABOUT ---- -->
   <section class="admin-panel-section active" data-panel="hero">
@@ -91,33 +94,43 @@
 
   <!-- ---- SKILLS ---- -->
   <section class="admin-panel-section" data-panel="skills">
-    <div id="skillsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addSkillGroupBtn">+ Add skill category</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="skillsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addSkillGroupBtn">+ Add skill category</button>
+    </div>
   </section>
 
   <!-- ---- PROJECTS ---- -->
   <section class="admin-panel-section" data-panel="projects">
-    <div id="projectsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addProjectBtn">+ Add project</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="projectsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addProjectBtn">+ Add project</button>
+    </div>
   </section>
 
   <!-- ---- CERTIFICATIONS ---- -->
   <section class="admin-panel-section" data-panel="certs">
-    <div id="certsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addCertBtn">+ Add certification</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="certsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addCertBtn">+ Add certification</button>
+    </div>
   </section>
 
   <!-- ---- EXPERIENCE ---- -->
   <section class="admin-panel-section" data-panel="experience">
-    <div id="experienceRepeatWrap"></div>
-    <button class="admin-add-btn" id="addExperienceBtn">+ Add experience</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="experienceRepeatWrap"></div>
+      <button class="admin-add-btn" id="addExperienceBtn">+ Add experience</button>
+    </div>
   </section>
 
   <!-- ---- EDUCATION ---- -->
   <section class="admin-panel-section" data-panel="education">
-    <div id="educationRepeatWrap"></div>
-    <button class="admin-add-btn" id="addEducationBtn">+ Add education entry</button>
-    <div class="glass panel admin-card" style="margin-top:24px;">
+    <div class="glass panel admin-card admin-card-full">
+      <div id="educationRepeatWrap"></div>
+      <button class="admin-add-btn" id="addEducationBtn">+ Add education entry</button>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:14px;">Languages</h3>
       <div id="languagesRepeatWrap"></div>
       <button class="admin-add-btn" id="addLanguageBtn">+ Add language</button>
@@ -140,8 +153,10 @@
 
   <!-- ---- HOBBIES ---- -->
   <section class="admin-panel-section" data-panel="hobbies">
-    <div id="hobbiesRepeatWrap"></div>
-    <button class="admin-add-btn" id="addHobbyBtn">+ Add hobby</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="hobbiesRepeatWrap"></div>
+      <button class="admin-add-btn" id="addHobbyBtn">+ Add hobby</button>
+    </div>
   </section>
 
   <!-- ---- CONNECT / YOUTUBE ---- -->
@@ -301,6 +316,9 @@
       <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4); color:#f06464;">Reset to data.js defaults</button>
     </div>
   </section>
+
+  </div>
+  </div>
 
   <div class="admin-save-bar">
     <span class="admin-save-status" id="bottomSaveStatus"></span>

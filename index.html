@@ -47,6 +47,7 @@
     <p>For the full experience — animations, parallax &amp; all the little details —<br><strong>view this on a desktop.</strong></p>
     <div class="intro-progress"><div class="intro-progress-bar"></div></div>
   </div>
+  <audio id="introSound" src="audio/intro-chime.mp3" preload="auto"></audio>
 </div>
 
 <!-- ================= AMBIENT BACKGROUND ================= -->
@@ -54,6 +55,9 @@
 <canvas id="constellation"></canvas>
 <canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
 <div class="grain"></div>
+
+<!-- ================= SCROLL SECTION LABEL ================= -->
+<div id="scrollSectionLabel" class="scroll-section-label"></div>
 
 <!-- ================= LIVE CLOCK ================= -->
 <div id="liveClock" class="live-clock" title="Local time"></div>
@@ -331,7 +335,8 @@
 
 </main>
 
-<button id="quizLauncherBtn" class="floating-quiz-btn" title="Quick tech quiz">🧠</button>
+<button id="funLauncherBtn" class="floating-game-btn" title="Play, get hints & try the quiz">✨</button>
+<button id="quizLauncherBtn" class="floating-quiz-btn gated-icon hidden" title="Quick tech quiz">🧠</button>
 
 <!-- ================= TECH QUIZ ================= -->
 <div id="quizOverlay" class="modal-overlay hidden">
@@ -383,8 +388,8 @@
 <!-- ================= FLOATING GIMMICK CONTROLS ================= -->
 <canvas id="fireflyCanvas" class="firefly-canvas"></canvas>
 <div id="floatingStar" class="floating-star hidden" title="Catch me!">⭐</div>
-<button id="gameLauncherBtn" class="floating-game-btn" title="Play a mini-game">🎮</button>
-<button id="hintsBtn" class="floating-hints-btn" title="Easter egg hints">💡</button>
+<button id="gameLauncherBtn" class="floating-game-btn gated-icon hidden" title="Play a mini-game">🎮</button>
+<button id="hintsBtn" class="floating-hints-btn gated-icon hidden" title="Easter egg hints">💡</button>
 <div id="hintsPanel" class="glass hints-panel hidden">
   <button id="hintsCloseBtn" class="modal-close" aria-label="Close">✕</button>
   <h3>🔍 Things to find</h3>
