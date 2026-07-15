@@ -227,5 +227,11 @@ const SITE_DATA = {
 
     cursorStyle: "default",  // see CURSOR_STYLES in app.js for the full list of presets
     cursorTrail: false,      // particle trail following the pointer — auto-disabled in recruiter mode
+
+    recruiterHiddenSections: ["hobbies", "connect", "achievements", "timeline"], // editable in admin.html → Sections
+
+    clockStyle: "digital", // "digital" | "neon" | "analog" — editable in admin.html → Settings
+
+    navVisibleSections: ["about", "experience", "timeline", "skills", "projects", "repos", "certs", "hobbies", "achievements", "connect"], // editable in admin.html → Sections
   },
 };

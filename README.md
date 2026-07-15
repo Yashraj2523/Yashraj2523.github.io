@@ -12,7 +12,7 @@ A polished, glassmorphism portfolio website with a public homepage and a separat
 - Command palette/global search with Ctrl+K.
 - Recruiter mode for a cleaner, more focused view.
 - Mini-games and easter-egg style extras for visitors.
- 
+
 ## Where content lives
 All editable site content is stored in Supabase in the table `site_content` under the row `id = 'main'`. The file `data.js` is only the initial seed content used the first time the site loads with an empty database. After that, the live site reads and writes content through Supabase.
 

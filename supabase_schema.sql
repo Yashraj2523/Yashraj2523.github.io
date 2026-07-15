@@ -55,6 +55,9 @@ alter table visitor_leads enable row level security;
 drop policy if exists "Anyone can submit a visitor lead" on visitor_leads;
 create policy "Anyone can submit a visitor lead" on visitor_leads for insert with check ( true );
 
+drop policy if exists "Only admin can read visitor leads" on visitor_leads;
+create policy "Only admin can read visitor leads" on visitor_leads for select using ( auth.role() = 'authenticated' );
+
 -- ===== HIRE ME INQUIRIES (Hire Me button on the hero) =====
 create table if not exists hire_inquiries (
   id uuid primary key default gen_random_uuid(),
@@ -69,6 +72,9 @@ alter table hire_inquiries enable row level security;
 
 drop policy if exists "Anyone can submit a hire inquiry" on hire_inquiries;
 create policy "Anyone can submit a hire inquiry" on hire_inquiries for insert with check ( true );
+
+drop policy if exists "Only admin can read hire inquiries" on hire_inquiries;
+create policy "Only admin can read hire inquiries" on hire_inquiries for select using ( auth.role() = 'authenticated' );
 
 -- ===== LIVE SYNC: lets index.html update instantly when admin.html saves =====
 alter publication supabase_realtime add table site_content;

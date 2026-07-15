@@ -43,6 +43,7 @@ function initLiveSync(){
       liveData = mergeWithDefaults(payload.new.content);
       applySettings();
       renderAll();
+      renderNavLinks();
     })
     .subscribe();
 }
@@ -510,13 +511,10 @@ function initConstellation(){
    5. SCROLL REVEAL + STAT COUNTERS
    ==================================================================== */
 function initReveal(){
-  const els = document.querySelectorAll('.reveal:not(.in)');
+  const els = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (e.isIntersecting){
-        e.target.classList.add('in');
-        obs.unobserve(e.target);
-      }
+      e.target.classList.toggle('in', e.isIntersecting);
     });
   }, { threshold: 0.12 });
   els.forEach(el => obs.observe(el));
@@ -1174,28 +1172,91 @@ function initIntroSplash(){
    LIVE DIGITAL CLOCK
    ==================================================================== */
 function initLiveClock(){
-  const el = document.getElementById('liveClock');
-  if (!el) return;
+  const root = document.getElementById('liveClock');
+  const digital = document.getElementById('clockDigital');
+  const analog = document.getElementById('clockAnalog');
+  const dateEl = document.getElementById('clockDate');
+  if (!root) return;
+  const style = (liveData.settings && liveData.settings.clockStyle) || 'digital';
+  root.classList.toggle('style-neon', style === 'neon');
+  digital.classList.toggle('hidden', style === 'analog');
+  analog.classList.toggle('hidden', style !== 'analog');
+  const hourHand = document.getElementById('clockHourHand');
+  const minHand = document.getElementById('clockMinHand');
+  const secHand = document.getElementById('clockSecHand');
   function tick(){
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2,'0');
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    const ss = String(now.getSeconds()).padStart(2,'0');
-    el.textContent = `${hh}:${mm}:${ss}`;
+    if (style === 'analog'){
+      const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
+      setHand(hourHand, (h + m / 60) * 30);
+      setHand(minHand, (m + s / 60) * 6);
+      setHand(secHand, s * 6);
+    } else {
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const ss = String(now.getSeconds()).padStart(2,'0');
+      digital.textContent = `${hh}:${mm}:${ss}`;
+    }
+    dateEl.textContent = now.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
   }
+  function setHand(el, deg){ el.setAttribute('transform', `rotate(${deg} 50 50)`); }
   tick();
   setInterval(tick, 1000);
 }
 
 /* ====================================================================
-   FONT SIZE CONTROL (persistent A-/A+ button, always visible)
+   ADMIN LOCK ICON — sign in directly on index.html, then jump straight
+   to admin.html's dashboard (session persists, no second login there).
    ==================================================================== */
+function initAdminLockPopup(){
+  const lockBtn = document.getElementById('adminLockBtn');
+  const popup = document.getElementById('loginPopup');
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  const status = document.getElementById('loginStatus');
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPass');
+  if (!lockBtn) return;
+
+  lockBtn.addEventListener('click', e => { e.stopPropagation(); popup.classList.toggle('hidden'); });
+  document.addEventListener('click', e => {
+    if (!popup.classList.contains('hidden') && !e.target.closest('.nav-auth-wrap')) popup.classList.add('hidden');
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    if (!supa){ status.textContent = 'Not connected to Supabase yet.'; return; }
+    status.textContent = 'Signing in…';
+    const { error } = await supa.auth.signInWithPassword({ email: emailInput.value.trim(), password: passInput.value });
+    if (error){ status.textContent = error.message; return; }
+    status.textContent = '✓ Signed in — opening dashboard…';
+    location.href = 'admin.html';
+  });
+  passInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
+}
+/* ====================================================================
+   FLOATING UI OFFSET — keeps clock/font-size/connect buttons below the
+   navbar even when it wraps to multiple lines (more nav links checked).
+   ==================================================================== */
+function updateFloatingUIOffset(){
+  const nav = document.querySelector('.navbar');
+  if (!nav) return;
+  const rect = nav.getBoundingClientRect();
+  const gap = rect.bottom + 10; // 10px breathing room below the navbar
+  document.documentElement.style.setProperty('--floating-ui-top', `${Math.max(10, gap)}px`);
+}
+function initFloatingUIOffset(){
+  updateFloatingUIOffset();
+  window.addEventListener('resize', updateFloatingUIOffset);
+  const links = document.getElementById('navLinks');
+  if (links) new MutationObserver(updateFloatingUIOffset).observe(links, { childList: true });
+}
+
 function initFontSizeControl(){
   const MIN = 85, MAX = 130, STEP = 10;
   let pct = +(localStorage.getItem('font_size_pct')) || 100;
   const resetBtn = document.getElementById('fontSizeReset');
+  const wrapper = document.getElementById('scaleWrapper');
   function apply(){
-    document.documentElement.style.fontSize = pct + '%';
+    if (wrapper) wrapper.style.fontSize = pct + '%';
     resetBtn.textContent = pct + '%';
     localStorage.setItem('font_size_pct', pct);
   }
@@ -1206,8 +1267,29 @@ function initFontSizeControl(){
 }
 
 /* ====================================================================
-   NAV SCROLLSPY — glows the nav link for whichever section is in view
+   NAV LINKS — built dynamically from which sections are actually visible
+   (admin's Sections toggles), short labels, re-filtered for Recruiter Mode.
    ==================================================================== */
+const NAV_FULL_LABELS = {
+  about: 'About', experience: 'Experience', timeline: 'Timeline', skills: 'Skills',
+  projects: 'Projects', repos: 'GitHub', certs: 'Certifications',
+  hobbies: 'Hobbies', achievements: 'Achievements', connect: 'Connect', contact: 'Contact',
+};
+function renderNavLinks(){
+  const wrap = document.getElementById('navLinks');
+  if (!wrap) return;
+  const recruiterOn = document.body.classList.contains('recruiter-mode');
+  const recruiterHidden = (liveData.settings && liveData.settings.recruiterHiddenSections) || [];
+  const navShown = (liveData.settings && liveData.settings.navVisibleSections) || Object.keys(NAV_FULL_LABELS).filter(k => k !== 'contact');
+  const html = Object.keys(NAV_FULL_LABELS).filter(id => {
+    if (!navShown.includes(id)) return false;
+    if (liveData.sectionVisibility?.[id] === false) return false;
+    if (recruiterOn && recruiterHidden.includes(id)) return false;
+    return document.getElementById(id);
+  }).map(id => `<a href="#${id}">${NAV_FULL_LABELS[id]}</a>`).join('');
+  wrap.innerHTML = html;
+  initNavScrollSpy();
+}
 function initNavScrollSpy(){
   const links = Array.from(document.querySelectorAll('.navlinks a[href^="#"]'));
   if (!links.length) return;
@@ -1244,7 +1326,6 @@ function initNavScrollSpy(){
 /* ====================================================================
    16. RECRUITER MODE (hides non-essential sections client-side)
    ==================================================================== */
-const RECRUITER_HIDE = ['hobbies', 'connect', 'achievements', 'timeline'];
 function initRecruiterMode(){
   const btn = document.getElementById('recruiterModeBtn');
   const label = btn.querySelector('.recruiter-label') || (() => {
@@ -1255,7 +1336,8 @@ function initRecruiterMode(){
   })();
   function apply(on){
     document.body.classList.toggle('recruiter-mode', on);
-    RECRUITER_HIDE.forEach(id => {
+    const hidden = (liveData.settings && liveData.settings.recruiterHiddenSections) || ['hobbies', 'connect', 'achievements', 'timeline'];
+    hidden.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = on ? 'none' : (liveData.sectionVisibility?.[id] === false ? 'none' : '');
     });
@@ -1263,6 +1345,7 @@ function initRecruiterMode(){
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     label.textContent = on ? 'Recruiter Mode: ON' : 'Recruiter Mode';
     localStorage.setItem('recruiter_mode', on ? '1' : '0');
+    renderNavLinks();
     // Cursor styling + trail are gimmicks — always off while recruiter mode is on, no matter what's saved.
     applyCursorSettings();
   }
@@ -1459,7 +1542,8 @@ function fireConfetti(){
 // ---- Konami code -> Matrix Mode ----
 function initKonami(){
   const seq = ['ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ArrowUp','ArrowDown'];
-  let pos = 0;
+  const reverseSeq = ['ArrowUp','ArrowDown','ArrowUp','ArrowDown','ArrowRight','ArrowLeft','ArrowRight','ArrowLeft'];
+  let pos = 0, rPos = 0;
   document.addEventListener('keydown', e => {
     if (!eggsAllowed()) return;
     const key = e.key;
@@ -1469,7 +1553,20 @@ function initKonami(){
       toggleMatrixMode();
       awardBadge('Konami Master 🕹️');
     }
+    if (key === reverseSeq[rPos]) rPos++; else rPos = (key === reverseSeq[0]) ? 1 : 0;
+    if (rPos === reverseSeq.length){
+      rPos = 0;
+      toggleInverseMode();
+      awardBadge('Mirror Mode 🔄');
+    }
   });
+}
+
+let inverseTimer = null;
+function toggleInverseMode(){
+  const on = !document.body.classList.contains('inverse-mode');
+  document.body.classList.toggle('inverse-mode', on);
+  showBadgeToast(on ? '🔄 Mirror Mode activated — do the sequence again to undo' : '🔄 Mirror Mode off');
 }
 
 let matrixAnimFrame = null;
@@ -2192,12 +2289,13 @@ function initSectionAccordion(){
 (async function boot(){
   initIntroSplash();
   initFontSizeControl();
-  initLiveClock();
+  initAdminLockPopup();
   initTheme();
   initConstellation();
   await loadContent();
   applySettings();
   renderAll();
+  initLiveClock();
   initLiveSync();
   initSlideshow();
   startRoleCycler();
@@ -2206,7 +2304,8 @@ function initSectionAccordion(){
   initCopyEmail();
   initLogoHome();
   initRecruiterMode();
-  initNavScrollSpy();
+  renderNavLinks();
+  initFloatingUIOffset();
   initSoundToggle();
   initCommandPalette();
   applyDynamicGreeting();

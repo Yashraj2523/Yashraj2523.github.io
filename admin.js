@@ -55,13 +55,15 @@ function initConstellationLite(){
    AUTH
    ==================================================================== */
 async function initAuth(){
-  const loginGate = document.getElementById('loginGate');
   const dashboard = document.getElementById('dashboard');
+  const navSignInBtn = document.getElementById('navSignInBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const loginPopup = document.getElementById('loginPopup');
+  const navTitle = document.getElementById('navAdminTitle');
   const submitBtn = document.getElementById('loginSubmitBtn');
   const status = document.getElementById('loginStatus');
   const emailInput = document.getElementById('loginEmail');
   const passInput = document.getElementById('loginPass');
-  const signOutBtn = document.getElementById('signOutBtn');
 
   if (!supabaseReady()){
     status.textContent = "Supabase isn't configured yet in config.js — see README.md.";
@@ -69,7 +71,12 @@ async function initAuth(){
     return;
   }
   supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+
+  navSignInBtn.addEventListener('click', () => loginPopup.classList.toggle('hidden'));
+  document.addEventListener('click', e => {
+    if (!loginPopup.classList.contains('hidden') && !e.target.closest('.nav-auth-wrap')) loginPopup.classList.add('hidden');
   });
 
   submitBtn.addEventListener('click', async () => {
@@ -82,17 +89,20 @@ async function initAuth(){
 
   signOutBtn.addEventListener('click', async () => {
     await supa.auth.signOut();
-    location.reload();
+    location.href = 'index.html?nointro=1';
   });
 
   const { data } = await supa.auth.getSession();
   if (data.session) await enterDashboard();
 
   async function enterDashboard(){
-    loginGate.classList.add('hidden');
+    loginPopup.classList.add('hidden');
+    navSignInBtn.classList.add('hidden');
+    signOutBtn.classList.remove('hidden');
+    navTitle.classList.remove('hidden');
     dashboard.classList.remove('hidden');
     showToast('✓ Signed in — you can edit everything below');
-    dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     await loadContent();
     populateForms();
     initRepeaters();
@@ -123,18 +133,82 @@ async function loadContent(){
 }
 
 async function saveContent(message){
-  const status = document.getElementById('saveStatus');
   const bottomStatus = document.getElementById('bottomSaveStatus');
-  status.textContent = 'Saving…'; bottomStatus.textContent = 'Saving…';
+  bottomStatus.textContent = 'Saving…';
   const { error } = await supa.from('site_content').upsert({ id: 'main', content: liveData });
   const msg = error ? ('Error: ' + error.message) : (message || 'Saved ✓ — live on the site now');
-  status.textContent = msg; bottomStatus.textContent = msg;
-  setTimeout(() => { status.textContent = ''; bottomStatus.textContent = ''; }, 4000);
+  bottomStatus.textContent = msg;
+  setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
 }
 
 /* ====================================================================
    TABS
    ==================================================================== */
+/* ====================================================================
+   VISITOR TRACKING — game/quiz players (visitor_leads) and Hire Me
+   submissions (hire_inquiries). Both tables require the SELECT policy
+   from supabase_schema.sql (admin-only reads) to already be applied.
+   ==================================================================== */
+function renderDataTable(wrapId, rows, columns){
+  const wrap = document.getElementById(wrapId);
+  if (!rows || !rows.length){ wrap.innerHTML = '<p class="settings-hint">Nothing yet.</p>'; return; }
+  wrap.innerHTML = `<table class="admin-data-table"><thead><tr>${
+    columns.map(c => `<th>${c.label}</th>`).join('')
+  }</tr></thead><tbody>${
+    rows.map(r => `<tr>${columns.map(c => `<td>${(r[c.key] ?? '').toString().replace(/</g,'&lt;')}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function toCSV(rows, columns){
+  const header = columns.map(c => `"${c.label}"`).join(',');
+  const lines = rows.map(r => columns.map(c => `"${(r[c.key] ?? '').toString().replace(/"/g,'""')}"`).join(','));
+  return [header, ...lines].join('\n');
+}
+
+function downloadCSV(filename, rows, columns){
+  const blob = new Blob([toCSV(rows, columns)], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+const VISITOR_COLUMNS = [
+  { key: 'name', label: 'Name' }, { key: 'contact', label: 'Contact' },
+  { key: 'page', label: 'Page' }, { key: 'created_at', label: 'Date' },
+];
+const HIRE_COLUMNS = [
+  { key: 'name', label: 'Name' }, { key: 'company', label: 'Company' }, { key: 'contact', label: 'Contact' },
+  { key: 'message', label: 'Message' }, { key: 'created_at', label: 'Date' },
+];
+
+let visitorLeadsCache = [], hireInquiriesCache = [];
+
+async function loadVisitorLeads(){
+  if (!supa) return;
+  const { data, error } = await supa.from('visitor_leads').select('*').order('created_at', { ascending: false });
+  if (error){
+    document.getElementById('visitorLeadsTableWrap').innerHTML = `<p class="settings-hint">Could not load — this usually means supabase_schema.sql hasn't been run in your Supabase SQL editor yet (it creates this table). Error: ${error.message}</p>`;
+    return;
+  }
+  visitorLeadsCache = data || [];
+  renderDataTable('visitorLeadsTableWrap', visitorLeadsCache, VISITOR_COLUMNS);
+}
+
+async function loadHireInquiries(){
+  if (!supa) return;
+  const { data, error } = await supa.from('hire_inquiries').select('*').order('created_at', { ascending: false });
+  if (error){
+    document.getElementById('hireInquiriesTableWrap').innerHTML = `<p class="settings-hint">Could not load — this usually means supabase_schema.sql hasn't been run in your Supabase SQL editor yet (it creates this table). Error: ${error.message}</p>`;
+    return;
+  }
+  hireInquiriesCache = data || [];
+  renderDataTable('hireInquiriesTableWrap', hireInquiriesCache, HIRE_COLUMNS);
+}
+
+document.getElementById('downloadVisitorsBtn').addEventListener('click', () => downloadCSV('game-quiz-players.csv', visitorLeadsCache, VISITOR_COLUMNS));
+document.getElementById('downloadHiresBtn').addEventListener('click', () => downloadCSV('hire-inquiries.csv', hireInquiriesCache, HIRE_COLUMNS));
+
 function initTabs(){
   document.querySelectorAll('.admin-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -142,6 +216,9 @@ function initTabs(){
       document.querySelectorAll('.admin-panel-section').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
       document.querySelector(`.admin-panel-section[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab.dataset.tab === 'visitors') loadVisitorLeads();
+      if (tab.dataset.tab === 'hires') loadHireInquiries();
     });
   });
 }
@@ -193,6 +270,7 @@ function populateForms(){
   byId('s_quizRewardVideoUrl').value = s.quizRewardVideoUrl || '';
   byId('quizVideoCurrent').textContent = s.quizRewardVideoUrl ? `Current: ${s.quizRewardVideoUrl}` : 'Using the default built-in video.';
   byId('s_cursorStyle').value = s.cursorStyle || 'default';
+  byId('s_clockStyle').value = s.clockStyle || 'digital';
   byId('s_cursorTrail').checked = !!s.cursorTrail;
   renderWallpaperPresets();
   byId('resumeCurrentLink').innerHTML = liveData.resume_url ? `Current file: <a href="${liveData.resume_url}" target="_blank">${liveData.resume_url}</a>` : 'No résumé uploaded yet.';
@@ -251,7 +329,10 @@ function collectSimpleFields(){
     eggsEnabled: (liveData.settings && liveData.settings.eggsEnabled) !== false,
     quizRewardVideoUrl: byId('s_quizRewardVideoUrl').value.trim(),
     cursorStyle: byId('s_cursorStyle').value,
+    clockStyle: byId('s_clockStyle').value,
     cursorTrail: byId('s_cursorTrail').checked,
+    recruiterHiddenSections: (liveData.settings && liveData.settings.recruiterHiddenSections) || ['hobbies','connect','achievements','timeline'],
+    navVisibleSections: (liveData.settings && liveData.settings.navVisibleSections) || Object.keys(SECTION_LABELS).filter(k => k !== 'contact'),
   };
 }
 
@@ -511,6 +592,8 @@ function initRepeaters(){
   });
 
   initSectionToggles();
+  initRecruiterToggles();
+  initNavToggles();
   initSectionTitles();
   initCustomSections();
 }
@@ -533,6 +616,46 @@ function initSectionToggles(){
   wrap.querySelectorAll('[data-section-toggle]').forEach(cb => {
     cb.addEventListener('change', async () => {
       liveData.sectionVisibility[cb.dataset.sectionToggle] = cb.checked;
+      await saveContent('Saved ✓');
+    });
+  });
+}
+
+function initNavToggles(){
+  const wrap = document.getElementById('navTogglesWrap');
+  liveData.settings = liveData.settings || {};
+  const shown = liveData.settings.navVisibleSections || Object.keys(SECTION_LABELS).filter(k => k !== 'contact');
+  wrap.innerHTML = Object.keys(SECTION_LABELS).map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-nav-toggle="${key}" ${shown.includes(key) ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      Show "${SECTION_LABELS[key]}" in nav bar
+    </label>`).join('');
+  wrap.querySelectorAll('[data-nav-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const key = cb.dataset.navToggle;
+      let list = liveData.settings.navVisibleSections || Object.keys(SECTION_LABELS).filter(k => k !== 'contact');
+      list = cb.checked ? [...new Set([...list, key])] : list.filter(k => k !== key);
+      liveData.settings.navVisibleSections = list;
+      await saveContent('Saved ✓');
+    });
+  });
+}
+
+function initRecruiterToggles(){
+  const wrap = document.getElementById('recruiterTogglesWrap');
+  liveData.settings = liveData.settings || {};
+  const hidden = liveData.settings.recruiterHiddenSections || ['hobbies','connect','achievements','timeline'];
+  wrap.innerHTML = Object.keys(SECTION_LABELS).filter(k => k !== 'contact').map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-recruiter-toggle="${key}" ${hidden.includes(key) ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      Hide "${SECTION_LABELS[key]}" in Recruiter Mode
+    </label>`).join('');
+  wrap.querySelectorAll('[data-recruiter-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const key = cb.dataset.recruiterToggle;
+      let list = liveData.settings.recruiterHiddenSections || ['hobbies','connect','achievements','timeline'];
+      list = cb.checked ? [...new Set([...list, key])] : list.filter(k => k !== key);
+      liveData.settings.recruiterHiddenSections = list;
       await saveContent('Saved ✓');
     });
   });
@@ -756,6 +879,12 @@ function initUploads(){
     liveData.settings = liveData.settings || {};
     liveData.settings.cursorStyle = byId('s_cursorStyle').value;
     await saveContent('Cursor style saved ✓');
+  });
+
+  byId('s_clockStyle').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.clockStyle = byId('s_clockStyle').value;
+    await saveContent('Clock style saved ✓');
   });
 
   byId('s_cursorTrail').addEventListener('change', async () => {

@@ -56,11 +56,24 @@
 <canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
 <div class="grain"></div>
 
+<!-- ================= CONNECT QUICK-JUMP (top-left) ================= -->
+<a href="#connect" class="connect-quickjump" title="Jump to Connect">🔗</a>
+
 <!-- ================= SCROLL SECTION LABEL ================= -->
 <div id="scrollSectionLabel" class="scroll-section-label"></div>
 
 <!-- ================= LIVE CLOCK ================= -->
-<div id="liveClock" class="live-clock" title="Local time"></div>
+<div id="liveClock" class="live-clock" title="Local time">
+  <span id="clockDigital" class="clock-digital"></span>
+  <svg id="clockAnalog" class="clock-analog hidden" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="46" class="clock-face" />
+    <line id="clockHourHand" x1="50" y1="50" x2="50" y2="28" class="clock-hand clock-hand-hour" />
+    <line id="clockMinHand" x1="50" y1="50" x2="50" y2="16" class="clock-hand clock-hand-min" />
+    <line id="clockSecHand" x1="50" y1="50" x2="50" y2="12" class="clock-hand clock-hand-sec" />
+    <circle cx="50" cy="50" r="2.5" class="clock-pin" />
+  </svg>
+  <span id="clockDate" class="clock-date"></span>
+</div>
 
 <!-- ================= FONT SIZE CONTROL (always visible) ================= -->
 <div id="fontSizeControl" class="font-size-control" role="group" aria-label="Adjust text size">
@@ -71,17 +84,9 @@
 
 <!-- ================= NAV ================= -->
 
-<nav class="navbar glass">
+<nav class="navbar viewer-navbar glass">
   <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
-  <div class="navlinks">
-    <a href="#about">About</a>
-    <a href="#timeline">Timeline</a>
-    <a href="#skills">Skills</a>
-    <a href="#projects">Projects</a>
-    <a href="#repos">GitHub</a>
-    <a href="#certs">Certs</a>
-    <a href="#connect">Connect</a>
-  </div>
+  <div class="navlinks" id="navLinks"></div>
   <div class="nav-actions">
     <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -95,9 +100,17 @@
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
-    <a href="admin.html" class="icon-btn" title="Owner sign in / edit dashboard">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
-    </a>
+    <div class="nav-auth-wrap">
+      <button id="adminLockBtn" class="icon-btn" type="button" title="Owner sign in">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+      </button>
+      <div id="loginPopup" class="login-popup hidden">
+        <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
+        <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
+        <button id="loginSubmitBtn" class="btn btn-primary btn-block" type="button">Sign in</button>
+        <p id="loginStatus" class="modal-status"></p>
+      </div>
+    </div>
     <button id="hireMeBtn" type="button" class="navcta">Hire me</button>
   </div>
 </nav>
@@ -113,7 +126,7 @@
   </div>
 </div>
 
-<main>
+<main id="scaleWrapper">
 
   <!-- ================= HERO ================= -->
   <section class="hero" id="hero">

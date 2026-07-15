@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="admin-page">
 
 <div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
@@ -18,38 +18,28 @@
 
 <nav class="navbar glass">
   <a href="index.html" class="logo">YR<span class="logo-dot">.</span> <span style="font-size:.7rem; color:var(--ink-2); font-weight:400;">/admin</span></a>
+  <span id="navAdminTitle" class="nav-admin-title hidden">Edit your portfolio</span>
   <div class="nav-actions">
     <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
     <a href="index.html?nointro=1" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">View site ↗</a>
+    <div class="nav-auth-wrap">
+      <button id="navSignInBtn" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">Sign in</button>
+      <button id="signOutBtn" class="btn btn-glass hidden" style="padding:8px 16px; font-size:.82rem;">Sign out</button>
+      <div id="loginPopup" class="login-popup hidden">
+        <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
+        <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
+        <button id="loginSubmitBtn" class="btn btn-primary btn-block">Sign in</button>
+        <p id="loginStatus" class="modal-status"></p>
+      </div>
+    </div>
   </div>
 </nav>
 
-<!-- ================= LOGIN GATE ================= -->
-<div id="loginGate" class="admin-gate">
-  <div class="glass panel admin-login-box">
-    <h2>Owner sign in</h2>
-    <p class="muted" style="margin-bottom:18px; font-size:.85rem;">Sign in with the one account you created in Supabase Authentication. Nobody else can access this page.</p>
-    <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
-    <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
-    <button id="loginSubmitBtn" class="btn btn-primary btn-block">Sign in</button>
-    <p id="loginStatus" class="modal-status"></p>
-    <p class="settings-hint" style="margin-top:16px;">Not configured yet? See <code>README.md</code> for the Supabase setup steps.</p>
-  </div>
-</div>
-
 <!-- ================= DASHBOARD (hidden until signed in) ================= -->
 <div id="dashboard" class="admin-shell hidden">
-  <div class="admin-header">
-    <h1>Edit your portfolio</h1>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <span id="saveStatus" class="admin-save-status"></span>
-      <button id="signOutBtn" class="btn btn-glass" style="padding:9px 16px; font-size:.82rem;">Sign out</button>
-    </div>
-  </div>
-
   <div class="admin-layout">
   <div class="admin-tabs" id="adminTabs">
     <button class="admin-tab active" data-tab="hero">Hero & About</button>
@@ -64,6 +54,8 @@
     <button class="admin-tab" data-tab="connect">Connect / YouTube</button>
     <button class="admin-tab" data-tab="sections">Sections</button>
     <button class="admin-tab" data-tab="settings">Settings</button>
+    <button class="admin-tab" data-tab="visitors">Game/Quiz Players</button>
+    <button class="admin-tab" data-tab="hires">Hire Me Inquiries</button>
   </div>
 
   <div class="admin-panel-content">
@@ -201,6 +193,16 @@
       <div id="sectionTogglesWrap"></div>
     </div>
     <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Recruiter Mode visibility</h3>
+      <p class="settings-hint">Pick which sections stay hidden when a visitor turns on Recruiter Mode. Everything left unchecked here stays visible in Recruiter Mode.</p>
+      <div id="recruiterTogglesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Nav bar links</h3>
+      <p class="settings-hint">Pick which sections get a link in the top nav bar. This is separate from Show/Hide above — a section can stay on the page but skip the nav, or vice versa.</p>
+      <div id="navTogglesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Section titles</h3>
       <p class="settings-hint">Rewrite the small label and heading shown above each section.</p>
       <div id="sectionTitlesWrap"></div>
@@ -284,6 +286,15 @@
       </label>
     </div>
     <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Live clock style</h3>
+      <p class="settings-hint">Choose how the fixed clock at the top of the site looks. Date is always shown underneath.</p>
+      <select id="s_clockStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="digital">Digital — teal LED</option>
+        <option value="neon">Digital — neon pink/gold</option>
+        <option value="analog">Analog clock face</option>
+      </select>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Easter eggs &amp; mini-games</h3>
       <p class="settings-hint">Site-wide on/off switch for every easter egg, gimmick, and mini-game. Visitors never see this control — only you do, here.</p>
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
@@ -314,6 +325,26 @@
       <h3 style="font-family:var(--font-display); margin-bottom:6px; color:#f06464;">Danger zone</h3>
       <p class="settings-hint">This overwrites your live database with whatever is currently written in <code>data.js</code>. Use this only if you want to discard everything and start fresh.</p>
       <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4); color:#f06464;">Reset to data.js defaults</button>
+    </div>
+  </section>
+
+  <!-- ---- VISITOR LEADS (game/quiz players) ---- -->
+  <section class="admin-panel-section" data-panel="visitors">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Who's played games/quiz</h3>
+      <p class="settings-hint">Everyone who filled the name/contact gate before playing a game, checking hints, or taking the quiz.</p>
+      <button id="downloadVisitorsBtn" class="btn btn-glass" style="margin:10px 0;">⬇ Download as CSV</button>
+      <div id="visitorLeadsTableWrap" class="admin-data-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- ---- HIRE ME INQUIRIES ---- -->
+  <section class="admin-panel-section" data-panel="hires">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Hire Me submissions</h3>
+      <p class="settings-hint">Everyone who filled out the "Hire Me" popup.</p>
+      <button id="downloadHiresBtn" class="btn btn-glass" style="margin:10px 0;">⬇ Download as CSV</button>
+      <div id="hireInquiriesTableWrap" class="admin-data-table-wrap"></div>
     </div>
   </section>
 
