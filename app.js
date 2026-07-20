@@ -1108,8 +1108,8 @@ function initHireMe(){
     const contact = document.getElementById('hireContact').value.trim();
     const message = document.getElementById('hireMessage').value.trim();
     if (!name || !contact){ status.textContent = 'Name and email/phone are required.'; return; }
+    status.textContent = '';
 
-    status.textContent = 'Sending…';
     let emailed = false;
     const hasEmailJs = window.emailjs && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY;
     if (hasEmailJs){
@@ -1124,22 +1124,13 @@ function initHireMe(){
       try { await supa.from('hire_inquiries').insert({ name, company, contact, message, page: location.href }); }
       catch(e){ console.warn('Supabase insert failed', e); }
     }
-    if (emailed){
-      status.textContent = '✓ Sent — I\'ll be in touch soon.';
-    } else if (supa){
-      status.textContent = '✓ Received — saved for me to follow up on.' + (hasEmailJs ? '' : ' (Email notifications aren\'t configured yet.)');
-    } else {
-      status.textContent = 'Could not send — please email yashwanthriya25@gmail.com directly instead.';
-    }
     sfxSuccess();
-    setTimeout(() => {
-      hideOverlay(overlay);
-      document.getElementById('hireName').value = '';
-      document.getElementById('hireCompany').value = '';
-      document.getElementById('hireContact').value = '';
-      document.getElementById('hireMessage').value = '';
-      status.textContent = '';
-    }, 1800);
+    hideOverlay(overlay);
+    document.getElementById('hireName').value = '';
+    document.getElementById('hireCompany').value = '';
+    document.getElementById('hireContact').value = '';
+    document.getElementById('hireMessage').value = '';
+    showMiniToast(emailed || supa ? '✓ Sent' : 'Could not send — email me directly');
   });
 }
 function initIntroSplash(){
@@ -1256,7 +1247,7 @@ function initFontSizeControl(){
   const resetBtn = document.getElementById('fontSizeReset');
   const wrapper = document.getElementById('scaleWrapper');
   function apply(){
-    if (wrapper) wrapper.style.fontSize = pct + '%';
+    if (wrapper) wrapper.style.zoom = pct / 100;
     resetBtn.textContent = pct + '%';
     localStorage.setItem('font_size_pct', pct);
   }
@@ -1505,6 +1496,22 @@ function showBadgeToast(msg){
   toast.classList.remove('hidden');
   requestAnimationFrame(() => toast.classList.add('show'));
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.classList.add('hidden'), 400); }, 3200);
+}
+
+// Small, transparent, quick — for low-key confirmations (e.g. Hire Me sent) that
+// shouldn't feel as loud/celebratory as the gradient badge-unlock toast above.
+function showMiniToast(msg){
+  let toast = document.getElementById('miniToast');
+  if (!toast){
+    toast = document.createElement('div');
+    toast.id = 'miniToast';
+    toast.className = 'mini-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 1600);
 }
 
 // ---- Coffee cup easter egg (footer): 5 clicks within 3s -> confetti + badge ----

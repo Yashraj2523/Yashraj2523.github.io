@@ -64,7 +64,7 @@ body{ transition: background .5s var(--ease), color .5s var(--ease); }
 
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-#scaleWrapper{ transition: font-size .35s var(--ease); }
+#scaleWrapper{ transition: zoom .35s var(--ease); }
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto;}
   *{animation-duration:.01ms !important; transition-duration:.01ms !important;}
@@ -1077,6 +1077,18 @@ body.inverse-mode .navbar, body.inverse-mode .live-clock, body.inverse-mode .fon
 }
 .badge-toast.hidden{ display:none; }
 .badge-toast.show{ opacity:1; transform:translateY(0); }
+
+/* ============ MINI TOAST (small, transparent, quick) ============ */
+.mini-toast{
+  position:fixed; bottom:90px; right:18px; z-index:400;
+  background:rgba(20,22,30,.55); color:var(--ink-0); font-size:.8rem; font-weight:500;
+  padding:9px 16px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(10px); box-shadow:0 10px 26px -10px rgba(0,0,0,.4);
+  opacity:0; transform:translateY(10px); pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease);
+}
+.mini-toast.show{ opacity:1; transform:translateY(0); }
+html[data-theme="light"] .mini-toast{ background:rgba(255,255,255,.6); border-color:rgba(0,0,0,.08); }
 
 /* ============ COFFEE EASTER EGG ============ */
 #coffeeEgg{ cursor:pointer; user-select:none; transition:transform .2s ease; display:inline-block; }
