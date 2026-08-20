@@ -1,65 +1,103 @@
-# Yashwanth R — Portfolio Site
+# Yashwanth R — Portfolio
 
-A polished, glassmorphism portfolio website with a public homepage and a separate admin dashboard. The site is now fully backed by Supabase for live content editing, and it includes a richer set of interactions such as search, recruiter mode, animated effects, and mini-games.
+A single-page, glass/iOS-style portfolio. Self-contained static site (HTML/CSS/JS)
+that you can host anywhere free: GitHub Pages, Netlify, Vercel, or Cloudflare Pages.
 
-## What the project includes now
-- A single-page portfolio experience with animated background effects, scroll reveals, and a modern glass UI.
-- A Supabase-powered admin dashboard for editing content without touching code.
-- Live GitHub repository cards pulled from the GitHub API.
-- Project popups with tags, metrics, features, and screenshots.
-- A YouTube card with banner/logo support.
-- Light/dark mode, theme palette presets, wallpaper controls, and section visibility settings.
-- Command palette/global search with Ctrl+K.
-- Recruiter mode for a cleaner, more focused view.
-- Mini-games and easter-egg style extras for visitors.
+## What's already working out of the box (no setup needed)
+- Full one-page layout: hero, about, skills, projects, certifications, hobbies, connect, contact
+- **Live GitHub repos** — pulled directly from `https://api.github.com/users/Yashraj2523/repos`
+  every time someone loads the page. No key needed, updates automatically as you push new repos.
+- LinkedIn + YouTube cards with redirect buttons (YouTube has a live embedded preview)
+- **Light / dark mode toggle** (sun/moon icon, top-right) — remembers your choice, also respects
+  the visitor's OS preference on first visit
+- Smooth scroll-reveal animations, animated constellation background (recolors with the theme), glass panels
+- Résumé download button (pointed at `Yashwanth_Resume.pdf` in this folder)
+- Back-to-top button, one-click "copy email" button in the contact section
+- Fully responsive, reduced-motion respected, social link preview tags (Open Graph) for nicer link shares
 
-## Where content lives
-All editable site content is stored in Supabase in the table `site_content` under the row `id = 'main'`. The file `data.js` is only the initial seed content used the first time the site loads with an empty database. After that, the live site reads and writes content through Supabase.
+## New in this update
+- **Profile photo slideshow** — add as many photos as you like via `profile_photos` in `data.js` (or live-edit the list by double-clicking the slideshow while signed in). Auto-advances every ~4s, hover/click/tap to skip ahead manually, dot indicators show position.
+- **Project popup modal** — clicking a project card opens a modal with description, tags, features, GitHub/demo links, and screenshots if you've added any. Click the same card again, click outside, or press Escape to close.
+- **Certification popup viewer** — clicking a certification opens its file (image or PDF, auto-detected from the URL) in a viewer with zoom in/out/reset/fit-to-screen, mouse-wheel zoom, drag-to-pan, and touch pinch-zoom on mobile.
+- **Redesigned light mode** — higher-contrast palette built specifically for readability, with smooth transition animations whenever you switch themes.
+- **YouTube card redesign** — banner + channel logo + visit button instead of an embedded player. Set `youtube_banner` / `youtube_logo` / `youtube_subs` in `data.js`.
+- Keyboard accessibility: all popups respond to Escape, focus outlines are visible everywhere, cards are reachable and triggerable via Tab + Enter/Space.
+- Lazy-loaded images throughout (slideshow, screenshots, certificates) to keep the page fast.
 
-## Project files
-- `index.html` — public homepage structure
-- `app.js` — public site rendering and interactions
-- `admin.html` — admin sign-in and dashboard UI
-- `admin.js` — admin forms, repeater editors, uploads, and save logic
-- `style.css` — shared styling for both the public and admin pages
-- `data.js` — initial seed content only
-- `config.js` — Supabase connection settings
-- `supabase_schema.sql` — SQL needed to initialize the database and storage bucket
-- `images/` — profile photos, channel art, logos, and other uploaded media
-- `Yashwanth_Resume.pdf` — résumé download link
+### Adding your own content for these features
+In `data.js`:
+- `profile_photos`: array of image URLs (or filenames if you upload them into this same folder)
+- Each project: add `features` (array of strings), `github`, `demo` (leave `""` if none), `screenshots` (array of image URLs, leave `[]` if none)
+- Each certification: add `file` — a URL to the certificate image or PDF (leave `""` if you haven't uploaded one yet)
+- `youtube_banner`, `youtube_logo`, `youtube_subs` — your channel's banner image URL, logo/avatar URL, and subscriber count text
 
-## One-time setup
-1. Create a free Supabase project at https://supabase.com.
-2. Open the SQL editor and run `supabase_schema.sql`.
-   - This creates the `site_content` table and the `portfolio-media` storage bucket.
-3. Enable email auth in Supabase and create one admin user account.
-4. Copy your Supabase project URL and anon key into `config.js`.
-5. Open `admin.html`, sign in, and start editing.
+All of the above are also editable live through the sign-in/edit mode described below — double-click a project or certification card while signed in for a quick-edit prompt covering these fields.
 
-## Editing content
-1. Visit `admin.html` (or use the lock icon in the main navigation).
-2. Sign in with the admin account created during setup.
-3. Use the tabs to edit sections such as hero/about, skills, projects, certifications, experience, education, achievements, hobbies, connect links, and settings.
-4. Upload images or PDFs directly for profile photos, project screenshots, YouTube assets, and certificates.
-5. Click Save changes. The changes appear on the live site immediately.
+## Turning on real, owner-only editing (Supabase)
 
-## Admin features worth noting
-- Reorderable repeaters for projects, certifications, experience, education, and more.
-- Section visibility and heading controls for the main homepage sections.
-- Theme palette presets and wallpaper opacity settings.
-- Custom sections can be added from the dashboard.
-- Reset to data.js defaults is available from the Settings area if you want to start over.
+Content lives in `data.js` by default. To make it genuinely editable — by **only you**,
+through a real sign-in, with changes stored in a database that updates instantly for
+every visitor:
 
-## Deployment
-This project is a static site, so it can be deployed to GitHub Pages or any other static host.
+1. Go to https://supabase.com → create a free project.
+2. Open **SQL Editor** → paste in the contents of `supabase_schema.sql` → run it.
+   (This creates the content table AND locks editing to signed-in users only — there
+   is no shared passphrase anyone could guess.)
+3. Go to **Authentication → Providers** → confirm "Email" is enabled.
+4. Go to **Authentication → Users → Add user** and create **exactly one account**:
+   your own email + a strong password. Optionally go to **Authentication → Settings**
+   and turn off public sign-ups, so nobody else can ever create an account.
+5. Go to **Project Settings → API** → copy your **Project URL** and **anon public key**.
+6. Open `config.js` and paste them in:
+   ```js
+   const SUPABASE_URL = "https://xxxxxxxx.supabase.co";
+   const SUPABASE_ANON_KEY = "eyJhbGciOi....";
+   ```
+7. Reload the site. The first load automatically seeds your Supabase table with
+   everything currently in `data.js`. From then on, the site reads from Supabase.
 
-1. Push all project files to your GitHub repository.
-2. Enable GitHub Pages in the repository settings.
-3. Deploy from the main branch.
-4. Open your Pages URL.
+### How editing works now
+- Click the **lock icon** (top-right of the nav) → a sign-in modal opens.
+- Enter the email + password of the one account you created in step 4. Anyone else
+  who tries will just get "Invalid login credentials" — there's no passphrase to leak.
+- Once signed in, a banner appears at the top confirming edit mode, and:
+  - Hero name, hero subtitle, the About paragraph, and the LinkedIn blurb become
+    click-and-type editable directly on the page — click in, type, click out, it saves.
+  - Double-click any **skill card**, **project card**, **certification row**, or
+    **hobby chip** for a focused quick-edit prompt.
+- Every change writes straight to Supabase — live for every visitor immediately,
+  no rebuild or redeploy needed, and it persists forever.
+- Click **"Sign out"** in the banner when you're done.
 
-> After editing content through the admin dashboard, you do not need to redeploy. The content is stored in Supabase and updates live.
+If Supabase isn't configured, clicking the lock icon just lets you know editing isn't
+set up yet on that deployment — no broken passphrase prompt, no fallback admin mode.
 
-## Notes
-- The résumé PDF is already included and linked from the hero section.
-- The site is designed to work even before full Supabase setup by falling back to the seed content in `data.js`.
+## Keeping GitHub/LinkedIn/YouTube "auto-updated"
+- **GitHub**: fully automatic already — it's a live API call on every page load.
+- **LinkedIn**: LinkedIn does not allow public, unauthenticated live embedding of
+  profile data (no public API for this) — this is a platform restriction, not a
+  limitation of this site. The LinkedIn card is a polished preview + a button
+  straight to your live profile, which is the realistic, ToS-compliant best option.
+- **YouTube**: the channel preview embed updates automatically as you add videos —
+  no action needed. The subscribe/visit button always points to your real channel.
+
+## File map
+```
+index.html            -- page structure & content
+style.css              -- all visual design (glass/iOS aesthetic, animations)
+data.js                -- your editable content, seeds the database on first run
+config.js              -- Supabase keys + admin passphrase (fill this in)
+app.js                 -- rendering, GitHub fetch, animations, edit-mode logic
+supabase_schema.sql     -- run once in Supabase to create the content table
+Yashwanth_Resume.pdf    -- linked from the "Download résumé" button
+```
+
+## Deploying for free (recommended: GitHub Pages, since you already use GitHub)
+1. Create a new repo, e.g. `yashwanthr.github.io` (or any name + enable Pages on it).
+2. Upload all files in this folder to the repo root.
+3. Repo → Settings → Pages → set source to the `main` branch, root folder.
+4. Your live site will be at `https://<your-username>.github.io/<repo-name>/`
+   (or just `https://<your-username>.github.io/` if you used the special repo name).
+
+Before sending this link to recruiters: complete the Supabase setup above so editing
+is truly locked to your account, and double check your phone/email in `data.js` are correct.

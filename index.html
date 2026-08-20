@@ -3,35 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Yashwanth R — Software Engineer | Full-Stack & AI/ML Portfolio</title>
-<meta name="description" content="Portfolio of Yashwanth R — full-stack & AI/ML engineer graduating 2026 from VIT Vellore. Projects, certifications, live GitHub repos, and contact details for recruiters." />
-<meta name="keywords" content="Yashwanth R, software engineer portfolio, full stack developer, AI ML engineer, fresher software engineer, VIT Vellore, Python developer, machine learning projects, hire fresher" />
-<meta name="author" content="Yashwanth R" />
-<link rel="canonical" href="https://yashraj2523.github.io/" />
+<title>Yashwanth R — Software Engineer</title>
+<meta name="description" content="Portfolio of Yashwanth R — Full-stack & AI/ML engineer, fresh graduate." />
 <meta name="theme-color" content="#0a0d14" />
 <meta property="og:title" content="Yashwanth R — Software Engineer" />
 <meta property="og:description" content="Full-stack & AI/ML engineer, M.Tech Software Engineering 2026. Projects, certifications, GitHub & more." />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://yashraj2523.github.io/" />
 <meta name="twitter:card" content="summary" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0d14'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0d14'/%3E%3Ctext x='90' y='118' font-size='80' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EYR%3C/text%3E%3C/svg%3E" />
-<link rel="manifest" href="manifest.json" />
-
-<!-- Google Search Console: replace YOUR_VERIFICATION_CODE then uncomment
-<meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
--->
-
-<!-- Google Analytics: replace G-XXXXXXXXXX with your GA4 Measurement ID then uncomment both tags
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>
--->
-
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,99 +19,95 @@
 </head>
 <body>
 
-<!-- ================= INTRO SPLASH ================= -->
-<div id="introSplash" class="intro-splash">
-  <div class="intro-splash-inner">
-    <span class="intro-logo">YR<span class="logo-dot">.</span></span>
-    <p>For the full experience — animations, parallax &amp; all the little details —<br><strong>view this on a desktop.</strong></p>
-    <div class="intro-progress"><div class="intro-progress-bar"></div></div>
-  </div>
-  <audio id="introSound" src="audio/intro-chime.mp3" preload="auto"></audio>
-</div>
-
 <!-- ================= AMBIENT BACKGROUND ================= -->
 <div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
-<canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
 <div class="grain"></div>
+<style id="cursorStyleRule"></style>
+<div id="cursorDot"></div>
 
-<!-- ================= CONNECT QUICK-JUMP (top-left) ================= -->
-<a href="#connect" class="connect-quickjump" title="Jump to Connect">🔗</a>
-
-<!-- ================= SCROLL SECTION LABEL ================= -->
-<div id="scrollSectionLabel" class="scroll-section-label"></div>
-
-<!-- ================= LIVE CLOCK ================= -->
-<div id="liveClock" class="live-clock" title="Local time">
-  <span id="clockDigital" class="clock-digital"></span>
-  <svg id="clockAnalog" class="clock-analog hidden" viewBox="0 0 100 100">
-    <circle cx="50" cy="50" r="46" class="clock-face" />
-    <line id="clockHourHand" x1="50" y1="50" x2="50" y2="28" class="clock-hand clock-hand-hour" />
-    <line id="clockMinHand" x1="50" y1="50" x2="50" y2="16" class="clock-hand clock-hand-min" />
-    <line id="clockSecHand" x1="50" y1="50" x2="50" y2="12" class="clock-hand clock-hand-sec" />
-    <circle cx="50" cy="50" r="2.5" class="clock-pin" />
-  </svg>
-  <span id="clockDate" class="clock-date"></span>
+<!-- ================= INTRO SPLASH ================= -->
+<div id="introSplash">
+  <div class="intro-inner">
+    <div class="intro-yr">YR<span style="color:var(--accent-1)">.</span></div>
+    <p class="intro-name">Yashwanth R</p>
+    <p class="intro-hint">Best experienced on desktop</p>
+    <button id="introEnterBtn" class="btn btn-primary" style="margin-top:26px">Enter portfolio →</button>
+  </div>
 </div>
 
-<!-- ================= FONT SIZE CONTROL (always visible) ================= -->
-<div id="fontSizeControl" class="font-size-control" role="group" aria-label="Adjust text size">
-  <button id="fontSizeDown" type="button" aria-label="Decrease text size">A−</button>
-  <button id="fontSizeReset" type="button" aria-label="Reset text size" title="Reset">100%</button>
-  <button id="fontSizeUp" type="button" aria-label="Increase text size">A+</button>
+<!-- ================= SCROLL PROGRESS ================= -->
+<div id="scrollProgress" class="scroll-progress"></div>
+
+<!-- ================= FONT SIZE BAR ================= -->
+<div id="fontSizeBar" class="font-size-bar glass">
+  <button id="fontDecrBtn" class="fsz-btn" title="Smaller text">A−</button>
+  <span class="fsz-label">Aa</span>
+  <button id="fontIncrBtn" class="fsz-btn" title="Larger text">A+</button>
 </div>
 
 <!-- ================= NAV ================= -->
-
-<nav class="navbar viewer-navbar glass">
+<nav class="navbar glass">
   <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
-  <div class="navlinks" id="navLinks"></div>
+  <div class="navlinks">
+    <a href="#about">About</a>
+    <a href="#skills">Skills</a>
+    <a href="#projects">Projects</a>
+    <a href="#repos">GitHub</a>
+    <a href="#certs">Certs</a>
+    <a href="#connect">Connect</a>
+  </div>
   <div class="nav-actions">
-    <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <button id="recruiterModeBtn" class="recruiter-pill" title="Switch to Recruiter Mode">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
+      Recruiter <span id="rmLabel">Mode</span>
     </button>
-    <button id="recruiterModeBtn" class="recruiter-mode-pill" aria-pressed="false" title="Recruiter Mode — see only the essentials: projects, skills, experience, certs, contact">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
-      <span class="recruiter-label">Recruiter Mode</span>
-    </button>
-    <button id="soundToggleBtn" class="icon-btn" title="Toggle sound">🔊</button>
     <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
-    <div class="nav-auth-wrap">
-      <button id="adminLockBtn" class="icon-btn" type="button" title="Owner sign in">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
-      </button>
-      <div id="loginPopup" class="login-popup hidden">
-        <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
-        <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
-        <button id="loginSubmitBtn" class="btn btn-primary btn-block" type="button">Sign in</button>
-        <p id="loginStatus" class="modal-status"></p>
-      </div>
-    </div>
-    <button id="hireMeBtn" type="button" class="navcta">Hire me</button>
+    <a href="admin.html" class="icon-btn" title="Owner dashboard">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+    </a>
+    <button id="hireMeBtn" class="navcta">Hire me</button>
   </div>
 </nav>
 
 <button id="backToTop" class="back-to-top hidden" title="Back to top">↑</button>
 
-<!-- ================= COMMAND PALETTE / GLOBAL SEARCH (Ctrl+K) ================= -->
-<div id="paletteOverlay" class="modal-overlay hidden">
-  <div class="glass modal-box palette-box">
-    <input id="paletteInput" type="text" placeholder="Search projects, skills, certifications… or type a command" autocomplete="off" />
-    <div id="paletteResults" class="palette-results"></div>
-    <div class="palette-hint">↑↓ to navigate · Enter to select · Esc to close</div>
+<!-- ================= FLOATING CONTROLS ================= -->
+<canvas id="fireflyCanvas" class="firefly-canvas"></canvas>
+<div id="floatingStar" class="floating-star hidden">⭐</div>
+<canvas id="matrixCanvas" class="matrix-canvas hidden"></canvas>
+
+<!-- ================= HIRE ME POPUP ================= -->
+<div id="hireMeOverlay" class="modal-overlay hidden">
+  <div class="glass modal-box hire-me-box">
+    <button id="hireMeClose" class="modal-close">✕</button>
+    <h3>👋 Let's connect</h3>
+    <p class="muted modal-sub">Fill in your details — I'll reply within 24 hours.</p>
+    <form id="hireMeForm" novalidate>
+      <div class="hm-field"><label>Name *</label><input id="hmName" type="text" required/></div>
+      <div class="hm-field"><label>Company</label><input id="hmCompany" type="text"/></div>
+      <div class="hm-field"><label>Email *</label><input id="hmEmail" type="email" required/></div>
+      <div class="hm-field"><label>Phone</label><input id="hmPhone" type="tel"/></div>
+      <div class="hm-field"><label>Message *</label><textarea id="hmMessage" required></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">Send message</button>
+      <p id="hireMeStatus" class="modal-status"></p>
+    </form>
   </div>
 </div>
 
-<main id="scaleWrapper">
+<!-- ================= BADGE TOAST ================= -->
+<div id="badgeToast" class="badge-toast hidden"></div>
+
+<main>
 
   <!-- ================= HERO ================= -->
   <section class="hero" id="hero">
     <div class="hero-inner hero-grid">
       <div class="hero-text">
-        <p class="eyebrow" id="heroEyebrow" data-rotate-status>● Open to opportunities — M.Tech Software Engineering, 2026</p>
+        <p class="eyebrow" data-rotate-status>● Open to opportunities — M.Tech Software Engineering, 2026</p>
         <h1 class="hero-name" data-edit="hero_name">Yashwanth R</h1>
         <h2 class="hero-role">
           <span class="role-fixed">I build </span><span id="roleCycler" class="role-cycle">intelligent systems</span>
@@ -143,31 +118,36 @@
           <a id="resumeDownloadBtn" href="Yashwanth_Resume.pdf" download class="btn btn-glass">Download résumé ↓</a>
         </div>
         <div class="hero-stats">
-          <div class="stat"><span class="stat-num" id="statProjects" data-count="0">0</span><span class="stat-label">Projects shipped</span></div>
-          <div class="stat"><span class="stat-num" id="statCerts" data-count="0">0</span><span class="stat-label">Certifications</span></div>
-          <div class="stat"><span class="stat-num" id="statLangs" data-count="0">0</span><span class="stat-label">Languages spoken</span></div>
+          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Projects shipped</span></div>
+          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Certifications</span></div>
+          <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">Languages spoken</span></div>
         </div>
       </div>
 
       <div class="hero-photo-wrap">
-        <div id="avatarFlip" class="avatar-flip" role="button" tabindex="0" aria-label="Click to reveal a QR code for this site" title="Click to flip: photo ↔ QR code">
-          <div class="avatar-flip-inner">
-            <div class="avatar-flip-front">
-              <div id="profileSlideshow" class="slideshow glass" tabindex="0" aria-label="Profile photo slideshow">
-                <div id="slideshowTrack" class="slideshow-track"></div>
-                <button id="slidePrev" class="slide-arrow prev" aria-label="Previous photo" type="button">‹</button>
-                <button id="slideNext" class="slide-arrow next" aria-label="Next photo" type="button">›</button>
-                <div id="slideshowDots" class="slideshow-dots"></div>
-              </div>
-            </div>
-            <div class="avatar-flip-back glass">
-              <img id="qrImage" alt="QR code linking to this site" />
-              <p>Scan to share this page</p>
-              <button id="qrCopyBtn" class="btn btn-glass" type="button">Copy link instead</button>
-            </div>
-          </div>
-          <span class="avatar-flip-hint" aria-hidden="true">▦ tap for QR</span>
+        <div id="profileSlideshow" class="slideshow glass" tabindex="0" aria-label="Profile photo slideshow, click to advance">
+          <div id="slideshowTrack" class="slideshow-track"></div>
+          <div id="slideshowDots" class="slideshow-dots"></div>
         </div>
+      </div>
+      <div id="avatarContainer" class="avatar-container" title="Click to wave!">
+        <svg class="avatar-svg" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+          <rect x="38" y="80" width="44" height="52" rx="12" fill="var(--accent-2)" opacity=".85"/>
+          <circle cx="60" cy="54" r="26" fill="#f5c5a3"/>
+          <ellipse cx="60" cy="32" rx="26" ry="14" fill="#2d1a08"/>
+          <circle cx="50" cy="52" r="4" fill="#2d1a08"/><circle cx="70" cy="52" r="4" fill="#2d1a08"/>
+          <circle cx="51" cy="51" r="1.5" fill="#fff"/><circle cx="71" cy="51" r="1.5" fill="#fff"/>
+          <path d="M50 62 Q60 70 70 62" stroke="#2d1a08" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <rect x="16" y="80" width="22" height="12" rx="6" fill="var(--accent-2)" opacity=".85" transform="rotate(10 27 86)"/>
+          <g id="avatarHand" class="avatar-hand">
+            <rect x="82" y="80" width="22" height="12" rx="6" fill="var(--accent-2)" opacity=".85" transform="rotate(-10 93 86)"/>
+            <text x="102" y="78" font-size="14">👋</text>
+          </g>
+          <rect x="42" y="126" width="14" height="22" rx="7" fill="var(--accent-2)" opacity=".7"/>
+          <rect x="64" y="126" width="14" height="22" rx="7" fill="var(--accent-2)" opacity=".7"/>
+          <text x="60" y="112" font-family="Arial" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">YR</text>
+        </svg>
+        <p class="avatar-label">Click me 👆</p>
       </div>
     </div>
     <div class="scroll-cue"><span></span></div>
@@ -187,29 +167,26 @@
       </div>
       <div class="glass panel about-edu">
         <h3>Education</h3>
-        <div id="eduList"></div>
+        <div class="edu-item">
+          <div class="edu-top"><strong>M.Tech, Software Engineering</strong><span>2021 – 2026</span></div>
+          <p>Vellore Institute of Technology</p>
+        </div>
+        <div class="edu-item">
+          <div class="edu-top"><strong>12th Grade</strong><span>2019 – 2020</span></div>
+          <p>Lakshmi Garden School</p>
+        </div>
+        <div class="edu-item">
+          <div class="edu-top"><strong>10th Grade</strong><span>2017 – 2018</span></div>
+          <p>Lakshmi Garden School</p>
+        </div>
         <h3 class="lang-head">Languages</h3>
-        <div class="lang-bars" id="langBars"></div>
+        <div class="lang-bars">
+          <div class="lang-row"><span>English</span><div class="bar"><div style="width:100%"></div></div></div>
+          <div class="lang-row"><span>Hindi</span><div class="bar"><div style="width:80%"></div></div></div>
+          <div class="lang-row"><span>Tamil</span><div class="bar"><div style="width:100%"></div></div></div>
+        </div>
       </div>
     </div>
-  </section>
-
-  <!-- ================= EXPERIENCE ================= -->
-  <section class="section" id="experience">
-    <div class="section-head">
-      <span class="tag">Experience</span>
-      <h2>Where I've worked.</h2>
-    </div>
-    <div class="experience-list" id="experienceList"></div>
-  </section>
-
-  <!-- ================= TIMELINE ================= -->
-  <section class="section" id="timeline">
-    <div class="section-head">
-      <span class="tag">Journey</span>
-      <h2>Everything, in order.</h2>
-    </div>
-    <div class="timeline-track" id="timelineTrack"></div>
   </section>
 
   <!-- ================= SKILLS ================= -->
@@ -238,11 +215,8 @@
       <span class="tag">Live from GitHub</span>
       <h2>Pulled straight from my repositories.</h2>
     </div>
-    <div id="githubStatsStrip" class="github-stats-strip"></div>
     <div id="githubStatus" class="github-status">Fetching latest repositories…</div>
-    <div class="repos-grid" id="reposGrid">
-      <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
-    </div>
+    <div class="repos-grid" id="reposGrid"></div>
     <div class="center-row">
       <a href="https://github.com/Yashraj2523" target="_blank" rel="noopener" class="btn btn-glass">Open full GitHub profile ↗</a>
     </div>
@@ -266,25 +240,13 @@
     <div class="hobbies-row" id="hobbiesRow"></div>
   </section>
 
-  <!-- ================= ACHIEVEMENTS & PUBLICATIONS ================= -->
-  <section class="section" id="achievements">
-    <div class="section-head">
-      <span class="tag">Recognition</span>
-      <h2>Achievements & publications.</h2>
-    </div>
-    <div class="achievements-grid" id="achievementsGrid"></div>
-    <div class="publications-list" id="publicationsList"></div>
-  </section>
-
-  <div id="customSectionsContainer"></div>
-
   <!-- ================= CONNECT ================= -->
   <section class="section" id="connect">
     <div class="section-head">
       <span class="tag">Connect</span>
       <h2>Find me elsewhere.</h2>
     </div>
-    <div class="connect-grid" id="connectGrid">
+    <div class="connect-grid">
 
       <div class="glass panel connect-card">
         <div class="connect-top">
@@ -304,13 +266,13 @@
         <a href="https://www.linkedin.com/in/yashraj2523/" target="_blank" rel="noopener" class="btn btn-glass btn-block">View LinkedIn ↗</a>
       </div>
 
-      <div class="glass panel connect-card connect-card-youtube" id="youtubeCard">
+      <div class="glass panel connect-card connect-card-wide" id="youtubeCard">
         <div class="yt-banner" id="ytBanner">
-          <img id="ytBannerImg" alt="YouTube channel banner" loading="lazy" onerror="this.closest('.yt-banner').classList.add('yt-banner-fallback'); this.style.display='none';" />
+          <img id="ytBannerImg" alt="YouTube channel banner" loading="lazy" />
           <div class="yt-banner-overlay"></div>
         </div>
         <div class="yt-card-body">
-          <img id="ytLogoImg" class="yt-logo" alt="Channel logo" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 72 72%27%3E%3Crect width=%2772%27 height=%2772%27 rx=%2736%27 fill=%27%23ff0000%27/%3E%3Cpath d=%27M30 24l18 12-18 12V24Z%27 fill=%27%23fff%27/%3E%3C/svg%3E';" />
+          <img id="ytLogoImg" class="yt-logo" alt="Channel logo" loading="lazy" />
           <div class="yt-card-info">
             <h3>YouTube</h3>
             <p class="muted">Tutorials, builds &amp; demos</p>
@@ -342,153 +304,19 @@
     </div>
   </section>
 
+  <!-- ================= QR SHARE ================= -->
+  <section class="section qr-section" id="qrShare">
+    <div class="glass panel qr-panel reveal">
+      <div><span class="tag">Share</span><h2>Scan to share this portfolio.</h2><p class="muted">Point your camera — it opens this page.</p></div>
+      <div class="qr-box"><img id="qrImage" alt="QR code"/><button id="qrCopyBtn" class="btn btn-glass" style="margin-top:10px">Copy link</button></div>
+    </div>
+  </section>
+
   <footer class="footer">
-    <p>© <span id="year"></span> Yashwanth R. Built with intent, not templates. <span id="coffeeEgg" title="" style="cursor:default;">☕</span></p>
+    <p>© <span id="year"></span> Yashwanth R. Built with intent, not templates. <span id="coffeeEgg" style="cursor:default">☕</span></p>
   </footer>
 
 </main>
-
-<button id="funLauncherBtn" class="floating-game-btn" title="Play, get hints & try the quiz">✨</button>
-<button id="quizLauncherBtn" class="floating-quiz-btn gated-icon hidden" title="Quick tech quiz">🧠</button>
-
-<!-- ================= TECH QUIZ ================= -->
-<div id="quizOverlay" class="modal-overlay hidden">
-  <div class="glass modal-box quiz-box">
-    <button id="quizCloseBtn" class="modal-close" aria-label="Close">✕</button>
-    <div id="quizQuestionView">
-      <h3>🧠 Quick tech quiz</h3>
-      <p class="muted" id="quizQuestionText" style="margin:10px 0 16px;"></p>
-      <div id="quizOptions" class="quiz-options"></div>
-    </div>
-    <div id="quizCorrectView" class="quiz-result hidden">
-      <h3>🎉 Nailed it!</h3>
-      <p class="muted">Here's a little reward for getting it right.</p>
-      <div class="quiz-video-wrap">
-        <iframe id="quizRewardVideoFrame" class="hidden" src="" title="Reward video" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        <video id="quizRewardVideoLocal" class="hidden" controls playsinline></video>
-      </div>
-      <button id="quizPlayAgainBtn" class="btn btn-glass" style="margin-top:14px;">Try another question</button>
-    </div>
-    <div id="quizWrongView" class="quiz-result hidden">
-      <h3>Close, but not quite!</h3>
-      <p class="muted">No worries — there's still a small gift waiting for you. Want another shot at it?</p>
-      <div class="quiz-retry-row">
-        <button id="quizRetryBtn" class="btn btn-primary">Yes, try again</button>
-        <button id="quizSkipBtn" class="btn btn-glass">Maybe later</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ================= AVATAR ASSISTANT ================= -->
-<button id="avatarAssistantBtn" class="avatar-assistant-btn" title="Ask me something">
-  <img src="images/profile/me1.jpg" alt="Chat with Yashwanth's avatar" />
-</button>
-<div id="avatarAssistantPanel" class="avatar-assistant-panel hidden">
-  <div class="avatar-assistant-head">
-    <img src="images/profile/me1.jpg" alt="" />
-    <div><strong>Ask me anything</strong><span>Scripted assistant — not live, but tries to help</span></div>
-    <button id="avatarAssistantClose" aria-label="Close">✕</button>
-  </div>
-  <div id="avatarAssistantMessages" class="avatar-assistant-messages"></div>
-  <div class="avatar-assistant-quick" id="avatarAssistantQuick"></div>
-  <div class="avatar-assistant-input-row">
-    <input id="avatarAssistantInput" type="text" placeholder="Type a question…" />
-    <button id="avatarAssistantSend" aria-label="Send">➤</button>
-  </div>
-</div>
-
-<!-- ================= FLOATING GIMMICK CONTROLS ================= -->
-<canvas id="fireflyCanvas" class="firefly-canvas"></canvas>
-<div id="floatingStar" class="floating-star hidden" title="Catch me!">⭐</div>
-<button id="gameLauncherBtn" class="floating-game-btn gated-icon hidden" title="Play a mini-game">🎮</button>
-<button id="hintsBtn" class="floating-hints-btn gated-icon hidden" title="Easter egg hints">💡</button>
-<div id="hintsPanel" class="glass hints-panel hidden">
-  <button id="hintsCloseBtn" class="modal-close" aria-label="Close">✕</button>
-  <h3>🔍 Things to find</h3>
-  <ul id="hintsList" class="hints-list"></ul>
-  <p class="settings-hint" id="hintsProgress" style="margin-top:10px;"></p>
-</div>
-
-<!-- ================= HIRE ME ================= -->
-<div id="hireMeOverlay" class="modal-overlay hidden">
-  <div class="glass modal-box hire-me-box">
-    <button id="hireMeClose" class="modal-close" aria-label="Close">✕</button>
-    <h3>💼 Let's talk.</h3>
-    <p class="muted modal-sub">Drop your details and what you have in mind — I get notified right away and reply personally.</p>
-    <input id="hireName" type="text" placeholder="Your name" autocomplete="name" required />
-    <input id="hireCompany" type="text" placeholder="Company / organization (optional)" autocomplete="organization" />
-    <input id="hireContact" type="text" placeholder="Email or phone number" autocomplete="email" required />
-    <textarea id="hireMessage" rows="4" placeholder="Role, project, timeline — whatever's useful"></textarea>
-    <button id="hireMeSubmit" class="btn btn-primary btn-block">Send</button>
-    <p id="hireMeStatus" class="modal-status"></p>
-  </div>
-</div>
-
-<!-- ================= VISITOR INFO GATE (before games/hints) ================= -->
-<div id="visitorGateOverlay" class="modal-overlay hidden">
-  <div class="glass modal-box">
-    <button id="visitorGateClose" class="modal-close" aria-label="Close">✕</button>
-    <h3>👋 Quick intro before you play</h3>
-    <p class="muted modal-sub">Tell me who's stopping by — takes 10 seconds, then the games and hidden extras unlock.</p>
-    <input id="visitorName" type="text" placeholder="Your name" autocomplete="name" />
-    <input id="visitorContact" type="text" placeholder="Email, mobile, or Instagram handle" autocomplete="email" />
-    <button id="visitorGateSubmit" class="btn btn-primary btn-block">Unlock & continue</button>
-    <p id="visitorGateStatus" class="modal-status"></p>
-  </div>
-</div>
-
-<!-- ================= GAME HUB (Bug Squash / Snake / Dino) ================= -->
-<div id="gameOverlay" class="modal-overlay hidden">
-  <div class="glass modal-box game-box">
-    <button id="gameCloseBtn" class="modal-close" aria-label="Close">✕</button>
-
-    <div id="gameMenu">
-      <h3>🎮 Mini-games</h3>
-      <p class="muted" style="margin-bottom:14px;">Take a break. High scores are saved on this device.</p>
-      <div class="game-menu-grid">
-        <button class="game-menu-card" data-game="bugsquash"><span>🐛</span>Bug Squash</button>
-        <button class="game-menu-card" data-game="snake"><span>🐍</span>Snake</button>
-        <button class="game-menu-card" data-game="dino"><span>🦖</span>Dino Runner</button>
-      </div>
-    </div>
-
-    <div id="gameBugSquash" class="game-panel hidden">
-      <button class="game-back-btn" data-back>← Games</button>
-      <h3>🐛 Bug Squash</h3>
-      <p class="muted">Squash bugs before they reach the bottom.</p>
-      <div class="game-hud"><span>Score: <strong id="gameScore">0</strong></span><span>Time: <strong id="gameTime">30</strong>s</span><span>Best: <strong id="gameBest">0</strong></span></div>
-      <div id="gameField" class="game-field">
-        <div id="gameStartOverlay" class="game-start-overlay"><p class="game-howto">🐛 Click bugs before they reach the bottom. Faster reflexes = higher score. 30 seconds on the clock.</p><button id="gameStartBtn" class="btn btn-primary">Start game</button></div>
-      </div>
-    </div>
-
-    <div id="gameSnake" class="game-panel hidden">
-      <button class="game-back-btn" data-back>← Games</button>
-      <h3>🐍 Snake</h3>
-      <p class="muted">Arrow keys or swipe. Eat the 🐛, don't bite yourself.</p>
-      <div class="game-hud"><span>Score: <strong id="snakeScore">0</strong></span><span>Best: <strong id="snakeBest">0</strong></span></div>
-      <div class="game-canvas-wrap">
-        <canvas id="snakeCanvas" width="360" height="360"></canvas>
-        <div id="snakeStartOverlay" class="game-start-overlay"><p class="game-howto">🐍 Use arrow keys (or swipe on mobile) to steer. Eat the 🐛 to grow — don't run into yourself or the walls.</p><button id="snakeStartBtn" class="btn btn-primary">Start game</button></div>
-      </div>
-    </div>
-
-    <div id="gameDino" class="game-panel hidden">
-      <button class="game-back-btn" data-back>← Games</button>
-      <h3>🦖 Dino Runner</h3>
-      <p class="muted">Space, ↑, or tap to jump over the bugs.</p>
-      <div class="game-hud"><span>Score: <strong id="dinoScore">0</strong></span><span>Best: <strong id="dinoBest">0</strong></span></div>
-      <div class="game-canvas-wrap">
-        <canvas id="dinoCanvas" width="360" height="200"></canvas>
-        <div id="dinoStartOverlay" class="game-start-overlay"><p class="game-howto">🦖 Press Space, ↑, or tap to jump over the bugs. It speeds up the longer you survive.</p><button id="dinoStartBtn" class="btn btn-primary">Start game</button></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ================= BADGE TOAST ================= -->
-<div id="badgeToast" class="badge-toast hidden"></div>
 
 <!-- ================= PROJECT POPUP MODAL ================= -->
 <div id="projectModalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
@@ -497,7 +325,6 @@
     <h3 id="projModalTitle"></h3>
     <p id="projModalDesc" class="muted"></p>
     <div id="projModalTags" class="project-tags modal-tags"></div>
-    <div id="projModalMetrics" class="metrics-row"></div>
     <div id="projModalFeaturesWrap">
       <h4 class="modal-subhead">Features</h4>
       <ul id="projModalFeatures" class="modal-feature-list"></ul>
@@ -521,10 +348,9 @@
     <p id="certModalMeta" class="muted"></p>
     <div id="certViewerWrap" class="cert-viewer-wrap">
       <div id="certViewerCanvas" class="cert-viewer-canvas">
-        <div id="certViewerLoading" class="cert-loading hidden">Loading certificate…</div>
         <img id="certViewerImg" class="cert-viewer-img hidden" alt="Certificate" />
         <iframe id="certViewerPdf" class="cert-viewer-pdf hidden" title="Certificate PDF"></iframe>
-        <p id="certViewerEmpty" class="muted cert-viewer-empty hidden">Certificate file coming soon.</p>
+        <p id="certViewerEmpty" class="muted cert-viewer-empty">No certificate file added yet — add one via <code>certifications[].file</code> in edit mode or data.js.</p>
       </div>
       <div class="cert-viewer-controls">
         <button id="certZoomOut" title="Zoom out">−</button>
@@ -538,16 +364,8 @@
 
 <!-- Supabase client (only loaded if you fill in config.js) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
-<script>
-  if ('serviceWorker' in navigator){
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
-  }
-</script>
 </body>
 </html>
