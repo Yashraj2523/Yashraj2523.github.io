@@ -1,304 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<title>Admin — Yashwanth R</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css"/>
-<style>
-.admin-shell{max-width:900px;margin:0 auto;padding:110px 20px 100px}
-.admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px}
-.admin-header h1{font-family:var(--font-display);font-size:1.6rem}
-.admin-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:24px}
-.admin-tab{padding:7px 14px;border-radius:999px;font-size:.8rem;cursor:pointer;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--ink-1);transition:.3s}
-.admin-tab.active{background:linear-gradient(135deg,var(--accent-1),var(--accent-2));color:#08090d;border-color:transparent}
-.admin-panel-section{display:none}.admin-panel-section.active{display:block}
-.admin-card{margin-bottom:14px}
-.admin-field{margin-bottom:11px}
-.admin-field label{display:block;font-size:.76rem;color:var(--ink-2);margin-bottom:4px;font-family:var(--font-mono)}
-.admin-field input,.admin-field textarea,.admin-field select{width:100%;padding:9px 12px;border-radius:9px;background:rgba(0,0,0,.18);border:1px solid var(--glass-border);color:var(--ink-0);font-size:.87rem;font-family:var(--font-body)}
-html[data-theme=light] .admin-field input,html[data-theme=light] .admin-field textarea,html[data-theme=light] .admin-field select{background:rgba(255,255,255,.6)}
-.admin-field textarea{min-height:76px;resize:vertical}
-.admin-field input[type=range]{padding:0;height:6px;cursor:pointer;accent-color:var(--accent-1)}
-.admin-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-.admin-repeat-item{border:1px solid var(--glass-border);border-radius:12px;padding:14px 14px 14px 38px;margin-bottom:10px;position:relative;background:var(--glass-bg)}
-.admin-repeat-item.collapsed .admin-repeat-body{display:none}
-.admin-repeat-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:10px}
-.admin-repeat-chevron{font-size:.95rem;color:var(--ink-2);transition:transform .3s}
-.admin-repeat-item:not(.collapsed) .admin-repeat-chevron{transform:rotate(180deg)}
-.admin-remove-btn{position:absolute;top:10px;right:10px;background:rgba(240,80,80,.12);color:#f06464;border:1px solid rgba(240,80,80,.3);border-radius:7px;width:24px;height:24px;cursor:pointer;font-size:.78rem}
-.drag-handle{position:absolute;left:10px;top:10px;cursor:grab;color:var(--ink-2);font-size:.95rem;padding:2px}
-.admin-repeat-item.dragging{opacity:.4}
-.admin-repeat-item.drag-over{border-color:var(--accent-1)}
-.admin-add-btn{background:var(--glass-bg-strong);border:1px dashed var(--glass-border);color:var(--accent-1);border-radius:10px;padding:10px;width:100%;cursor:pointer;font-size:.82rem;font-weight:600;margin-top:4px;transition:.3s}
-.admin-add-btn:hover{border-color:var(--accent-1)}
-.admin-save-bar{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:10px;padding:14px 0;margin-top:24px;background:linear-gradient(180deg,transparent,var(--bg-0) 40%)}
-.admin-save-status{font-size:.78rem;color:var(--accent-1);align-self:center}
-.upload-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.upload-row input[type=file]{font-size:.76rem;color:var(--ink-1)}
-.upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.upload-preview-item{position:relative;width:72px;height:72px;border-radius:9px;overflow:hidden;border:1px solid var(--glass-border)}
-.upload-preview-item img{width:100%;height:100%;object-fit:cover}
-.upload-preview-item button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:5px;width:16px;height:16px;font-size:.6rem;cursor:pointer;line-height:1}
-.admin-gate{display:flex;align-items:center;justify-content:center;min-height:80vh}
-.admin-login-box{width:min(92%,340px);padding:32px}
-.admin-login-box h2{font-family:var(--font-display);margin-bottom:8px}
-.settings-hint{font-size:.75rem;color:var(--ink-2);margin-bottom:12px;line-height:1.5}
-.wallpaper-presets-row{display:grid;grid-template-columns:repeat(auto-fill,48px);gap:7px;margin-top:8px}
-.wallpaper-preset-btn{width:48px;height:48px;border-radius:9px;overflow:hidden;border:2px solid var(--glass-border);cursor:pointer;padding:0;background:rgba(0,0,0,.2);transition:.25s}
-.wallpaper-preset-btn:hover{border-color:var(--accent-1);transform:scale(1.06)}
-.wallpaper-preset-btn img{width:100%;height:100%;object-fit:cover}
-.preset-none{display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-2)}
-.theme-palette-row{display:grid;grid-template-columns:repeat(auto-fill,34px);gap:7px;margin-top:6px}
-.theme-swatch-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--glass-border);cursor:pointer;padding:0;transition:.25s}
-.theme-swatch-btn:hover{transform:scale(1.12)}
-.theme-swatch-btn.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent-1)}
-.cursor-style-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
-.cursor-style-chip{padding:6px 13px;border-radius:999px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--ink-1);cursor:pointer;font-size:.78rem;transition:.25s}
-.cursor-style-chip.active{background:linear-gradient(135deg,var(--accent-1),var(--accent-2));color:#08090d;border-color:transparent}
-.section-toggle-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border);font-size:.84rem;cursor:pointer}
-.section-toggle-row:last-child{border-bottom:none}
-.section-toggle-row input{width:15px;height:15px;accent-color:var(--accent-1)}
-</style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin — Yashwanth R Portfolio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0d14'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' fill='%236ee7d8' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="admin-page">
+
+<div id="wallpaper"></div>
 <canvas id="constellation"></canvas>
 <div class="grain"></div>
+
 <nav class="navbar glass">
-  <a href="index.html" class="logo">YR<span class="logo-dot">.</span> <span style="font-size:.66rem;color:var(--ink-2);font-weight:400">/admin</span></a>
+  <a href="index.html" class="logo">YR<span class="logo-dot">.</span> <span style="font-size:.7rem; color:var(--ink-2); font-weight:400;">/admin</span></a>
+  <span id="navAdminTitle" class="nav-admin-title hidden">Edit your portfolio</span>
   <div class="nav-actions">
-    <button id="themeToggle" class="icon-btn" title="Toggle theme">
-      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
-      <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
+    <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
-    <a href="index.html" class="btn btn-glass" style="padding:7px 14px;font-size:.78rem">View site ↗</a>
+    <a href="index.html?nointro=1" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">View site ↗</a>
+    <div class="nav-auth-wrap">
+      <button id="navSignInBtn" class="btn btn-glass" style="padding:8px 16px; font-size:.82rem;">Sign in</button>
+      <button id="signOutBtn" class="btn btn-glass hidden" style="padding:8px 16px; font-size:.82rem;">Sign out</button>
+      <div id="loginPopup" class="login-popup hidden">
+        <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
+        <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
+        <button id="loginSubmitBtn" class="btn btn-primary btn-block">Sign in</button>
+        <p id="loginStatus" class="modal-status"></p>
+      </div>
+    </div>
   </div>
 </nav>
 
-<div id="loginGate" class="admin-gate">
-  <div class="glass panel admin-login-box">
-    <h2>Owner sign in</h2>
-    <p class="settings-hint">Sign in with your Supabase Authentication account. Only you can access this.</p>
-    <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username"/></div>
-    <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password"/></div>
-    <button id="loginSubmitBtn" class="btn btn-primary btn-block">Sign in</button>
-    <p id="loginStatus" class="modal-status"></p>
-    <p class="settings-hint" style="margin-top:12px">Not set up yet? See README.md for Supabase steps.</p>
-  </div>
-</div>
-
+<!-- ================= DASHBOARD (hidden until signed in) ================= -->
 <div id="dashboard" class="admin-shell hidden">
-  <div class="admin-header">
-    <h1>Edit your portfolio</h1>
-    <div style="display:flex;gap:9px;align-items:center">
-      <span id="saveStatus" class="admin-save-status"></span>
-      <button id="signOutBtn" class="btn btn-glass" style="padding:7px 14px;font-size:.78rem">Sign out</button>
-    </div>
-  </div>
-
-  <div class="admin-tabs">
-    <button class="admin-tab active" data-tab="hero">Hero &amp; About</button>
-    <button class="admin-tab" data-tab="photos">Photos</button>
+  <div class="admin-layout">
+  <div class="admin-tabs" id="adminTabs">
+    <button class="admin-tab active" data-tab="hero">Hero & About</button>
+    <button class="admin-tab" data-tab="photos">Profile Photos</button>
     <button class="admin-tab" data-tab="skills">Skills</button>
     <button class="admin-tab" data-tab="projects">Projects</button>
     <button class="admin-tab" data-tab="certs">Certifications</button>
     <button class="admin-tab" data-tab="experience">Experience</button>
     <button class="admin-tab" data-tab="education">Education</button>
-    <button class="admin-tab" data-tab="achievements">Achievements</button>
+    <button class="admin-tab" data-tab="achievements">Achievements & Pubs</button>
     <button class="admin-tab" data-tab="hobbies">Hobbies</button>
-    <button class="admin-tab" data-tab="connect">Connect</button>
+    <button class="admin-tab" data-tab="connect">Connect / YouTube</button>
     <button class="admin-tab" data-tab="sections">Sections</button>
     <button class="admin-tab" data-tab="settings">Settings</button>
+    <button class="admin-tab" data-tab="visitors">Game/Quiz Players</button>
+    <button class="admin-tab" data-tab="hires">Hire Me Inquiries</button>
   </div>
 
+  <div class="admin-panel-content">
+
+  <!-- ---- HERO & ABOUT ---- -->
   <section class="admin-panel-section active" data-panel="hero">
     <div class="glass panel admin-card">
-      <div class="admin-field"><label>Hero name</label><input id="f_hero_name" type="text"/></div>
+      <div class="admin-field"><label>Hero name</label><input id="f_hero_name" type="text" /></div>
       <div class="admin-field"><label>Hero subtitle</label><textarea id="f_hero_sub"></textarea></div>
-      <div class="admin-field"><label>Rotating roles (one per line)</label><textarea id="f_roles"></textarea></div>
-      <div class="admin-field"><label>About — one paragraph per line</label><textarea id="f_about" style="min-height:110px"></textarea></div>
-      <div class="admin-row">
-        <div class="admin-field"><label>Email</label><input id="f_email" type="email"/></div>
-        <div class="admin-field"><label>Phone</label><input id="f_phone" type="text"/></div>
-      </div>
+      <div class="admin-field"><label>Rotating role words (one per line)</label><textarea id="f_roles"></textarea></div>
+      <div class="admin-field"><label>About paragraph(s) — one per line, becomes separate paragraphs</label><textarea id="f_about" style="min-height:140px;"></textarea></div>
+      <div class="admin-field"><label>Email</label><input id="f_email" type="email" /></div>
+      <div class="admin-field"><label>Phone</label><input id="f_phone" type="text" /></div>
     </div>
   </section>
 
+  <!-- ---- PROFILE PHOTOS ---- -->
   <section class="admin-panel-section" data-panel="photos">
     <div class="glass panel admin-card">
-      <p class="settings-hint">Upload profile photos for the slideshow. Click ✕ to remove.</p>
-      <div class="upload-row"><input id="photoUploadInput" type="file" accept="image/*" multiple/><span id="photoUploadStatus" class="settings-hint"></span></div>
+      <p class="settings-hint">Upload photos directly — they'll be stored in Supabase Storage and added to the slideshow automatically. Drag isn't supported yet; use the remove (✕) buttons to reorder by removing and re-adding.</p>
+      <div class="upload-row">
+        <input id="photoUploadInput" type="file" accept="image/*" multiple />
+        <span id="photoUploadStatus" class="settings-hint"></span>
+      </div>
       <div class="upload-preview" id="photoPreviewList"></div>
     </div>
   </section>
 
+  <!-- ---- SKILLS ---- -->
   <section class="admin-panel-section" data-panel="skills">
-    <div id="skillsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addSkillGroupBtn">+ Add skill category</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="skillsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addSkillGroupBtn">+ Add skill category</button>
+    </div>
   </section>
 
+  <!-- ---- PROJECTS ---- -->
   <section class="admin-panel-section" data-panel="projects">
-    <div id="projectsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addProjectBtn">+ Add project</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="projectsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addProjectBtn">+ Add project</button>
+    </div>
   </section>
 
+  <!-- ---- CERTIFICATIONS ---- -->
   <section class="admin-panel-section" data-panel="certs">
-    <div id="certsRepeatWrap"></div>
-    <button class="admin-add-btn" id="addCertBtn">+ Add certification</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="certsRepeatWrap"></div>
+      <button class="admin-add-btn" id="addCertBtn">+ Add certification</button>
+    </div>
   </section>
 
+  <!-- ---- EXPERIENCE ---- -->
   <section class="admin-panel-section" data-panel="experience">
-    <div id="experienceRepeatWrap"></div>
-    <button class="admin-add-btn" id="addExperienceBtn">+ Add experience</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="experienceRepeatWrap"></div>
+      <button class="admin-add-btn" id="addExperienceBtn">+ Add experience</button>
+    </div>
   </section>
 
+  <!-- ---- EDUCATION ---- -->
   <section class="admin-panel-section" data-panel="education">
-    <div id="educationRepeatWrap"></div>
-    <button class="admin-add-btn" id="addEducationBtn">+ Add education</button>
-    <div class="glass panel admin-card" style="margin-top:18px">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:10px">Languages</h3>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="educationRepeatWrap"></div>
+      <button class="admin-add-btn" id="addEducationBtn">+ Add education entry</button>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Languages</h3>
       <div id="languagesRepeatWrap"></div>
       <button class="admin-add-btn" id="addLanguageBtn">+ Add language</button>
     </div>
   </section>
 
+  <!-- ---- ACHIEVEMENTS & PUBLICATIONS ---- -->
   <section class="admin-panel-section" data-panel="achievements">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:10px">Achievements</h3>
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Achievements</h3>
       <div id="achievementsRepeatWrap"></div>
       <button class="admin-add-btn" id="addAchievementBtn">+ Add achievement</button>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:10px">Publications</h3>
+      <h3 style="font-family:var(--font-display); margin-bottom:14px;">Publications</h3>
       <div id="publicationsRepeatWrap"></div>
       <button class="admin-add-btn" id="addPublicationBtn">+ Add publication</button>
     </div>
   </section>
 
+  <!-- ---- HOBBIES ---- -->
   <section class="admin-panel-section" data-panel="hobbies">
-    <div id="hobbiesRepeatWrap"></div>
-    <button class="admin-add-btn" id="addHobbyBtn">+ Add hobby</button>
+    <div class="glass panel admin-card admin-card-full">
+      <div id="hobbiesRepeatWrap"></div>
+      <button class="admin-add-btn" id="addHobbyBtn">+ Add hobby</button>
+    </div>
   </section>
 
+  <!-- ---- CONNECT / YOUTUBE ---- -->
   <section class="admin-panel-section" data-panel="connect">
     <div class="glass panel admin-card">
-      <div class="admin-row">
-        <div class="admin-field"><label>GitHub username</label><input id="f_github_username" type="text"/></div>
-        <div class="admin-field"><label>LinkedIn URL</label><input id="f_linkedin_url" type="url"/></div>
+      <div class="admin-field"><label>GitHub username</label><input id="f_github_username" type="text" /></div>
+      <div class="admin-field"><label>LinkedIn URL</label><input id="f_linkedin_url" type="url" /></div>
+      <div class="admin-field"><label>LinkedIn card blurb</label><textarea id="f_linkedin_blurb"></textarea></div>
+      <div class="admin-field"><label>YouTube channel URL</label><input id="f_youtube_url" type="url" /></div>
+      <div class="admin-field"><label>YouTube subscriber count (text, optional)</label><input id="f_youtube_subs" type="text" placeholder="e.g. 1.2K" /></div>
+
+      <div class="admin-field">
+        <label>YouTube channel banner</label>
+        <div class="upload-row">
+          <input id="ytBannerUploadInput" type="file" accept="image/*" />
+          <span id="ytBannerUploadStatus" class="settings-hint"></span>
+        </div>
+        <div class="upload-preview" id="ytBannerPreview"></div>
       </div>
-      <div class="admin-field"><label>LinkedIn blurb</label><textarea id="f_linkedin_blurb"></textarea></div>
-      <div class="admin-row">
-        <div class="admin-field"><label>YouTube URL</label><input id="f_youtube_url" type="url"/></div>
-        <div class="admin-field"><label>YouTube subscribers</label><input id="f_youtube_subs" type="text" placeholder="e.g. 1.2K"/></div>
-      </div>
-      <div class="admin-field"><label>YouTube logo / avatar</label>
-        <div class="upload-row"><input id="ytLogoUploadInput" type="file" accept="image/*"/><span id="ytLogoUploadStatus" class="settings-hint"></span></div>
+      <div class="admin-field">
+        <label>YouTube channel logo</label>
+        <div class="upload-row">
+          <input id="ytLogoUploadInput" type="file" accept="image/*" />
+          <span id="ytLogoUploadStatus" class="settings-hint"></span>
+        </div>
         <div class="upload-preview" id="ytLogoPreview"></div>
       </div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:10px">Extra connect links</h3>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">More ways to connect</h3>
+      <p class="settings-hint">Add Twitter/X, Instagram, personal blog, Discord, Behance — any other link. Each shows as its own card in the Connect section.</p>
       <div id="connectLinksRepeatWrap"></div>
-      <button class="admin-add-btn" id="addConnectLinkBtn">+ Add link</button>
+      <button class="admin-add-btn" id="addConnectLinkBtn">+ Add connect link</button>
     </div>
   </section>
 
+  <!-- ---- SECTIONS (show/hide, rename, add new) ---- -->
   <section class="admin-panel-section" data-panel="sections">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Show / hide sections</h3>
-      <p class="settings-hint">Saves instantly.</p>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Show / hide sections</h3>
+      <p class="settings-hint">Turn any section off the homepage entirely — instantly, no need for "Save changes".</p>
       <div id="sectionTogglesWrap"></div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Section titles</h3>
-      <p class="settings-hint">Tag (small label) and Heading for each section.</p>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Recruiter Mode visibility</h3>
+      <p class="settings-hint">Pick which sections stay hidden when a visitor turns on Recruiter Mode. Everything left unchecked here stays visible in Recruiter Mode.</p>
+      <div id="recruiterTogglesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Nav bar links</h3>
+      <p class="settings-hint">Pick which sections get a link in the top nav bar. This is separate from Show/Hide above — a section can stay on the page but skip the nav, or vice versa.</p>
+      <div id="navTogglesWrap"></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Section titles</h3>
+      <p class="settings-hint">Rewrite the small label and heading shown above each section.</p>
       <div id="sectionTitlesWrap"></div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Custom sections</h3>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Add a brand-new section</h3>
+      <p class="settings-hint">Each one appears on the homepage, just above the Connect section, in the order listed below. Drag the ⠿ handle to reorder them.</p>
       <div id="customSectionsRepeatWrap"></div>
-      <button class="admin-add-btn" id="addCustomSectionBtn">+ Add custom section</button>
+      <button class="admin-add-btn" id="addCustomSectionBtn">+ Add new section</button>
     </div>
   </section>
 
+  <!-- ---- SETTINGS ---- -->
   <section class="admin-panel-section" data-panel="settings">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Theme palette</h3>
-      <p class="settings-hint">Click a swatch — saves instantly.</p>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Résumé</h3>
+      <p class="settings-hint">This is the exact file your "Download résumé" button on the homepage links to. Upload a new version any time you update it — saves immediately, no need to touch "Save changes".</p>
+      <div class="upload-row">
+        <input id="resumeUploadInput" type="file" accept=".pdf" />
+        <span id="resumeUploadStatus" class="settings-hint"></span>
+      </div>
+      <p class="settings-hint" id="resumeCurrentLink"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background style</h3>
+      <p class="settings-hint">Choose the animated background behind the whole site. "Space" gives a drifting starfield/galaxy feel; "Dots" is the original constellation look.</p>
+      <select id="s_bgStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="dots">Dots (constellation)</option>
+        <option value="space">Space / Galaxy drift</option>
+        <option value="nebula">Nebula clouds</option>
+      </select>
+      <p class="settings-hint" id="bgStyleSavedLabel" style="margin-top:8px;"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background wallpaper</h3>
+      <p class="settings-hint">Upload your own image, or pick a ready-made preset below. Leave empty to use just the animated background style above.</p>
+      <div class="upload-row">
+        <input id="wallpaperUploadInput" type="file" accept="image/*" />
+        <span id="wallpaperUploadStatus" class="settings-hint"></span>
+      </div>
+      <div class="upload-preview" id="wallpaperPreview"></div>
+      <p class="settings-hint" style="margin-top:14px;">Or pick a preset:</p>
+      <div id="wallpaperPresetsRow" class="wallpaper-presets-row"></div>
+      <div class="admin-field" style="margin-top:14px; max-width:240px;"><label>Wallpaper dimness (0 = invisible, 100 = full image)</label><input id="s_wallpaperOpacity" type="number" min="0" max="100" /></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+        <button id="removeWallpaperBtn" class="btn btn-glass">Reset to default (no wallpaper)</button>
+      </div>
+      <p class="settings-hint" id="wallpaperSaveHint" style="margin-top:8px;"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Quiz reward video</h3>
+      <p class="settings-hint">The video shown when a visitor answers the tech quiz correctly. Upload your own .mp4/.webm/.mov to play it as a local file, in-panel — this is the fix if a YouTube video ever refuses to autoplay/embed in the popup. Leave empty for the default YouTube video.</p>
+      <div class="upload-row">
+        <input id="quizVideoUploadInput" type="file" accept="video/mp4,video/webm,video/quicktime" />
+        <span id="quizVideoUploadStatus" class="settings-hint"></span>
+      </div>
+      <p class="settings-hint" id="quizVideoCurrent"></p>
+      <div class="admin-field" style="margin-top:10px; max-width:420px;">
+        <label>...or paste a YouTube URL / video ID instead</label>
+        <input id="s_quizRewardVideoUrl" type="text" placeholder="https://youtube.com/watch?v=..." />
+      </div>
+      <button id="clearQuizVideoBtn" class="btn btn-glass" style="margin-top:8px;">Reset to default video</button>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Cursor style</h3>
+      <p class="settings-hint">Site-wide custom cursor + optional particle trail. Both are automatically switched off whenever a visitor turns on Recruiter Mode, so the site always looks clean and professional for that audience.</p>
+      <select id="s_cursorStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="default">Default (browser cursor)</option>
+        <option value="dot">Minimal dot</option>
+        <option value="ring">Glowing ring</option>
+        <option value="crosshair">Crosshair</option>
+        <option value="diamond">Diamond</option>
+        <option value="comet">Comet</option>
+        <option value="pixel">Retro pixel</option>
+        <option value="ghost">Soft ghost blur</option>
+        <option value="target">Target lock</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px;">
+        <input type="checkbox" id="s_cursorTrail" style="width:18px; height:18px; accent-color:var(--accent-1);" />
+        Enable particle trail following the cursor
+      </label>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Live clock style</h3>
+      <p class="settings-hint">Choose how the fixed clock at the top of the site looks. Date is always shown underneath.</p>
+      <select id="s_clockStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+        <option value="digital">Digital — teal LED</option>
+        <option value="neon">Digital — neon pink/gold</option>
+        <option value="analog">Analog clock face</option>
+      </select>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Easter eggs &amp; mini-games</h3>
+      <p class="settings-hint">Site-wide on/off switch for every easter egg, gimmick, and mini-game. Visitors never see this control — only you do, here.</p>
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+        <input type="checkbox" id="s_eggsEnabled" style="width:18px; height:18px; accent-color:var(--accent-1);" />
+        Enable easter eggs, gimmicks &amp; mini-games for visitors
+      </label>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Theme palette</h3>
+      <p class="settings-hint">Changes the accent colors used across the whole site (independent of light/dark mode). Saves instantly.</p>
       <div id="themePaletteRow" class="theme-palette-row"></div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Animated background</h3>
-      <div class="admin-field">
-        <select id="s_bgStyle">
-          <option value="dots">Dots (constellation)</option>
-          <option value="space">Space / galaxy starfield</option>
-          <option value="nebula">Nebula clouds</option>
-        </select>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>
+      <p class="settings-hint">These control sizes across the live site — change a number and save, no code edits needed.</p>
+      <p class="settings-hint">Drag any slider — the live site animates smoothly to the new size instead of snapping (once you save).</p>
+      <div class="admin-row appearance-slider-row">
+        <div class="admin-field slider-field"><label>Icon button size <span class="slider-val" id="v_iconButtonSize"></span></label><input id="s_iconButtonSize" type="range" min="24" max="64" /></div>
+        <div class="admin-field slider-field"><label>Profile photo size <span class="slider-val" id="v_avatarSize"></span></label><input id="s_avatarSize" type="range" min="160" max="600" /></div>
+        <div class="admin-field slider-field"><label>Card corner radius <span class="slider-val" id="v_cardRadius"></span></label><input id="s_cardRadius" type="range" min="0" max="48" /></div>
+        <div class="admin-field slider-field"><label>Glass blur strength <span class="slider-val" id="v_glassBlur"></span></label><input id="s_glassBlur" type="range" min="0" max="40" /></div>
+        <div class="admin-field slider-field"><label>Section spacing <span class="slider-val" id="v_sectionSpacing"></span></label><input id="s_sectionSpacing" type="range" min="40" max="240" /></div>
       </div>
+      <button id="resetAppearanceBtn" class="btn btn-glass" style="margin-top:12px;">↺ Reset appearance to default</button>
+      <p class="settings-hint" style="margin-top:6px;">Only resets sizes/blur/spacing/cursor/background style above — your projects, certs, bio and everything else stay untouched.</p>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Wallpaper image</h3>
-      <p class="settings-hint">Upload or choose a preset. Saves immediately.</p>
-      <div class="upload-row"><input id="wallpaperUploadInput" type="file" accept="image/*"/><span id="wallpaperUploadStatus" class="settings-hint"></span></div>
-      <div class="upload-preview" id="wallpaperPreview"></div>
-      <div id="wallpaperPresetsRow" class="wallpaper-presets-row"></div>
-      <div class="admin-field" style="margin-top:10px;max-width:200px"><label>Dimness 0–100</label><input id="s_wallpaperOpacity" type="range" min="0" max="100" class="admin-slider"/></div>
-      <button id="removeWallpaperBtn" class="btn btn-glass" style="margin-top:8px;font-size:.8rem">Remove wallpaper</button>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Appearance</h3>
-      <div class="admin-field"><label>Icon size: <strong id="s_iconButtonSizeVal">36</strong>px</label><input id="s_iconButtonSize" type="range" min="24" max="60" class="admin-slider"/></div>
-      <div class="admin-field"><label>Profile photo size: <strong id="s_avatarSizeVal">320</strong>px</label><input id="s_avatarSize" type="range" min="160" max="480" class="admin-slider"/></div>
-      <div class="admin-field"><label>Card radius: <strong id="s_cardRadiusVal">18</strong>px</label><input id="s_cardRadius" type="range" min="0" max="48" class="admin-slider"/></div>
-      <div class="admin-field"><label>Glass blur: <strong id="s_glassBlurVal">18</strong>px</label><input id="s_glassBlur" type="range" min="0" max="40" class="admin-slider"/></div>
-      <div class="admin-field"><label>Section spacing: <strong id="s_sectionSpacingVal">130</strong>px</label><input id="s_sectionSpacing" type="range" min="40" max="220" class="admin-slider"/></div>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Cursor style</h3>
-      <div id="cursorStylePicker" class="cursor-style-row"></div>
-      <label style="display:flex;align-items:center;gap:9px;margin-top:11px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s_cursorTrail" style="width:15px;height:15px;accent-color:var(--accent-1)"/>Enable colour cursor trail</label>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Easter eggs &amp; mini-games</h3>
-      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.84rem"><input type="checkbox" id="s_eggsEnabled" style="width:15px;height:15px;accent-color:var(--accent-1)"/>Enable for visitors (hidden in Recruiter Mode)</label>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Hire Me — EmailJS notifications</h3>
-      <p class="settings-hint">Free at <a href="https://emailjs.com" target="_blank" style="color:var(--accent-1)">emailjs.com</a> — get an email every time someone hits "Hire me".</p>
-      <div class="admin-row">
-        <div class="admin-field"><label>Service ID</label><input id="s_emailjsService" type="text" placeholder="service_xxx"/></div>
-        <div class="admin-field"><label>Template ID</label><input id="s_emailjsTemplate" type="text" placeholder="template_xxx"/></div>
-        <div class="admin-field"><label>Public Key</label><input id="s_emailjsPublic" type="text"/></div>
-      </div>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Quiz reward video</h3>
-      <p class="settings-hint">Plays in the quiz popup on a correct answer (falls back to YouTube link if not set).</p>
-      <div class="upload-row"><input id="quizVideoUploadInput" type="file" accept="video/*"/><span id="quizVideoUploadStatus" class="settings-hint"></span></div>
-      <p id="quizVideoCurrentLink" class="settings-hint"></p>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:6px">Résumé PDF</h3>
-      <p class="settings-hint">Upload a new PDF — updates the download button immediately.</p>
-      <div class="upload-row"><input id="resumeUploadInput" type="file" accept=".pdf"/><span id="resumeUploadStatus" class="settings-hint"></span></div>
-      <p id="resumeCurrentLink" class="settings-hint"></p>
-    </div>
-    <div class="glass panel admin-card" style="border-color:rgba(240,80,80,.3)">
-      <h3 style="font-family:var(--font-display);font-size:1rem;color:#f06464;margin-bottom:6px">Danger zone</h3>
-      <p class="settings-hint">Wipes the database back to the defaults in data.js. Cannot be undone.</p>
-      <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4);color:#f06464;font-size:.82rem">Reset to data.js defaults</button>
+      <h3 style="font-family:var(--font-display); margin-bottom:6px; color:#f06464;">Danger zone</h3>
+      <p class="settings-hint">This overwrites your live database with whatever is currently written in <code>data.js</code>. Use this only if you want to discard everything and start fresh.</p>
+      <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4); color:#f06464;">Reset to data.js defaults</button>
     </div>
   </section>
+
+  <!-- ---- VISITOR LEADS (game/quiz players) ---- -->
+  <section class="admin-panel-section" data-panel="visitors">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Who's played games/quiz</h3>
+      <p class="settings-hint">Everyone who filled the name/contact gate before playing a game, checking hints, or taking the quiz.</p>
+      <button id="downloadVisitorsBtn" class="btn btn-glass" style="margin:10px 0;">⬇ Download as CSV</button>
+      <div id="visitorLeadsTableWrap" class="admin-data-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- ---- HIRE ME INQUIRIES ---- -->
+  <section class="admin-panel-section" data-panel="hires">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Hire Me submissions</h3>
+      <p class="settings-hint">Everyone who filled out the "Hire Me" popup.</p>
+      <button id="downloadHiresBtn" class="btn btn-glass" style="margin:10px 0;">⬇ Download as CSV</button>
+      <div id="hireInquiriesTableWrap" class="admin-data-table-wrap"></div>
+    </div>
+  </section>
+
+  </div>
+  </div>
 
   <div class="admin-save-bar">
     <span class="admin-save-status" id="bottomSaveStatus"></span>
     <button id="saveAllBtn" class="btn btn-primary">Save changes</button>
   </div>
 </div>
-
-<div id="adminToastEl" class="admin-toast"></div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>

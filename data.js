@@ -1,9 +1,14 @@
 // data.js
-// This is the SEED content. On first load, app.js pushes this into Supabase
-// (table: site_content, row id 'main') if no row exists yet, then always
-// reads from Supabase after that. Edit mode writes back to Supabase.
-// If Supabase isn't configured (see config.js), the site just runs on this
-// file directly and "Edit mode" falls back to browser storage only.
+// IMPORTANT: This file is ONLY the one-time seed used the very first time the
+// site ever loads with a fresh Supabase database. After that first load, the
+// live site reads and writes EVERYTHING through Supabase (table: site_content,
+// row id 'main') — this file is never read again automatically.
+//
+// To actually edit your live content day-to-day, use admin.html — it has a
+// form for every section plus image/PDF uploads, and writes straight to
+// Supabase. If you ever want to wipe the database and start over from
+// whatever is written here, admin.html has a "Reset to data.js defaults"
+// button under Settings that does exactly that.
 
 const SITE_DATA = {
 
@@ -11,13 +16,15 @@ const SITE_DATA = {
   hero_sub: "Full-stack engineer with a deep AI/ML core — I design, train, ship and deploy software that solves problems people actually have. Graduating 2026, looking for my first full-time role.",
   roles: ["intelligent systems", "full-stack web apps", "computer vision pipelines", "scalable backends", "NLP tools"],
 
-  // ---- PROFILE PHOTO SLIDESHOW ----
-  // Add as many image URLs/paths as you like. Local files work too —
-  // just drop them in this folder and reference them like "me1.jpg".
+  // Profile photo slideshow — local files in images/profile/ work great here.
   profile_photos: [
-    "https://api.dicebear.com/7.x/shapes/svg?seed=yashwanth1",
-    "https://api.dicebear.com/7.x/shapes/svg?seed=yashwanth2",
-    "https://api.dicebear.com/7.x/shapes/svg?seed=yashwanth3"
+    "images/profile/me1.jpg",
+    "images/profile/me2.jpg",
+    "images/profile/me3.jpg",
+    "images/profile/me4.jpg",
+    "images/profile/me5.jpg",
+    "images/profile/me6.jpg",
+    "images/profile/me7.jpeg"
   ],
 
   about_text_html: `
@@ -37,14 +44,15 @@ const SITE_DATA = {
     { category: "Operating Systems", items: ["Windows", "Linux (Kali)", "Ubuntu"] },
   ],
 
-  // ---- PROJECTS ----
-  // "screenshots" and "demo" are optional — leave screenshots: [] or demo: ""
-  // if you don't have one yet; the popup will just hide that part.
+  // metrics: small highlight badges shown on the card AND in the popup,
+  // e.g. { label: "Accuracy", value: "95%" }. Leave metrics: [] for none.
   projects: [
     {
       title: "AI-Based Meat Spoilage Detection System",
       desc: "CNN-based model with a FastAPI backend for real-time freshness prediction, with Grad-CAM integrated for explainable AI — simulating real-world food quality monitoring.",
       tags: ["CNN", "FastAPI", "Grad-CAM", "Computer Vision"],
+      date: "Mar 2025",
+      metrics: [{ label: "Accuracy", value: "95%" }, { label: "Inference", value: "50ms" }, { label: "Samples", value: "1000+" }],
       features: [
         "Real-time freshness classification from camera input",
         "Grad-CAM heatmaps for explainable predictions",
@@ -58,6 +66,7 @@ const SITE_DATA = {
       title: "AI Virtual Mouse",
       desc: "An AI-powered virtual mouse that enables full PC control through hand gestures, built as an accessibility tool for persons with disability.",
       tags: ["OpenCV", "Computer Vision", "Accessibility"],
+      metrics: [],
       features: [
         "Hand-landmark tracking via webcam, no extra hardware",
         "Gesture mapping for click, scroll and drag",
@@ -71,6 +80,7 @@ const SITE_DATA = {
       title: "Hate Speech Detection using AI",
       desc: "An NLP + SVM based hate speech detector with auto-transcription and regional language support.",
       tags: ["NLP", "SVM", "Speech-to-Text"],
+      metrics: [],
       features: [
         "SVM classifier trained on labelled hate-speech datasets",
         "Auto-transcription pipeline for audio input",
@@ -84,6 +94,7 @@ const SITE_DATA = {
       title: "Online Job Portal",
       desc: "Full-stack job portal with role-based access control and encrypted storage, deployed on Heroku using a PaaS model.",
       tags: ["Full-Stack", "RBAC", "Heroku", "Security"],
+      metrics: [],
       features: [
         "Role-based access control for recruiters vs candidates",
         "Encrypted storage for sensitive applicant data",
@@ -97,6 +108,7 @@ const SITE_DATA = {
       title: "Image Quality Enhancer using SRGAN",
       desc: "An AI system that upscales low-resolution images into high-quality outputs using SRGAN-based super-resolution.",
       tags: ["GANs", "Super-Resolution", "Deep Learning"],
+      metrics: [],
       features: [
         "SRGAN architecture trained for 4x upscaling",
         "Perceptual loss for sharper, more natural textures",
@@ -108,9 +120,7 @@ const SITE_DATA = {
     },
   ],
 
-  // ---- CERTIFICATIONS ----
-  // "file" can be an image (.jpg/.png) or a PDF — the viewer auto-detects it.
-  // Leave file: "" if you haven't uploaded the certificate yet.
+  // file: URL to certificate image or PDF. Leave "" if not uploaded yet.
   certifications: [
     { name: "Microsoft Certified: Azure AI Fundamentals", issuer: "Microsoft", year: "Jul 2024", file: "" },
     { name: "Exploratory Data Analysis", issuer: "Infosys Springboard", year: "Sep 2024", file: "" },
@@ -128,37 +138,100 @@ const SITE_DATA = {
     { emoji: "🗣️", label: "Public speaking" },
   ],
 
+  // ---- RECRUITER-FOCUSED SECTIONS ----
+  experience: [
+    // { role: "Software Engineering Intern", org: "Company Name", period: "Jun 2025 – Aug 2025", desc: "What you did, in 1-2 sentences." }
+  ],
+
+  education: [
+    { degree: "M.Tech, Software Engineering", school: "Vellore Institute of Technology", period: "2021 – 2026", detail: "CGPA 7.97" },
+    { degree: "12th Grade", school: "Lakshmi Garden School", period: "2019 – 2020", detail: "62.17%" },
+    { degree: "10th Grade", school: "Lakshmi Garden School", period: "2017 – 2018", detail: "88.4%" },
+  ],
+
+  achievements: [
+    // { title: "Hackathon Winner", desc: "Won 1st place at XYZ Hackathon 2025", year: "2025" }
+  ],
+
+  publications: [
+    // { title: "Paper title", venue: "Conference/Journal name", year: "2025", link: "" }
+  ],
+
+  languages: [
+    { name: "English", level: 95 },
+    { name: "Hindi", level: 85 },
+    { name: "Tamil", level: 100 },
+  ],
+
+  // Extra "ways to connect" cards — shown alongside GitHub/LinkedIn/YouTube
+  // in the Connect section. Each needs a label, url, and an emoji as icon.
+  connectLinks: [
+    // { emoji: "🐦", label: "Twitter / X", url: "https://x.com/yourhandle" }
+  ],
+
   github_username: "Yashraj2523",
   linkedin_url: "https://www.linkedin.com/in/yashraj2523/",
   youtube_url: "https://youtube.com/@yashwanthrajesh4726",
   youtube_banner: "images/channel-art/banner1.jpg",
-  youtube_logo: "images/channel-art/banner2.jpg",
-  youtube_subs: "100+",
+  youtube_logo: "images/profile/youtube-logo.jpg",
+  youtube_subs: "",
   email: "yashwanthriya25@gmail.com",
   phone: "+91-8438772502",
-
   background_image: "",
   resume_url: "Yashwanth_Resume.pdf",
-  connectLinks: [],
-  customSections: [],
-  sectionVisibility: {},
-  sectionMeta: {},
 
+  // ---- SECTION CONTROL (admin: Sections tab) ----
+  // Turn any built-in section on/off, or rewrite its small label + heading,
+  // without touching any code.
+  sectionVisibility: {
+    about: true, experience: true, timeline: true, skills: true,
+    projects: true, repos: true, certs: true, achievements: true,
+    hobbies: true, connect: true, contact: true,
+  },
+  sectionMeta: {
+    about: { tag: "About", heading: "A little about how I think." },
+    experience: { tag: "Experience", heading: "Where I've worked." },
+    timeline: { tag: "Journey", heading: "Everything, in order." },
+    skills: { tag: "Skills", heading: "The stack I reach for." },
+    projects: { tag: "Projects", heading: "Things I've shipped." },
+    repos: { tag: "Live from GitHub", heading: "Pulled straight from my repositories." },
+    certs: { tag: "Certifications", heading: "Credentials that back the skills." },
+    achievements: { tag: "Recognition", heading: "Achievements & publications." },
+    hobbies: { tag: "Beyond the screen", heading: "Interests & hobbies." },
+    connect: { tag: "Connect", heading: "Find me elsewhere." },
+  },
+
+  // Add brand-new sections entirely from the admin dashboard — each one
+  // becomes a full section on the homepage, inserted right before "Connect".
+  // body: array of paragraph strings.
+  customSections: [
+    // { id: "custom-1", tag: "Side Projects", heading: "Things I build for fun.", body: ["..."] }
+  ],
+
+  // ---- SITE SETTINGS (admin-editable: Settings tab) ----
+  // Anything here is applied live as CSS custom properties — change a number,
+  // the whole site re-renders with it, no code edits required.
   settings: {
-    iconButtonSize: 36,
-    avatarSize: 320,
-    cardRadius: 18,
-    glassBlur: 18,
-    sectionSpacing: 130,
-    themePalette: "default",
-    bgStyle: "dots",
-    wallpaperOpacity: 35,
-    eggsEnabled: true,
-    cursorStyleId: "default",
-    cursorTrailOn: false,
-    emailjsService: "",
-    emailjsTemplate: "",
-    emailjsPublic: "",
+    iconButtonSize: 36,     // px, the round nav icon buttons (theme/login)
+    avatarSize: 320,        // px, profile photo slideshow diameter
+    cardRadius: 18,         // px, corner roundness of cards/panels
+    glassBlur: 18,          // px, backdrop blur strength on glass panels
+    sectionSpacing: 130,    // px, top padding between major sections
+
+    // Quiz reward video (shown when a visitor answers the tech quiz correctly).
+    // Leave empty to use the built-in YouTube video. Upload an .mp4/.webm/.mov via
+    // admin.html → Settings to play a LOCAL file instead — this is the fix for YouTube
+    // videos that refuse to embed/autoplay in a popup (owner-disabled embedding, region
+    // locks, etc). A local file always plays reliably since there's no third-party embed.
     quizRewardVideoUrl: "",
+
+    cursorStyle: "default",  // see CURSOR_STYLES in app.js for the full list of presets
+    cursorTrail: false,      // particle trail following the pointer — auto-disabled in recruiter mode
+
+    recruiterHiddenSections: ["hobbies", "connect", "achievements", "timeline"], // editable in admin.html → Sections
+
+    clockStyle: "digital", // "digital" | "neon" | "analog" — editable in admin.html → Settings
+
+    navVisibleSections: ["about", "experience", "timeline", "skills", "projects", "repos", "certs", "hobbies", "achievements", "connect"], // editable in admin.html → Sections
   },
 };

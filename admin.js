@@ -1,271 +1,940 @@
-// admin.js — Portfolio admin dashboard
-let supa=null,liveData=null;
-function supabaseReady(){return typeof SUPABASE_URL==='string'&&SUPABASE_URL.length>5&&typeof SUPABASE_ANON_KEY==='string'&&SUPABASE_ANON_KEY.length>5&&window.supabase;}
-function mergeDefaults(c){const m=Object.assign({},SITE_DATA,c);m.settings=Object.assign({},SITE_DATA.settings||{},c.settings||{});m.sectionVisibility=Object.assign({},c.sectionVisibility||{});m.sectionMeta=Object.assign({},c.sectionMeta||{});m.customSections=c.customSections||[];m.connectLinks=c.connectLinks||[];return m;}
+// admin.js
+let supa = null;
+let liveData = null;
 
-/* ── THEME ── */
-function initTheme(){const s=localStorage.getItem('site_theme')||'dark';applyTheme(s);document.getElementById('themeToggle').addEventListener('click',()=>{const n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';applyTheme(n);localStorage.setItem('site_theme',n);});}
-function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('themeIconMoon').style.display=t==='light'?'block':'none';document.getElementById('themeIconSun').style.display=t==='light'?'none':'block';}
+function supabaseReady(){
+  return typeof SUPABASE_URL === 'string' && SUPABASE_URL.length > 5 &&
+         typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY.length > 5 &&
+         window.supabase;
+}
 
-/* ── MINI CONSTELLATION ── */
-function initDots(){const canvas=document.getElementById('constellation');if(!canvas)return;const ctx=canvas.getContext('2d');function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}resize();window.addEventListener('resize',resize);const col=getComputedStyle(document.documentElement).getPropertyValue('--node-color').trim()||'160,220,210';for(let i=0;i<50;i++){ctx.beginPath();ctx.arc(Math.random()*canvas.width,Math.random()*canvas.height,1.4,0,Math.PI*2);ctx.fillStyle=`rgba(${col},.28)`;ctx.fill();}}
+function mergeWithDefaults(content){
+  const merged = Object.assign({}, SITE_DATA, content);
+  merged.settings = Object.assign({}, SITE_DATA.settings, content.settings || {});
+  merged.sectionVisibility = Object.assign({}, SITE_DATA.sectionVisibility, content.sectionVisibility || {});
+  merged.sectionMeta = Object.assign({}, SITE_DATA.sectionMeta, content.sectionMeta || {});
+  merged.customSections = content.customSections || [];
+  merged.connectLinks = content.connectLinks || [];
+  return merged;
+}
 
-/* ── HELPERS ── */
-function byId(id){return document.getElementById(id);}
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function htmlToLines(html){if(!html)return'';const d=document.createElement('div');d.innerHTML=html;return[...d.querySelectorAll('p')].map(p=>p.textContent.trim()).join('\n');}
-function linesToHtml(t){return t.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<p>${esc(l)}</p>`).join('\n');}
-function showToast(msg){const t=byId('adminToastEl');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-
-/* ── AUTH ── */
-async function initAuth(){
-  const gate=byId('loginGate'),dash=byId('dashboard'),submit=byId('loginSubmitBtn'),status=byId('loginStatus');
-  if(!supabaseReady()){status.textContent='Supabase not configured — fill in config.js';submit.disabled=true;return;}
-  supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-  submit.addEventListener('click',async()=>{
-    status.textContent='Signing in…';
-    const{error}=await supa.auth.signInWithPassword({email:byId('loginEmail').value.trim(),password:byId('loginPass').value});
-    if(error){status.textContent=error.message;return;}
-    showToast('✓ Signed in — you can now edit everything below');
-    gate.classList.add('hidden');dash.classList.remove('hidden');
-    await loadContent();populateForms();initRepeaters();initSections();
+/* ====================================================================
+   THEME (same as main site, just so admin matches your last choice)
+   ==================================================================== */
+function initTheme(){
+  const root = document.documentElement;
+  const saved = localStorage.getItem('site_theme');
+  applyTheme(saved || 'dark');
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    localStorage.setItem('site_theme', next);
   });
-  byId('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')submit.click();});
-  byId('signOutBtn').addEventListener('click',async()=>{await supa.auth.signOut();location.reload();});
-  const{data}=await supa.auth.getSession();
-  if(data.session){gate.classList.add('hidden');dash.classList.remove('hidden');await loadContent();populateForms();initRepeaters();initSections();}
+}
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeIconMoon').style.display = theme === 'light' ? 'block' : 'none';
+  document.getElementById('themeIconSun').style.display = theme === 'light' ? 'none' : 'block';
 }
 
-/* ── LOAD / SAVE ── */
+function initConstellationLite(){
+  const canvas = document.getElementById('constellation');
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const styles = getComputedStyle(document.documentElement);
+  ctx.fillStyle = `rgba(${styles.getPropertyValue('--node-color').trim() || '160,220,210'},0.3)`;
+  for (let i=0;i<40;i++){
+    ctx.beginPath();
+    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 1.4, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+/* ====================================================================
+   AUTH
+   ==================================================================== */
+async function initAuth(){
+  const dashboard = document.getElementById('dashboard');
+  const navSignInBtn = document.getElementById('navSignInBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const loginPopup = document.getElementById('loginPopup');
+  const navTitle = document.getElementById('navAdminTitle');
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  const status = document.getElementById('loginStatus');
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPass');
+
+  if (!supabaseReady()){
+    status.textContent = "Supabase isn't configured yet in config.js — see README.md.";
+    submitBtn.disabled = true;
+    return;
+  }
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+
+  navSignInBtn.addEventListener('click', () => loginPopup.classList.toggle('hidden'));
+  document.addEventListener('click', e => {
+    if (!loginPopup.classList.contains('hidden') && !e.target.closest('.nav-auth-wrap')) loginPopup.classList.add('hidden');
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    status.textContent = 'Signing in…';
+    const { error } = await supa.auth.signInWithPassword({ email: emailInput.value.trim(), password: passInput.value });
+    if (error){ status.textContent = error.message; return; }
+    await enterDashboard();
+  });
+  passInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
+
+  signOutBtn.addEventListener('click', async () => {
+    await supa.auth.signOut();
+    location.href = 'index.html?nointro=1';
+  });
+
+  const { data } = await supa.auth.getSession();
+  if (data.session) await enterDashboard();
+
+  async function enterDashboard(){
+    loginPopup.classList.add('hidden');
+    navSignInBtn.classList.add('hidden');
+    signOutBtn.classList.remove('hidden');
+    navTitle.classList.remove('hidden');
+    dashboard.classList.remove('hidden');
+    showToast('✓ Signed in — you can edit everything below');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await loadContent();
+    populateForms();
+    initRepeaters();
+    initUploads();
+  }
+}
+
+function showToast(msg){
+  let toast = document.getElementById('adminToast');
+  if (!toast){
+    toast = document.createElement('div');
+    toast.id = 'adminToast';
+    toast.className = 'admin-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ====================================================================
+   LOAD / SAVE
+   ==================================================================== */
 async function loadContent(){
-  const{data,error}=await supa.from('site_content').select('content').eq('id','main').single();
-  if(!error&&data?.content)liveData=mergeDefaults(data.content);
-  else{await supa.from('site_content').upsert({id:'main',content:SITE_DATA});liveData=mergeDefaults(SITE_DATA);}
-}
-async function saveContent(msg){
-  const s=byId('saveStatus'),b=byId('bottomSaveStatus');if(s)s.textContent='Saving…';if(b)b.textContent='Saving…';
-  const{error}=await supa.from('site_content').upsert({id:'main',content:liveData});
-  const m=error?'Error: '+error.message:(msg||'Saved ✓ — live now');
-  if(s)s.textContent=m;if(b)b.textContent=m;
-  setTimeout(()=>{if(s)s.textContent='';if(b)b.textContent='';},4000);
+  const { data, error } = await supa.from('site_content').select('content').eq('id', 'main').single();
+  if (!error && data && data.content) liveData = mergeWithDefaults(data.content);
+  else { await supa.from('site_content').upsert({ id: 'main', content: SITE_DATA }); liveData = mergeWithDefaults(SITE_DATA); }
 }
 
-/* ── TABS ── */
+async function saveContent(message){
+  const bottomStatus = document.getElementById('bottomSaveStatus');
+  bottomStatus.textContent = 'Saving…';
+  const { error } = await supa.from('site_content').upsert({ id: 'main', content: liveData });
+  const msg = error ? ('Error: ' + error.message) : (message || 'Saved ✓ — live on the site now');
+  bottomStatus.textContent = msg;
+  setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
+}
+
+/* ====================================================================
+   TABS
+   ==================================================================== */
+/* ====================================================================
+   VISITOR TRACKING — game/quiz players (visitor_leads) and Hire Me
+   submissions (hire_inquiries). Both tables require the SELECT policy
+   from supabase_schema.sql (admin-only reads) to already be applied.
+   ==================================================================== */
+function renderDataTable(wrapId, rows, columns){
+  const wrap = document.getElementById(wrapId);
+  if (!rows || !rows.length){ wrap.innerHTML = '<p class="settings-hint">Nothing yet.</p>'; return; }
+  wrap.innerHTML = `<table class="admin-data-table"><thead><tr>${
+    columns.map(c => `<th>${c.label}</th>`).join('')
+  }</tr></thead><tbody>${
+    rows.map(r => `<tr>${columns.map(c => `<td>${(r[c.key] ?? '').toString().replace(/</g,'&lt;')}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function toCSV(rows, columns){
+  const header = columns.map(c => `"${c.label}"`).join(',');
+  const lines = rows.map(r => columns.map(c => `"${(r[c.key] ?? '').toString().replace(/"/g,'""')}"`).join(','));
+  return [header, ...lines].join('\n');
+}
+
+function downloadCSV(filename, rows, columns){
+  const blob = new Blob([toCSV(rows, columns)], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+const VISITOR_COLUMNS = [
+  { key: 'name', label: 'Name' }, { key: 'contact', label: 'Contact' },
+  { key: 'page', label: 'Page' }, { key: 'created_at', label: 'Date' },
+];
+const HIRE_COLUMNS = [
+  { key: 'name', label: 'Name' }, { key: 'company', label: 'Company' }, { key: 'contact', label: 'Contact' },
+  { key: 'message', label: 'Message' }, { key: 'created_at', label: 'Date' },
+];
+
+let visitorLeadsCache = [], hireInquiriesCache = [];
+
+async function loadVisitorLeads(){
+  if (!supa) return;
+  const { data, error } = await supa.from('visitor_leads').select('*').order('created_at', { ascending: false });
+  if (error){
+    document.getElementById('visitorLeadsTableWrap').innerHTML = `<p class="settings-hint">Could not load — this usually means supabase_schema.sql hasn't been run in your Supabase SQL editor yet (it creates this table). Error: ${error.message}</p>`;
+    return;
+  }
+  visitorLeadsCache = data || [];
+  renderDataTable('visitorLeadsTableWrap', visitorLeadsCache, VISITOR_COLUMNS);
+}
+
+async function loadHireInquiries(){
+  if (!supa) return;
+  const { data, error } = await supa.from('hire_inquiries').select('*').order('created_at', { ascending: false });
+  if (error){
+    document.getElementById('hireInquiriesTableWrap').innerHTML = `<p class="settings-hint">Could not load — this usually means supabase_schema.sql hasn't been run in your Supabase SQL editor yet (it creates this table). Error: ${error.message}</p>`;
+    return;
+  }
+  hireInquiriesCache = data || [];
+  renderDataTable('hireInquiriesTableWrap', hireInquiriesCache, HIRE_COLUMNS);
+}
+
+document.getElementById('downloadVisitorsBtn').addEventListener('click', () => downloadCSV('game-quiz-players.csv', visitorLeadsCache, VISITOR_COLUMNS));
+document.getElementById('downloadHiresBtn').addEventListener('click', () => downloadCSV('hire-inquiries.csv', hireInquiriesCache, HIRE_COLUMNS));
+
 function initTabs(){
-  document.querySelectorAll('.admin-tab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
-      document.querySelectorAll('.admin-panel-section').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.admin-panel-section').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
-      document.querySelector(`.admin-panel-section[data-panel="${tab.dataset.tab}"]`)?.classList.add('active');
+      document.querySelector(`.admin-panel-section[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab.dataset.tab === 'visitors') loadVisitorLeads();
+      if (tab.dataset.tab === 'hires') loadHireInquiries();
     });
   });
 }
 
-/* ── POPULATE FIELDS ── */
+/* ====================================================================
+   POPULATE SIMPLE FIELDS
+   ==================================================================== */
 function populateForms(){
-  byId('f_hero_name').value=liveData.hero_name||'';
-  byId('f_hero_sub').value=liveData.hero_sub||'';
-  byId('f_roles').value=(liveData.roles||[]).join('\n');
-  byId('f_about').value=htmlToLines(liveData.about_text_html);
-  byId('f_email').value=liveData.email||'';byId('f_phone').value=liveData.phone||'';
-  byId('f_github_username').value=liveData.github_username||'';
-  byId('f_linkedin_url').value=liveData.linkedin_url||'';
-  byId('f_linkedin_blurb').value=liveData.linkedin_blurb||'';
-  byId('f_youtube_url').value=liveData.youtube_url||'';
-  byId('f_youtube_subs').value=liveData.youtube_subs||'';
-  const s=liveData.settings||{};
-  // sliders with live value labels
-  [['s_iconButtonSize','s_iconButtonSizeVal',s.iconButtonSize||36],
-   ['s_avatarSize','s_avatarSizeVal',s.avatarSize||320],
-   ['s_cardRadius','s_cardRadiusVal',s.cardRadius||18],
-   ['s_glassBlur','s_glassBlurVal',s.glassBlur||18],
-   ['s_sectionSpacing','s_sectionSpacingVal',s.sectionSpacing||130]
-  ].forEach(([iId,lId,val])=>{const inp=byId(iId),lbl=byId(lId);if(!inp)return;inp.value=val;if(lbl)lbl.textContent=val;inp.addEventListener('input',()=>{if(lbl)lbl.textContent=inp.value;});});
-  // bg style
-  if(byId('s_bgStyle')){byId('s_bgStyle').value=s.bgStyle||'dots';byId('s_bgStyle').onchange=async()=>{liveData.settings.bgStyle=byId('s_bgStyle').value;await saveContent('Background style saved ✓');};}
-  // wallpaper opacity
-  if(byId('s_wallpaperOpacity'))byId('s_wallpaperOpacity').value=s.wallpaperOpacity!==undefined?s.wallpaperOpacity:35;
-  // eggs toggle
-  if(byId('s_eggsEnabled')){byId('s_eggsEnabled').checked=s.eggsEnabled!==false;byId('s_eggsEnabled').onchange=async()=>{liveData.settings.eggsEnabled=byId('s_eggsEnabled').checked;await saveContent('Easter eggs saved ✓');};}
-  // cursor trail
-  if(byId('s_cursorTrail')){byId('s_cursorTrail').checked=!!s.cursorTrailOn;byId('s_cursorTrail').onchange=async()=>{liveData.settings.cursorTrailOn=byId('s_cursorTrail').checked;await saveContent('Cursor trail saved ✓');};}
-  // emailjs
-  if(byId('s_emailjsService'))byId('s_emailjsService').value=s.emailjsService||'';
-  if(byId('s_emailjsTemplate'))byId('s_emailjsTemplate').value=s.emailjsTemplate||'';
-  if(byId('s_emailjsPublic'))byId('s_emailjsPublic').value=s.emailjsPublic||'';
-  // resume / quiz video current state
-  if(byId('resumeCurrentLink'))byId('resumeCurrentLink').textContent=liveData.resume_url?'Current: '+liveData.resume_url:'No résumé uploaded';
-  if(byId('quizVideoCurrentLink'))byId('quizVideoCurrentLink').textContent=s.quizRewardVideoUrl?'Reward video uploaded ✓':'No reward video uploaded yet';
-  renderThemeSwatches(s.themePalette||'default');
-  renderCursorPicker(s.cursorStyleId||'default');
+  byId('f_hero_name').value = liveData.hero_name || '';
+  byId('f_hero_sub').value = liveData.hero_sub || '';
+  byId('f_roles').value = (liveData.roles || []).join('\n');
+  byId('f_about').value = htmlToLines(liveData.about_text_html);
+  byId('f_email').value = liveData.email || '';
+  byId('f_phone').value = liveData.phone || '';
+
+  byId('f_github_username').value = liveData.github_username || '';
+  byId('f_linkedin_url').value = liveData.linkedin_url || '';
+  byId('f_linkedin_blurb').value = liveData.linkedin_blurb || '';
+  byId('f_youtube_url').value = liveData.youtube_url || '';
+  byId('f_youtube_subs').value = liveData.youtube_subs || '';
+
+  const s = liveData.settings || {};
+  bindSlider('s_iconButtonSize', 'v_iconButtonSize', s.iconButtonSize || 36, 'px');
+  bindSlider('s_avatarSize', 'v_avatarSize', s.avatarSize || 320, 'px');
+  bindSlider('s_cardRadius', 'v_cardRadius', s.cardRadius || 18, 'px');
+  bindSlider('s_glassBlur', 'v_glassBlur', s.glassBlur || 18, 'px');
+  bindSlider('s_sectionSpacing', 'v_sectionSpacing', s.sectionSpacing || 130, 'px');
+  renderThemePaletteSwatches(s.themePalette || 'default');
+  byId('s_wallpaperOpacity').value = s.wallpaperOpacity !== undefined ? s.wallpaperOpacity : 35;
+  renderSingleImagePreview('wallpaperPreview', liveData.background_image);
+  byId('s_bgStyle').value = s.bgStyle || 'dots';
+  const bgSavedLabel = byId('bgStyleSavedLabel');
+  function updateBgSavedLabel(){
+    bgSavedLabel.textContent = `Currently saved & live on the site: "${(liveData.settings && liveData.settings.bgStyle) || 'dots'}". If it looks unchanged after saving, hard-refresh the site tab (Ctrl/Cmd+Shift+R) — browsers cache background images.`;
+  }
+  updateBgSavedLabel();
+  byId('s_bgStyle').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.bgStyle = byId('s_bgStyle').value;
+    await saveContent('Background style saved ✓');
+    updateBgSavedLabel();
+  };
+  byId('s_eggsEnabled').checked = s.eggsEnabled !== false;
+  byId('s_eggsEnabled').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.eggsEnabled = byId('s_eggsEnabled').checked;
+    await saveContent('Easter eggs setting saved ✓');
+  };
+  byId('s_quizRewardVideoUrl').value = s.quizRewardVideoUrl || '';
+  byId('quizVideoCurrent').textContent = s.quizRewardVideoUrl ? `Current: ${s.quizRewardVideoUrl}` : 'Using the default built-in video.';
+  byId('s_cursorStyle').value = s.cursorStyle || 'default';
+  byId('s_clockStyle').value = s.clockStyle || 'digital';
+  byId('s_cursorTrail').checked = !!s.cursorTrail;
   renderWallpaperPresets();
-  renderSingleImg('wallpaperPreview',liveData.background_image);
-  renderSingleImg('ytLogoPreview',liveData.youtube_logo);
-  renderUploadPreview('photoPreviewList',liveData.profile_photos||[]);
-  initUploads();
+  byId('resumeCurrentLink').innerHTML = liveData.resume_url ? `Current file: <a href="${liveData.resume_url}" target="_blank">${liveData.resume_url}</a>` : 'No résumé uploaded yet.';
+
+  renderUploadPreview('photoPreviewList', liveData.profile_photos || []);
+  renderSingleImagePreview('ytBannerPreview', liveData.youtube_banner);
+  renderSingleImagePreview('ytLogoPreview', liveData.youtube_logo);
+}
+
+function htmlToLines(html){
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return [...div.querySelectorAll('p')].map(p => p.textContent.trim()).join('\n');
+}
+function linesToHtml(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(l => `<p>${escapeHtml(l)}</p>`).join('\n');
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function byId(id){ return document.getElementById(id); }
+
+// Keeps a slider's little value-badge in sync live while dragging, so the number
+// isn't just a static thing you type — you can see it move as you drag.
+function bindSlider(inputId, labelId, initial, unit){
+  const input = byId(inputId), label = byId(labelId);
+  input.value = initial;
+  label.textContent = initial + unit;
+  input.addEventListener('input', () => { label.textContent = input.value + unit; });
 }
 
 function collectSimpleFields(){
-  liveData.hero_name=byId('f_hero_name').value;
-  liveData.hero_sub=byId('f_hero_sub').value;
-  liveData.roles=byId('f_roles').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  liveData.about_text_html=linesToHtml(byId('f_about').value);
-  liveData.email=byId('f_email').value;liveData.phone=byId('f_phone').value;
-  liveData.github_username=byId('f_github_username').value;
-  liveData.linkedin_url=byId('f_linkedin_url').value;liveData.linkedin_blurb=byId('f_linkedin_blurb').value;
-  liveData.youtube_url=byId('f_youtube_url').value;liveData.youtube_subs=byId('f_youtube_subs').value;
-  liveData.settings=Object.assign(liveData.settings||{},{
-    iconButtonSize:+byId('s_iconButtonSize').value||36,avatarSize:+byId('s_avatarSize').value||320,
-    cardRadius:+byId('s_cardRadius').value||18,glassBlur:+byId('s_glassBlur').value||18,
-    sectionSpacing:+byId('s_sectionSpacing').value||130,
-    bgStyle:byId('s_bgStyle')?.value||'dots',wallpaperOpacity:+byId('s_wallpaperOpacity')?.value||35,
-    eggsEnabled:byId('s_eggsEnabled')?.checked!==false,cursorTrailOn:!!byId('s_cursorTrail')?.checked,
-    emailjsService:byId('s_emailjsService')?.value||'',emailjsTemplate:byId('s_emailjsTemplate')?.value||'',emailjsPublic:byId('s_emailjsPublic')?.value||'',
-  });
+  liveData.hero_name = byId('f_hero_name').value;
+  liveData.hero_sub = byId('f_hero_sub').value;
+  liveData.roles = byId('f_roles').value.split('\n').map(s => s.trim()).filter(Boolean);
+  liveData.about_text_html = linesToHtml(byId('f_about').value);
+  liveData.email = byId('f_email').value;
+  liveData.phone = byId('f_phone').value;
+
+  liveData.github_username = byId('f_github_username').value;
+  liveData.linkedin_url = byId('f_linkedin_url').value;
+  liveData.linkedin_blurb = byId('f_linkedin_blurb').value;
+  liveData.youtube_url = byId('f_youtube_url').value;
+  liveData.youtube_subs = byId('f_youtube_subs').value;
+
+  liveData.settings = {
+    iconButtonSize: +byId('s_iconButtonSize').value || 36,
+    avatarSize: +byId('s_avatarSize').value || 320,
+    cardRadius: +byId('s_cardRadius').value || 18,
+    glassBlur: +byId('s_glassBlur').value || 18,
+    sectionSpacing: +byId('s_sectionSpacing').value || 130,
+    themePalette: (liveData.settings && liveData.settings.themePalette) || 'default',
+    wallpaperOpacity: +byId('s_wallpaperOpacity').value,
+    bgStyle: (liveData.settings && liveData.settings.bgStyle) || 'dots',
+    eggsEnabled: (liveData.settings && liveData.settings.eggsEnabled) !== false,
+    quizRewardVideoUrl: byId('s_quizRewardVideoUrl').value.trim(),
+    cursorStyle: byId('s_cursorStyle').value,
+    clockStyle: byId('s_clockStyle').value,
+    cursorTrail: byId('s_cursorTrail').checked,
+    recruiterHiddenSections: (liveData.settings && liveData.settings.recruiterHiddenSections) || ['hobbies','connect','achievements','timeline'],
+    navVisibleSections: (liveData.settings && liveData.settings.navVisibleSections) || Object.keys(SECTION_LABELS).filter(k => k !== 'contact'),
+  };
 }
 
-/* ── THEME SWATCHES ── */
-const PALETTES={default:['#6ee7d8','#a78bfa'],sunset:['#ff9966','#ff5e8a'],ocean:['#38bdf8','#6366f1'],forest:['#34d399','#0d9488'],amber:['#fbbf24','#d97706'],rose:['#f7b9c4','#c2410c'],lavender:['#c4b5fd','#8b5cf6'],mint:['#6ee7b7','#10b981'],coral:['#fb923c','#f43f5e'],slate:['#94a3b8','#475569'],cherry:['#fda4af','#e11d48'],cyberpunk:['#f0abfc','#22d3ee'],autumn:['#f59e0b','#b91c1c'],arctic:['#a5f3fc','#0891b2'],berry:['#f472b6','#7e22ce'],citrus:['#fde047','#ea580c'],steel:['#7dd3fc','#1e3a8a'],terracotta:['#fdba74','#9a3412'],monochrome:['#e5e7eb','#6b7280'],emerald:['#34d399','#059669']};
-function renderThemeSwatches(active){
-  const row=byId('themePaletteRow');if(!row)return;
-  row.innerHTML=Object.keys(PALETTES).map(k=>`<button type="button" class="theme-swatch-btn${k===active?' active':''}" data-key="${k}" title="${k}" style="background:linear-gradient(135deg,${PALETTES[k][0]},${PALETTES[k][1]})"></button>`).join('');
-  row.querySelectorAll('.theme-swatch-btn').forEach(btn=>{btn.addEventListener('click',async()=>{liveData.settings=liveData.settings||{};liveData.settings.themePalette=btn.dataset.key;row.querySelectorAll('.theme-swatch-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');await saveContent('Theme saved ✓');});});
-}
+/* ====================================================================
+   GENERIC REPEATER FACTORY
+   Each repeater renders a list of objects as editable cards with a
+   remove button, plus an "add" button that appends a blank object.
+   ==================================================================== */
+function makeRepeater(opts){
+  const { wrapId, dataKey, fields, blank, addBtnId, labelFn } = opts;
+  const wrap = document.getElementById(wrapId);
 
-/* ── CURSOR PICKER ── */
-const CURSOR_LABELS=['Default','Dot','Cross','Ring','Star','Rocket','Bug'];
-const CURSOR_IDS=['default','dot','cross','ring','star','rocket','bug'];
-function renderCursorPicker(active){
-  const row=byId('cursorStylePicker');if(!row)return;
-  row.innerHTML=CURSOR_IDS.map((id,i)=>`<button type="button" class="cursor-style-chip${id===active?' active':''}" data-id="${id}">${CURSOR_LABELS[i]}</button>`).join('');
-  row.querySelectorAll('.cursor-style-chip').forEach(btn=>{btn.addEventListener('click',async()=>{liveData.settings=liveData.settings||{};liveData.settings.cursorStyleId=btn.dataset.id;row.querySelectorAll('.cursor-style-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');await saveContent('Cursor saved ✓');});});
-}
-
-/* ── WALLPAPER PRESETS ── */
-const WP_PRESETS=[{id:'none',label:'None',url:''},{id:'galaxy',label:'Galaxy',url:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&q=40'},{id:'nebula',label:'Nebula',url:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&q=40'},{id:'aurora',label:'Aurora',url:'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=300&q=40'},{id:'mountains',label:'Mountains',url:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=40'},{id:'forest',label:'Forest',url:'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=40'},{id:'ocean',label:'Ocean',url:'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&q=40'},{id:'city',label:'City',url:'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=300&q=40'},{id:'gradient',label:'Gradient',url:'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=300&q=40'},{id:'circuit',label:'Circuit',url:'https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=40'},{id:'code',label:'Code',url:'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&q=40'},{id:'marble',label:'Marble',url:'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=40'},{id:'rain',label:'Rain',url:'https://images.unsplash.com/photo-1428592953211-077101b2021b?w=300&q=40'},{id:'autumn',label:'Autumn',url:'https://images.unsplash.com/photo-1507783548227-544c3b8fc065?w=300&q=40'},{id:'desert',label:'Desert',url:'https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=300&q=40'},{id:'abstract',label:'Abstract',url:'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=300&q=40'},{id:'snow',label:'Snow',url:'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=300&q=40'},{id:'sunset',label:'Sunset',url:'https://images.unsplash.com/photo-1500817487388-039e623edc21?w=300&q=40'},{id:'minimal',label:'Minimal',url:'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=300&q=40'}];
-function fullUrl(t){return t?t.replace('w=300&q=40','w=1600&q=70'):'';}
-function renderWallpaperPresets(){
-  const row=byId('wallpaperPresetsRow');if(!row)return;
-  row.innerHTML=WP_PRESETS.map(p=>`<button type="button" class="wallpaper-preset-btn" data-url="${p.url}" title="${p.label}">${p.url?`<img src="${p.url}" alt="${p.label}" loading="lazy"/>`:'<span class="preset-none">✕</span>'}</button>`).join('');
-  row.querySelectorAll('.wallpaper-preset-btn').forEach(btn=>{btn.addEventListener('click',async()=>{const u=fullUrl(btn.dataset.url);liveData.background_image=u;renderSingleImg('wallpaperPreview',u);await saveContent(u?'Wallpaper applied ✓':'Wallpaper removed ✓');});});
-}
-
-/* ── UPLOAD HELPERS ── */
-function renderUploadPreview(cId,urls){
-  const c=byId(cId);if(!c)return;
-  c.innerHTML=(urls||[]).map((url,i)=>`<div class="upload-preview-item" data-i="${i}"><img src="${esc(url)}"/><button data-action="remove">✕</button></div>`).join('');
-  c.querySelectorAll('[data-action="remove"]').forEach(btn=>{btn.addEventListener('click',()=>{const i=+btn.closest('.upload-preview-item').dataset.i;liveData.profile_photos.splice(i,1);renderUploadPreview(cId,liveData.profile_photos);});});
-}
-function renderSingleImg(cId,url){const c=byId(cId);if(!c)return;c.innerHTML=url?`<div class="upload-preview-item"><img src="${esc(url)}"/></div>`:'';}
-async function uploadFile(file,statusEl){
-  if(!supa)return null;if(statusEl)statusEl.textContent='Uploading…';
-  const ext=file.name.split('.').pop();const path=`uploads/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-  const{error}=await supa.storage.from('portfolio-media').upload(path,file,{cacheControl:'3600',upsert:false});
-  if(error){if(statusEl)statusEl.textContent='Failed: '+error.message;return null;}
-  const{data}=supa.storage.from('portfolio-media').getPublicUrl(path);
-  if(statusEl){statusEl.textContent='Uploaded ✓';setTimeout(()=>statusEl.textContent='',2500);}
-  return data.publicUrl;
-}
-let uploadsInited=false;
-function initUploads(){
-  if(uploadsInited)return;uploadsInited=true;
-  byId('photoUploadInput')?.addEventListener('change',async e=>{const st=byId('photoUploadStatus');for(const f of e.target.files){const u=await uploadFile(f,st);if(u){(liveData.profile_photos=liveData.profile_photos||[]).push(u);}}renderUploadPreview('photoPreviewList',liveData.profile_photos);e.target.value='';});
-  byId('ytLogoUploadInput')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const u=await uploadFile(f,byId('ytLogoUploadStatus'));if(u){liveData.youtube_logo=u;renderSingleImg('ytLogoPreview',u);}e.target.value='';});
-  byId('wallpaperUploadInput')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const u=await uploadFile(f,byId('wallpaperUploadStatus'));if(u){liveData.background_image=u;renderSingleImg('wallpaperPreview',u);await saveContent('Wallpaper saved ✓');}e.target.value='';});
-  byId('removeWallpaperBtn')?.addEventListener('click',async()=>{liveData.background_image='';renderSingleImg('wallpaperPreview','');await saveContent('Wallpaper removed ✓');});
-  byId('s_wallpaperOpacity')?.addEventListener('change',async()=>{(liveData.settings=liveData.settings||{}).wallpaperOpacity=+byId('s_wallpaperOpacity').value;await saveContent('Dimness saved ✓');});
-  byId('resumeUploadInput')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const u=await uploadFile(f,byId('resumeUploadStatus'));if(u){liveData.resume_url=u;if(byId('resumeCurrentLink'))byId('resumeCurrentLink').textContent='Current: '+u;await saveContent('Résumé updated ✓');}e.target.value='';});
-  byId('quizVideoUploadInput')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const u=await uploadFile(f,byId('quizVideoUploadStatus'));if(u){(liveData.settings=liveData.settings||{}).quizRewardVideoUrl=u;if(byId('quizVideoCurrentLink'))byId('quizVideoCurrentLink').textContent='Reward video uploaded ✓';await saveContent('Quiz video saved ✓');}e.target.value='';});
-}
-
-/* ── DRAG-TO-REORDER ── */
-function initDragReorder(wrap,list,rerender){
-  let dragIdx=null;
-  wrap.querySelectorAll('.admin-repeat-item').forEach(el=>{
-    el.addEventListener('dragstart',()=>{dragIdx=+el.dataset.idx;el.classList.add('dragging');});
-    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
-    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
-    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
-    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');const di=+el.dataset.idx;if(dragIdx===null||dragIdx===di)return;const[m]=list.splice(dragIdx,1);list.splice(di,0,m);dragIdx=null;rerender();});
-  });
-}
-
-/* ── REPEATER FACTORY ── */
-function makeRepeater({wrapId,dataKey,fields,blank,addBtnId,labelFn}){
-  const wrap=byId(wrapId);if(!wrap)return;
   function render(){
-    const list=liveData[dataKey]||(liveData[dataKey]=[]);
-    if(!list.length){wrap.innerHTML='<p style="color:var(--ink-2);font-size:.84rem;padding:6px 0">Nothing yet — add one below.</p>';byId(addBtnId).addEventListener('click',addItem,{once:true});return;}
-    wrap.innerHTML=list.map((item,idx)=>`
+    const list = liveData[dataKey] || (liveData[dataKey] = []);
+    wrap.innerHTML = list.map((item, idx) => `
       <div class="admin-repeat-item collapsed" data-idx="${idx}" draggable="true">
-        <span class="drag-handle" title="Drag to reorder">⠿</span>
-        <button class="admin-remove-btn" data-action="remove">✕</button>
         <div class="admin-repeat-header" data-action="toggle">
-          <span style="font-size:.8rem;color:var(--accent-2);font-family:var(--font-mono)">${esc(labelFn?labelFn(item,idx):'Item '+(idx+1))}</span>
-          <span class="admin-repeat-chevron">⌄</span>
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <span class="admin-repeat-title">${escapeHtml(labelFn ? labelFn(item, idx) : `Item ${idx + 1}`)}</span>
+          <span class="admin-repeat-chevron">▾</span>
         </div>
-        <div class="admin-repeat-body">${fields.map(f=>fieldHtml(f,item,idx)).join('')}</div>
-      </div>`).join('');
-    wrap.querySelectorAll('.admin-repeat-item').forEach(el=>{
-      const idx=+el.dataset.idx;
-      el.querySelector('[data-action="toggle"]').addEventListener('click',()=>el.classList.toggle('collapsed'));
-      el.querySelector('[data-action="remove"]').addEventListener('click',()=>{list.splice(idx,1);render();});
-      fields.forEach(f=>{
-        const inp=el.querySelector(`[data-field="${f.key}"]`);if(!inp)return;
-        inp.addEventListener('input',()=>{if(f.type==='list')list[idx][f.key]=inp.value.split('\n').map(s=>s.trim()).filter(Boolean);else if(f.type==='metrics')list[idx][f.key]=parseMetrics(inp.value);else if(f.type==='number')list[idx][f.key]=+inp.value;else list[idx][f.key]=inp.value;});
-        if(f.type==='fileupload'){const fi=el.querySelector(`[data-fileupload="${f.key}"]`);fi?.addEventListener('change',async()=>{const file=fi.files[0];if(!file)return;const st=el.querySelector(`[data-uploadstatus="${f.key}-${idx}"]`);const u=await uploadFile(file,st);if(u){list[idx][f.key]=u;render();}});}
+        <button class="admin-remove-btn" data-action="remove">✕</button>
+        <div class="admin-repeat-body">
+          ${fields.map(f => fieldHtml(f, item, idx)).join('')}
+        </div>
+      </div>`).join('') || '<p class="empty-state">Nothing here yet — use the button below to add one.</p>';
+
+    wrap.querySelectorAll('.admin-repeat-item').forEach(itemEl => {
+      const idx = +itemEl.dataset.idx;
+      itemEl.querySelector('[data-action="remove"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        list.splice(idx, 1); render();
+      });
+      itemEl.querySelector('[data-action="toggle"]').addEventListener('click', () => {
+        itemEl.classList.toggle('collapsed');
+      });
+      const titleEl = itemEl.querySelector('.admin-repeat-title');
+      fields.forEach(f => {
+        const input = itemEl.querySelector(`[data-field="${f.key}"]`);
+        input.addEventListener('input', () => {
+          if (f.type === 'list') list[idx][f.key] = input.value.split('\n').map(s => s.trim()).filter(Boolean);
+          else if (f.type === 'metrics') list[idx][f.key] = parseMetrics(input.value);
+          else if (f.type === 'number') list[idx][f.key] = +input.value;
+          else list[idx][f.key] = input.value;
+          if (labelFn && titleEl) titleEl.textContent = labelFn(list[idx], idx);
+        });
+        if (f.type === 'fileupload'){
+          const fileInput = itemEl.querySelector(`[data-fileupload="${f.key}"]`);
+          fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0]; if (!file) return;
+            const status = itemEl.querySelector(`[data-uploadstatus="${f.key}-${idx}"]`);
+            const url = await uploadFile(file, status);
+            if (url){ list[idx][f.key] = url; render(); }
+          });
+        }
       });
     });
-    initDragReorder(wrap,list,render);
-  }
-  function fieldHtml(f,item,idx){
-    const val=item[f.key];const display=f.type==='list'?(val||[]).join('\n'):f.type==='metrics'?metricsToText(val):(val!==undefined?val:'');
-    if(f.type==='fileupload')return`<div class="admin-field"><label>${f.label}</label><div class="upload-row"><input type="text" data-field="${f.key}" value="${esc(display)}" placeholder="Paste URL or upload →" style="flex:1"/><input type="file" accept="${f.accept||'*'}" data-fileupload="${f.key}" data-idx="${idx}"/><span class="settings-hint" data-uploadstatus="${f.key}-${idx}"></span></div></div>`;
-    if(f.type==='textarea'||f.type==='list'||f.type==='metrics')return`<div class="admin-field"><label>${f.label}</label><textarea data-field="${f.key}">${esc(display)}</textarea></div>`;
-    return`<div class="admin-field"><label>${f.label}</label><input type="${f.type==='number'?'number':'text'}" data-field="${f.key}" value="${esc(display)}"/></div>`;
-  }
-  function addItem(){(liveData[dataKey]=liveData[dataKey]||[]).push(Object.assign({},blank));render();}
-  byId(addBtnId)?.addEventListener('click',addItem);
-  render();return render;
-}
-function parseMetrics(t){return t.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const[a,b]=l.split(':').map(s=>s.trim());return{label:a||'',value:b||''};});}
-function metricsToText(m){return(m||[]).map(x=>`${x.label}: ${x.value}`).join('\n');}
 
-/* ── ALL REPEATER DEFINITIONS ── */
+    initDragReorder(wrap, list, render);
+  }
+
+  function fieldHtml(f, item, idx){
+    const val = item[f.key];
+    const display = f.type === 'list' ? (val || []).join('\n')
+      : f.type === 'metrics' ? metricsToText(val)
+      : (val !== undefined ? val : '');
+    if (f.type === 'fileupload'){
+      return `<div class="admin-field">
+        <label>${f.label}</label>
+        <div class="upload-row">
+          <input type="text" data-field="${f.key}" value="${escapeHtml(display)}" placeholder="Paste a URL, or upload a file →" style="flex:1; min-width:160px;" />
+          <input type="file" accept="${f.accept || '*'}" data-fileupload="${f.key}" data-idx="${idx}" />
+          <span class="settings-hint" data-uploadstatus="${f.key}-${idx}"></span>
+        </div>
+        ${display ? (/\.pdf($|\?)/i.test(display) ? `<a href="${display}" target="_blank" class="settings-hint">📄 View current PDF</a>` : `<div class="upload-preview-item" style="margin-top:8px;"><img src="${display}" /></div>`) : ''}
+      </div>`;
+    }
+    if (f.type === 'textarea' || f.type === 'list' || f.type === 'metrics'){
+      return `<div class="admin-field"><label>${f.label}</label><textarea data-field="${f.key}">${escapeHtml(display)}</textarea></div>`;
+    }
+    return `<div class="admin-field"><label>${f.label}</label><input type="${f.type === 'number' ? 'number' : 'text'}" data-field="${f.key}" value="${escapeHtml(display)}" /></div>`;
+  }
+
+  document.getElementById(addBtnId).addEventListener('click', () => {
+    (liveData[dataKey] = liveData[dataKey] || []).push(Object.assign({}, blank));
+    render();
+  });
+
+  render();
+  return render;
+}
+
+function initDragReorder(wrap, list, rerender){
+  let dragIdx = null;
+  wrap.querySelectorAll('.admin-repeat-item').forEach(itemEl => {
+    itemEl.addEventListener('dragstart', () => {
+      dragIdx = +itemEl.dataset.idx;
+      itemEl.classList.add('dragging');
+    });
+    itemEl.addEventListener('dragend', () => itemEl.classList.remove('dragging'));
+    itemEl.addEventListener('dragover', e => { e.preventDefault(); itemEl.classList.add('drag-over'); });
+    itemEl.addEventListener('dragleave', () => itemEl.classList.remove('drag-over'));
+    itemEl.addEventListener('drop', e => {
+      e.preventDefault();
+      itemEl.classList.remove('drag-over');
+      const dropIdx = +itemEl.dataset.idx;
+      if (dragIdx === null || dragIdx === dropIdx) return;
+      const [moved] = list.splice(dragIdx, 1);
+      list.splice(dropIdx, 0, moved);
+      dragIdx = null;
+      rerender();
+    });
+  });
+}
+
+function parseMetrics(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const [label, value] = l.split(':').map(s => s.trim());
+    return { label: label || '', value: value || '' };
+  });
+}
+function metricsToText(metrics){
+  return (metrics || []).map(m => `${m.label}: ${m.value}`).join('\n');
+}
+
 function initRepeaters(){
-  makeRepeater({wrapId:'skillsRepeatWrap',dataKey:'skills',addBtnId:'addSkillGroupBtn',blank:{category:'New category',items:[]},labelFn:i=>i.category||'Category',fields:[{key:'category',label:'Category name',type:'text'},{key:'items',label:'Skills (one per line)',type:'list'}]});
-  makeRepeater({wrapId:'projectsRepeatWrap',dataKey:'projects',addBtnId:'addProjectBtn',blank:{title:'New project',desc:'',tags:[],metrics:[],features:[],github:'',demo:'',screenshots:[],date:''},labelFn:i=>i.title||'Project',fields:[{key:'title',label:'Title',type:'text'},{key:'date',label:'Date (e.g. Jun 2025)',type:'text'},{key:'desc',label:'Description',type:'textarea'},{key:'tags',label:'Tags (one per line)',type:'list'},{key:'metrics',label:'Metrics — "Label: Value" per line (e.g. Accuracy: 95%)',type:'metrics'},{key:'features',label:'Features (one per line)',type:'list'},{key:'github',label:'GitHub URL',type:'text'},{key:'demo',label:'Live demo URL',type:'text'},{key:'screenshots',label:'Screenshot URLs (one per line)',type:'list'}]});
-  makeRepeater({wrapId:'certsRepeatWrap',dataKey:'certifications',addBtnId:'addCertBtn',blank:{name:'New cert',issuer:'',year:'',file:''},labelFn:i=>i.name||'Certification',fields:[{key:'name',label:'Name',type:'text'},{key:'issuer',label:'Issuer',type:'text'},{key:'year',label:'Year',type:'text'},{key:'file',label:'Certificate file (image or PDF)',type:'fileupload',accept:'.pdf,image/*'}]});
-  makeRepeater({wrapId:'experienceRepeatWrap',dataKey:'experience',addBtnId:'addExperienceBtn',blank:{role:'',org:'',period:'',desc:''},labelFn:i=>(i.role?`${i.role} · `:'')+(i.org||'Experience'),fields:[{key:'role',label:'Role / title',type:'text'},{key:'org',label:'Organisation',type:'text'},{key:'period',label:'Period (e.g. Jun 2024 – Aug 2024)',type:'text'},{key:'desc',label:'Description',type:'textarea'}]});
-  makeRepeater({wrapId:'educationRepeatWrap',dataKey:'education',addBtnId:'addEducationBtn',blank:{degree:'',school:'',period:'',detail:''},labelFn:i=>i.degree||'Education',fields:[{key:'degree',label:'Degree / qualification',type:'text'},{key:'school',label:'School / institution',type:'text'},{key:'period',label:'Period',type:'text'},{key:'detail',label:'Detail (CGPA, %)',type:'text'}]});
-  makeRepeater({wrapId:'languagesRepeatWrap',dataKey:'languages',addBtnId:'addLanguageBtn',blank:{name:'',level:80},labelFn:i=>i.name||'Language',fields:[{key:'name',label:'Language',type:'text'},{key:'level',label:'Level (0–100)',type:'number'}]});
-  makeRepeater({wrapId:'achievementsRepeatWrap',dataKey:'achievements',addBtnId:'addAchievementBtn',blank:{title:'',desc:'',year:''},labelFn:i=>i.title||'Achievement',fields:[{key:'title',label:'Title',type:'text'},{key:'desc',label:'Description',type:'textarea'},{key:'year',label:'Year',type:'text'}]});
-  makeRepeater({wrapId:'publicationsRepeatWrap',dataKey:'publications',addBtnId:'addPublicationBtn',blank:{title:'',venue:'',year:'',link:''},labelFn:i=>i.title||'Publication',fields:[{key:'title',label:'Title',type:'text'},{key:'venue',label:'Venue / journal',type:'text'},{key:'year',label:'Year',type:'text'},{key:'link',label:'Link URL',type:'text'}]});
-  makeRepeater({wrapId:'hobbiesRepeatWrap',dataKey:'hobbies',addBtnId:'addHobbyBtn',blank:{emoji:'✨',label:''},labelFn:i=>i.label||'Hobby',fields:[{key:'emoji',label:'Emoji',type:'text'},{key:'label',label:'Label',type:'text'}]});
-  makeRepeater({wrapId:'connectLinksRepeatWrap',dataKey:'connectLinks',addBtnId:'addConnectLinkBtn',blank:{platform:'',label:'',url:''},labelFn:i=>i.label||i.platform||'Link',fields:[{key:'platform',label:'Platform name',type:'text'},{key:'label',label:'Button label',type:'text'},{key:'url',label:'URL',type:'text'}]});
-  makeRepeater({wrapId:'customSectionsRepeatWrap',dataKey:'customSections',addBtnId:'addCustomSectionBtn',blank:{id:'custom-'+Date.now(),tag:'New',heading:'',body:[]},labelFn:i=>i.heading||'Custom section',fields:[{key:'tag',label:'Tag label',type:'text'},{key:'heading',label:'Heading',type:'text'},{key:'body',label:'Body paragraphs (one per line)',type:'list'}]});
-  byId('resetDefaultsBtn')?.addEventListener('click',async()=>{if(!confirm('Reset all content to data.js defaults? This cannot be undone.'))return;liveData=mergeDefaults(SITE_DATA);await saveContent('Reset to defaults ✓');populateForms();initRepeaters();});
+  makeRepeater({
+    wrapId: 'skillsRepeatWrap', dataKey: 'skills', addBtnId: 'addSkillGroupBtn',
+    blank: { category: 'New category', items: [] },
+    labelFn: (item) => item.category || 'Category',
+    fields: [
+      { key: 'category', label: 'Category name', type: 'text' },
+      { key: 'items', label: 'Skills (one per line)', type: 'list' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'projectsRepeatWrap', dataKey: 'projects', addBtnId: 'addProjectBtn',
+    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [] },
+    labelFn: (item) => item.title || 'Project',
+    fields: [
+      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'date', label: 'Date completed (e.g. "Jun 2025") — used to sort projects latest-first', type: 'text' },
+      { key: 'desc', label: 'Description', type: 'textarea' },
+      { key: 'tags', label: 'Tags (one per line)', type: 'list' },
+      { key: 'metrics', label: 'Metrics — one per line as "Label: Value" (e.g. Accuracy: 95%)', type: 'metrics' },
+      { key: 'features', label: 'Features (one per line)', type: 'list' },
+      { key: 'github', label: 'GitHub link', type: 'text' },
+      { key: 'demo', label: 'Live demo link', type: 'text' },
+      { key: 'screenshots', label: 'Screenshot image URLs (one per line — upload via Photos tab or paste a link)', type: 'list' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'certsRepeatWrap', dataKey: 'certifications', addBtnId: 'addCertBtn',
+    blank: { name: 'New certification', issuer: '', year: '', file: '' },
+    labelFn: (item) => item.name || 'Certification',
+    fields: [
+      { key: 'name', label: 'Certificate name', type: 'text' },
+      { key: 'issuer', label: 'Issuer', type: 'text' },
+      { key: 'year', label: 'Year', type: 'text' },
+      { key: 'file', label: 'Certificate file (image or PDF)', type: 'fileupload', accept: '.pdf,image/*' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'experienceRepeatWrap', dataKey: 'experience', addBtnId: 'addExperienceBtn',
+    blank: { role: 'New role', org: '', period: '', desc: '' },
+    labelFn: (item) => item.role || 'Experience',
+    fields: [
+      { key: 'role', label: 'Role / title', type: 'text' },
+      { key: 'org', label: 'Organization', type: 'text' },
+      { key: 'period', label: 'Period (e.g. Jun 2025 – Aug 2025)', type: 'text' },
+      { key: 'desc', label: 'Description', type: 'textarea' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'educationRepeatWrap', dataKey: 'education', addBtnId: 'addEducationBtn',
+    blank: { degree: 'New degree', school: '', period: '', detail: '' },
+    labelFn: (item) => item.degree || 'Education',
+    fields: [
+      { key: 'degree', label: 'Degree / qualification', type: 'text' },
+      { key: 'school', label: 'School / institution', type: 'text' },
+      { key: 'period', label: 'Period', type: 'text' },
+      { key: 'detail', label: 'Detail (CGPA, %, etc.)', type: 'text' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'languagesRepeatWrap', dataKey: 'languages', addBtnId: 'addLanguageBtn',
+    blank: { name: 'New language', level: 80 },
+    labelFn: (item) => item.name || 'Language',
+    fields: [
+      { key: 'name', label: 'Language', type: 'text' },
+      { key: 'level', label: 'Proficiency (0-100)', type: 'number' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'achievementsRepeatWrap', dataKey: 'achievements', addBtnId: 'addAchievementBtn',
+    blank: { title: 'New achievement', desc: '', year: '' },
+    labelFn: (item) => item.title || 'Achievement',
+    fields: [
+      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'desc', label: 'Description', type: 'textarea' },
+      { key: 'year', label: 'Year', type: 'text' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'publicationsRepeatWrap', dataKey: 'publications', addBtnId: 'addPublicationBtn',
+    blank: { title: 'New publication', venue: '', year: '', link: '' },
+    labelFn: (item) => item.title || 'Publication',
+    fields: [
+      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'venue', label: 'Venue / journal / conference', type: 'text' },
+      { key: 'year', label: 'Year', type: 'text' },
+      { key: 'link', label: 'Link', type: 'text' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'hobbiesRepeatWrap', dataKey: 'hobbies', addBtnId: 'addHobbyBtn',
+    blank: { emoji: '✨', label: 'New hobby' },
+    labelFn: (item) => item.label || 'Hobby',
+    fields: [
+      { key: 'emoji', label: 'Emoji', type: 'text' },
+      { key: 'label', label: 'Label', type: 'text' },
+    ]
+  });
+
+  makeRepeater({
+    wrapId: 'connectLinksRepeatWrap', dataKey: 'connectLinks', addBtnId: 'addConnectLinkBtn',
+    blank: { emoji: '🔗', label: 'New link', url: '' },
+    labelFn: (item) => item.label || 'Connect link',
+    fields: [
+      { key: 'emoji', label: 'Emoji icon', type: 'text' },
+      { key: 'label', label: 'Label (e.g. "Twitter / X")', type: 'text' },
+      { key: 'url', label: 'URL', type: 'text' },
+    ]
+  });
+
+  document.getElementById('resetAppearanceBtn').addEventListener('click', async () => {
+    if (!confirm('Reset all appearance settings (sizes, blur, spacing, cursor, background style) to default? Your content is not affected.')) return;
+    liveData.settings = JSON.parse(JSON.stringify(SITE_DATA.settings));
+    await saveContent('Appearance reset to default ✓');
+    populateForms();
+  });
+
+  document.getElementById('resetDefaultsBtn').addEventListener('click', async () => {
+    if (!confirm('This will overwrite your live database with the contents of data.js. Continue?')) return;
+    liveData = mergeWithDefaults(SITE_DATA);
+    await saveContent('Reset to defaults ✓');
+    populateForms();
+    initRepeaters();
+  });
+
+  initSectionToggles();
+  initRecruiterToggles();
+  initNavToggles();
+  initSectionTitles();
+  initCustomSections();
 }
 
-/* ── SECTIONS PANEL ── */
-const SECTION_LABELS={about:'About',experience:'Experience',timeline:'Timeline',skills:'Skills',projects:'Projects',repos:'GitHub Repos',certs:'Certifications',achievements:'Achievements',hobbies:'Hobbies',connect:'Connect',contact:'Contact'};
-function initSections(){
-  // visibility toggles
-  const tw=byId('sectionTogglesWrap');if(!tw)return;
-  const vis=liveData.sectionVisibility=liveData.sectionVisibility||{};
-  tw.innerHTML=Object.keys(SECTION_LABELS).map(k=>`<label class="section-toggle-row"><input type="checkbox" data-section="${k}" ${vis[k]===false?'':'checked'} style="width:16px;height:16px;accent-color:var(--accent-1)"/><span>${SECTION_LABELS[k]}</span></label>`).join('');
-  tw.querySelectorAll('[data-section]').forEach(cb=>{cb.addEventListener('change',async()=>{liveData.sectionVisibility[cb.dataset.section]=cb.checked;await saveContent('Saved ✓');});});
-  // titles
-  const meta=liveData.sectionMeta=liveData.sectionMeta||{};
-  const mw=byId('sectionTitlesWrap');if(!mw)return;
-  const defaults={about:{tag:'About',heading:'A little about how I think.'},experience:{tag:'Experience',heading:"Where I've worked."},timeline:{tag:'Journey',heading:'Everything, in order.'},skills:{tag:'Skills',heading:'The stack I reach for.'},projects:{tag:'Projects',heading:"Things I've shipped."},repos:{tag:'Live from GitHub',heading:'Pulled straight from my repositories.'},certs:{tag:'Certifications',heading:'Credentials that back the skills.'},achievements:{tag:'Recognition',heading:'Achievements & publications.'},hobbies:{tag:'Beyond the screen',heading:'Interests & hobbies.'},connect:{tag:'Connect',heading:'Find me elsewhere.'}};
-  mw.innerHTML=Object.keys(defaults).map(k=>{const m=meta[k]||defaults[k];return`<div style="margin-bottom:12px"><div style="font-size:.75rem;color:var(--accent-2);font-family:var(--font-mono);margin-bottom:5px">${SECTION_LABELS[k]}</div><div style="display:grid;grid-template-columns:1fr 2fr;gap:8px"><input type="text" data-meta="${k}-tag" value="${esc(m.tag||'')}" placeholder="Tag"/><input type="text" data-meta="${k}-heading" value="${esc(m.heading||'')}" placeholder="Heading"/></div></div>`;}).join('');
-  mw.querySelectorAll('[data-meta]').forEach(inp=>{inp.addEventListener('input',()=>{const[k,f]=inp.dataset.meta.split('-');(meta[k]=meta[k]||{})[f]=inp.value;});});
+const SECTION_LABELS = {
+  about: 'About', experience: 'Experience', timeline: 'Timeline', skills: 'Skills',
+  projects: 'Projects', repos: 'GitHub repos', certs: 'Certifications',
+  achievements: 'Achievements & publications', hobbies: 'Hobbies', connect: 'Connect',
+  contact: 'Contact',
+};
+
+function initSectionToggles(){
+  const wrap = document.getElementById('sectionTogglesWrap');
+  const vis = liveData.sectionVisibility = liveData.sectionVisibility || {};
+  wrap.innerHTML = Object.keys(SECTION_LABELS).map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-section-toggle="${key}" ${vis[key] === false ? '' : 'checked'} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      ${SECTION_LABELS[key]}
+    </label>`).join('');
+  wrap.querySelectorAll('[data-section-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      liveData.sectionVisibility[cb.dataset.sectionToggle] = cb.checked;
+      await saveContent('Saved ✓');
+    });
+  });
 }
 
-/* ── SAVE ALL ── */
-function initSaveAll(){byId('saveAllBtn')?.addEventListener('click',async()=>{collectSimpleFields();await saveContent();});}
+function initNavToggles(){
+  const wrap = document.getElementById('navTogglesWrap');
+  liveData.settings = liveData.settings || {};
+  const shown = liveData.settings.navVisibleSections || Object.keys(SECTION_LABELS).filter(k => k !== 'contact');
+  wrap.innerHTML = Object.keys(SECTION_LABELS).map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-nav-toggle="${key}" ${shown.includes(key) ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      Show "${SECTION_LABELS[key]}" in nav bar
+    </label>`).join('');
+  wrap.querySelectorAll('[data-nav-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const key = cb.dataset.navToggle;
+      let list = liveData.settings.navVisibleSections || Object.keys(SECTION_LABELS).filter(k => k !== 'contact');
+      list = cb.checked ? [...new Set([...list, key])] : list.filter(k => k !== key);
+      liveData.settings.navVisibleSections = list;
+      await saveContent('Saved ✓');
+    });
+  });
+}
 
-/* ── BOOT ── */
-(function boot(){initTheme();initDots();initTabs();initSaveAll();initAuth();})();
+function initRecruiterToggles(){
+  const wrap = document.getElementById('recruiterTogglesWrap');
+  liveData.settings = liveData.settings || {};
+  const hidden = liveData.settings.recruiterHiddenSections || ['hobbies','connect','achievements','timeline'];
+  wrap.innerHTML = Object.keys(SECTION_LABELS).filter(k => k !== 'contact').map(key => `
+    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;">
+      <input type="checkbox" data-recruiter-toggle="${key}" ${hidden.includes(key) ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--accent-1);" />
+      Hide "${SECTION_LABELS[key]}" in Recruiter Mode
+    </label>`).join('');
+  wrap.querySelectorAll('[data-recruiter-toggle]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const key = cb.dataset.recruiterToggle;
+      let list = liveData.settings.recruiterHiddenSections || ['hobbies','connect','achievements','timeline'];
+      list = cb.checked ? [...new Set([...list, key])] : list.filter(k => k !== key);
+      liveData.settings.recruiterHiddenSections = list;
+      await saveContent('Saved ✓');
+    });
+  });
+}
+
+function initSectionTitles(){
+  const wrap = document.getElementById('sectionTitlesWrap');
+  const meta = liveData.sectionMeta = liveData.sectionMeta || {};
+  wrap.innerHTML = Object.keys(SECTION_LABELS).filter(k => k !== 'contact').map(key => {
+    const m = meta[key] || {};
+    return `
+    <div class="admin-repeat-item" style="padding-left:18px;">
+      <div style="font-size:.78rem; color:var(--accent-2); margin-bottom:10px; font-family:var(--font-mono);">${SECTION_LABELS[key]}</div>
+      <div class="admin-row">
+        <div class="admin-field"><label>Small label (tag)</label><input type="text" data-meta="${key}-tag" value="${escapeHtml(m.tag || '')}" /></div>
+        <div class="admin-field"><label>Heading</label><input type="text" data-meta="${key}-heading" value="${escapeHtml(m.heading || '')}" /></div>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-meta]').forEach(input => {
+    input.addEventListener('input', () => {
+      const [key, field] = input.dataset.meta.split('-');
+      meta[key] = meta[key] || {};
+      meta[key][field] = input.value;
+    });
+  });
+}
+
+function initCustomSections(){
+  makeRepeater({
+    wrapId: 'customSectionsRepeatWrap', dataKey: 'customSections', addBtnId: 'addCustomSectionBtn',
+    blank: { id: 'custom-' + Date.now(), tag: 'New section', heading: 'New section heading', body: [] },
+    labelFn: (item) => item.heading || 'Custom section',
+    fields: [
+      { key: 'tag', label: 'Small label (tag)', type: 'text' },
+      { key: 'heading', label: 'Heading', type: 'text' },
+      { key: 'body', label: 'Body text (one paragraph per line)', type: 'list' },
+    ]
+  });
+}
+
+/* ====================================================================
+   UPLOADS (Supabase Storage bucket "portfolio-media")
+   ==================================================================== */
+const THEME_PALETTES = {
+  default:{accent1:'#6ee7d8',accent2:'#a78bfa'}, sunset:{accent1:'#ff9966',accent2:'#ff5e8a'},
+  ocean:{accent1:'#38bdf8',accent2:'#6366f1'}, forest:{accent1:'#34d399',accent2:'#0d9488'},
+  amber:{accent1:'#fbbf24',accent2:'#d97706'}, rose:{accent1:'#f7b9c4',accent2:'#c2410c'},
+  lavender:{accent1:'#c4b5fd',accent2:'#8b5cf6'}, mint:{accent1:'#6ee7b7',accent2:'#10b981'},
+  coral:{accent1:'#fb923c',accent2:'#f43f5e'}, slate:{accent1:'#94a3b8',accent2:'#475569'},
+  cherry:{accent1:'#fda4af',accent2:'#e11d48'}, emerald:{accent1:'#34d399',accent2:'#059669'},
+  cyberpunk:{accent1:'#f0abfc',accent2:'#22d3ee'}, autumn:{accent1:'#f59e0b',accent2:'#b91c1c'},
+  arctic:{accent1:'#a5f3fc',accent2:'#0891b2'}, berry:{accent1:'#f472b6',accent2:'#7e22ce'},
+  citrus:{accent1:'#fde047',accent2:'#ea580c'}, steel:{accent1:'#7dd3fc',accent2:'#1e3a8a'},
+  terracotta:{accent1:'#fdba74',accent2:'#9a3412'}, monochrome:{accent1:'#e5e7eb',accent2:'#6b7280'},
+};
+function renderThemePaletteSwatches(active){
+  const row = document.getElementById('themePaletteRow');
+  row.innerHTML = Object.keys(THEME_PALETTES).map(key => {
+    const p = THEME_PALETTES[key];
+    return `<button type="button" class="theme-swatch-btn ${key === active ? 'active' : ''}" data-key="${key}" title="${key}"
+      style="background:linear-gradient(135deg, ${p.accent1}, ${p.accent2});"></button>`;
+  }).join('');
+  row.querySelectorAll('.theme-swatch-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      liveData.settings = liveData.settings || {};
+      liveData.settings.themePalette = btn.dataset.key;
+      row.querySelectorAll('.theme-swatch-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      await saveContent('Theme palette saved ✓');
+    });
+  });
+}
+
+const WALLPAPER_PRESETS = [
+  { id: 'none', label: 'None', url: '' },
+  { id: 'galaxy', label: 'Galaxy', url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&q=40' },
+  { id: 'nebula', label: 'Nebula', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&q=40' },
+  { id: 'aurora', label: 'Aurora', url: 'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=300&q=40' },
+  { id: 'mountains', label: 'Mountains', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=40' },
+  { id: 'abstract', label: 'Abstract waves', url: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=300&q=40' },
+  { id: 'forest', label: 'Forest', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=40' },
+  { id: 'ocean', label: 'Ocean', url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&q=40' },
+  { id: 'desert', label: 'Desert dunes', url: 'https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=300&q=40' },
+  { id: 'city', label: 'City skyline', url: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=300&q=40' },
+  { id: 'minimal', label: 'Minimal gray', url: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=300&q=40' },
+  { id: 'gradient1', label: 'Gradient blue', url: 'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=300&q=40' },
+  { id: 'gradient2', label: 'Gradient pink', url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300&q=40' },
+  { id: 'circuit', label: 'Circuit board', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&q=40' },
+  { id: 'code', label: 'Code close-up', url: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&q=40' },
+  { id: 'paper', label: 'Paper texture', url: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&q=40' },
+  { id: 'marble', label: 'Marble', url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=40' },
+  { id: 'rain', label: 'Rainy window', url: 'https://images.unsplash.com/photo-1428592953211-077101b2021b?w=300&q=40' },
+  { id: 'snow', label: 'Snowy peaks', url: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=300&q=40' },
+  { id: 'autumn', label: 'Autumn leaves', url: 'https://images.unsplash.com/photo-1507783548227-544c3b8fc065?w=300&q=40' },
+  { id: 'sunset2', label: 'Sunset clouds', url: 'https://images.unsplash.com/photo-1500817487388-039e623edc21?w=300&q=40' },
+];
+function presetFullUrl(thumbUrl){
+  return thumbUrl ? thumbUrl.replace('w=300&q=40', 'w=1600&q=65') : '';
+}
+function renderWallpaperPresets(){
+  const row = document.getElementById('wallpaperPresetsRow');
+  row.innerHTML = WALLPAPER_PRESETS.map(p => `
+    <button type="button" class="wallpaper-preset-btn" data-url="${p.url}" title="${p.label}">
+      ${p.url ? `<img src="${p.url}" alt="${p.label}" loading="lazy" />` : '<span class="preset-none">✕</span>'}
+    </button>`).join('');
+  row.querySelectorAll('.wallpaper-preset-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const fullUrl = presetFullUrl(btn.dataset.url);
+      liveData.background_image = fullUrl;
+      renderSingleImagePreview('wallpaperPreview', fullUrl);
+      await saveContent(fullUrl ? 'Wallpaper preset applied ✓' : 'Wallpaper removed ✓');
+    });
+  });
+}
+function renderUploadPreview(containerId, urls){
+  const container = document.getElementById(containerId);
+  container.innerHTML = (urls || []).map((url, i) => `
+    <div class="upload-preview-item" data-i="${i}">
+      <img src="${url}" />
+      <button data-action="remove">✕</button>
+    </div>`).join('');
+  container.querySelectorAll('[data-action="remove"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = +btn.closest('.upload-preview-item').dataset.i;
+      liveData.profile_photos.splice(i, 1);
+      renderUploadPreview(containerId, liveData.profile_photos);
+    });
+  });
+}
+function renderSingleImagePreview(containerId, url){
+  const container = document.getElementById(containerId);
+  container.innerHTML = url ? `<div class="upload-preview-item"><img src="${url}" /></div>` : '';
+}
+
+async function uploadFile(file, statusEl){
+  if (!supa) return null;
+  statusEl.textContent = 'Uploading…';
+  const ext = file.name.split('.').pop();
+  const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { error } = await supa.storage.from('portfolio-media').upload(path, file, { cacheControl: '3600', upsert: false });
+  if (error){ statusEl.textContent = 'Upload failed: ' + error.message; return null; }
+  const { data } = supa.storage.from('portfolio-media').getPublicUrl(path);
+  statusEl.textContent = 'Uploaded ✓';
+  setTimeout(() => statusEl.textContent = '', 2500);
+  return data.publicUrl;
+}
+
+function initUploads(){
+  document.getElementById('photoUploadInput').addEventListener('change', async (e) => {
+    const status = document.getElementById('photoUploadStatus');
+    for (const file of e.target.files){
+      const url = await uploadFile(file, status);
+      if (url){
+        liveData.profile_photos = liveData.profile_photos || [];
+        liveData.profile_photos.push(url);
+      }
+    }
+    renderUploadPreview('photoPreviewList', liveData.profile_photos);
+    e.target.value = '';
+  });
+
+  document.getElementById('ytBannerUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('ytBannerUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){ liveData.youtube_banner = url; renderSingleImagePreview('ytBannerPreview', url); }
+    e.target.value = '';
+  });
+
+  document.getElementById('ytLogoUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('ytLogoUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){ liveData.youtube_logo = url; renderSingleImagePreview('ytLogoPreview', url); }
+    e.target.value = '';
+  });
+
+  document.getElementById('resumeUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('resumeUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.resume_url = url;
+      byId('resumeCurrentLink').innerHTML = `Current file: <a href="${url}" target="_blank">${url}</a>`;
+      await saveContent('Résumé updated ✓ — live on the download button now');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('quizVideoUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('quizVideoUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.settings = liveData.settings || {};
+      liveData.settings.quizRewardVideoUrl = url;
+      byId('s_quizRewardVideoUrl').value = url;
+      byId('quizVideoCurrent').textContent = `Current: ${url}`;
+      await saveContent('Quiz reward video updated ✓ — plays locally now, no YouTube embed needed');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('clearQuizVideoBtn').addEventListener('click', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.quizRewardVideoUrl = '';
+    byId('s_quizRewardVideoUrl').value = '';
+    byId('quizVideoCurrent').textContent = 'Using the default built-in video.';
+    await saveContent('Reset to default reward video ✓');
+  });
+
+  byId('s_quizRewardVideoUrl').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.quizRewardVideoUrl = byId('s_quizRewardVideoUrl').value.trim();
+    byId('quizVideoCurrent').textContent = liveData.settings.quizRewardVideoUrl ? `Current: ${liveData.settings.quizRewardVideoUrl}` : 'Using the default built-in video.';
+    await saveContent('Reward video URL saved ✓');
+  });
+
+  byId('s_cursorStyle').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.cursorStyle = byId('s_cursorStyle').value;
+    await saveContent('Cursor style saved ✓');
+  });
+
+  byId('s_clockStyle').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.clockStyle = byId('s_clockStyle').value;
+    await saveContent('Clock style saved ✓');
+  });
+
+  byId('s_cursorTrail').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.cursorTrail = byId('s_cursorTrail').checked;
+    await saveContent('Cursor trail setting saved ✓');
+  });
+
+  document.getElementById('wallpaperUploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const status = document.getElementById('wallpaperUploadStatus');
+    const url = await uploadFile(file, status);
+    if (url){
+      liveData.background_image = url;
+      renderSingleImagePreview('wallpaperPreview', url);
+      await saveContent('Wallpaper saved ✓');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('removeWallpaperBtn').addEventListener('click', async () => {
+    liveData.background_image = '';
+    renderSingleImagePreview('wallpaperPreview', '');
+    await saveContent('Reset to default ✓');
+  });
+
+  document.getElementById('s_wallpaperOpacity').addEventListener('change', async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.wallpaperOpacity = +byId('s_wallpaperOpacity').value;
+    await saveContent('Wallpaper dimness saved ✓');
+  });
+}
+
+/* ====================================================================
+   SAVE ALL
+   ==================================================================== */
+function initSaveAll(){
+  document.getElementById('saveAllBtn').addEventListener('click', async () => {
+    collectSimpleFields();
+    await saveContent();
+  });
+}
+
+/* ====================================================================
+   BOOT
+   ==================================================================== */
+(function boot(){
+  initTheme();
+  initConstellationLite();
+  initTabs();
+  initSaveAll();
+  initAuth();
+})();
