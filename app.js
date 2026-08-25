@@ -1317,10 +1317,83 @@ function initNavScrollSpy(){
 /* ====================================================================
    16. RECRUITER MODE (hides non-essential sections client-side)
    ==================================================================== */
+function buildPrintResume(){
+  const doc = document.getElementById('printResumeDoc');
+  if (!doc || !liveData) return;
+  const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  const edu = sortByDateDesc(liveData.education || [], e => e.period).map(x => x.item);
+  const exp = sortByDateDesc(liveData.experience || [], e => e.period).map(x => x.item);
+  const projects = sortByDateDesc(liveData.projects || [], p => p.date).map(x => x.item);
+  const certs = sortByDateDesc(liveData.certifications || [], c => c.year).map(x => x.item);
+  const skills = liveData.skills || [];
+
+  const contactBits = [
+    liveData.email ? `✉ ${esc(liveData.email)}` : '',
+    liveData.phone ? `☎ ${esc(liveData.phone)}` : '',
+    liveData.linkedin_url ? `🔗 ${esc(liveData.linkedin_url.replace(/^https?:\/\//,''))}` : '',
+    liveData.github_username ? `⌥ github.com/${esc(liveData.github_username)}` : '',
+  ].filter(Boolean).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
+
+  doc.innerHTML = `
+    <header class="pr-header">
+      <h1>${esc(liveData.hero_name || 'Your Name')}</h1>
+      <p class="pr-role">${esc(liveData.hero_sub || '')}</p>
+      <p class="pr-contact">${contactBits}</p>
+    </header>
+
+    ${skills.length ? `
+    <section class="pr-section">
+      <h2>Skills</h2>
+      ${skills.map(g => `<p class="pr-line"><strong>${esc(g.category)}:</strong> ${(g.items||[]).map(esc).join(', ')}</p>`).join('')}
+    </section>` : ''}
+
+    ${exp.length ? `
+    <section class="pr-section">
+      <h2>Experience</h2>
+      ${exp.map(e => `
+        <div class="pr-item">
+          <div class="pr-item-top"><strong>${esc(e.role)} · ${esc(e.org)}</strong><span>${esc(e.period)}</span></div>
+          ${e.desc ? `<p>${esc(e.desc)}</p>` : ''}
+        </div>`).join('')}
+    </section>` : ''}
+
+    ${edu.length ? `
+    <section class="pr-section">
+      <h2>Education</h2>
+      ${edu.map(e => `
+        <div class="pr-item">
+          <div class="pr-item-top"><strong>${esc(e.degree)}</strong><span>${esc(e.period)}</span></div>
+          <p>${esc(e.school)}${e.detail ? ' · ' + esc(e.detail) : ''}</p>
+        </div>`).join('')}
+    </section>` : ''}
+
+    ${projects.length ? `
+    <section class="pr-section">
+      <h2>Projects</h2>
+      ${projects.map(p => `
+        <div class="pr-item">
+          <div class="pr-item-top"><strong>${esc(p.title)}</strong>${p.date ? `<span>${esc(p.date)}</span>` : ''}</div>
+          <p>${esc(p.desc)}</p>
+          ${(p.tags && p.tags.length) ? `<p class="pr-tags">${p.tags.map(esc).join(' · ')}</p>` : ''}
+        </div>`).join('')}
+    </section>` : ''}
+
+    ${certs.length ? `
+    <section class="pr-section">
+      <h2>Certifications</h2>
+      ${certs.map(c => `<p class="pr-line"><strong>${esc(c.name)}</strong> — ${esc(c.issuer)} (${esc(c.year)})</p>`).join('')}
+    </section>` : ''}
+  `;
+}
+
 function initPrintResumeButton(){
   const btn = document.getElementById('printResumeBtn');
   if (!btn) return;
-  btn.addEventListener('click', () => window.print());
+  btn.addEventListener('click', () => {
+    buildPrintResume();
+    window.print();
+  });
 }
 
 function initRecruiterMode(){

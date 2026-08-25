@@ -1036,25 +1036,27 @@ html[data-theme="light"] .palette-box input{ background:rgba(255,255,255,.6); }
 body.recruiter-mode .hero-stats{ opacity:1; }
 
 /* ============ PRINT VIEW ============ */
+/* ============ PRINTABLE RÉSUMÉ DOCUMENT ============ */
+.print-resume-doc{ display:none; }
 @media print{
-  #wallpaper, #constellation, .grain, .navbar, .back-to-top,
-  #paletteOverlay, #projectModalOverlay, #certModalOverlay, .scroll-cue,
-  #connect, #hobbies, .hero-actions, .footer, .icon-btn, #customCursor,
-  #fireflyCanvas, .font-size-control, #introSplash,
-  .recruiter-mode-pill, .recruiter-callout, #scrollProgress,
-  #gameLauncherBtn, #hintsBtn, #hintsPanel, #quizLauncherBtn, #quizOverlay,
-  #gameOverlay, #floatingStar, #badgeToast, #matrixCanvas, #visitorGateOverlay,
-  #hireMeOverlay, #hireMeBtn, .avatar-container, #qrShare,
-  .hero-photo-wrap, .scroll-cue, .btn-pulse { display:none !important; }
-  body{ background:#fff !important; color:#111 !important; }
-  .panel, .glass{ background:#fff !important; border:1px solid #ddd !important; backdrop-filter:none !important; box-shadow:none !important; }
-  .hero{ min-height:auto; padding:10px 0 20px; }
-  .hero-grid{ display:block; }
-  .section{ padding:18px 0 0; max-width:100%; page-break-inside:avoid; }
-  .section-head h2, h1, h2, h3{ text-shadow:none !important; color:#111 !important; }
-  a{ color:#111 !important; }
-  .tag{ color:#555 !important; }
-  .tilt-card:hover{ transform:none !important; }
+  body *{ visibility:hidden; }
+  #printResumeDoc, #printResumeDoc *{ visibility:visible; }
+  #printResumeDoc{
+    display:block !important; position:absolute; top:0; left:0; width:100%;
+    background:#fff; color:#111; padding:24px 30px; font-family:Arial, Helvetica, sans-serif;
+  }
+  .pr-header{ border-bottom:2px solid #222; padding-bottom:10px; margin-bottom:16px; }
+  .pr-header h1{ font-size:26px; margin:0 0 4px; color:#111; }
+  .pr-role{ font-size:13px; color:#333; margin:0 0 8px; }
+  .pr-contact{ font-size:11px; color:#444; }
+  .pr-section{ margin-bottom:16px; page-break-inside:avoid; }
+  .pr-section h2{ font-size:13px; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #ccc; padding-bottom:3px; margin-bottom:8px; color:#111; }
+  .pr-item{ margin-bottom:10px; }
+  .pr-item-top{ display:flex; justify-content:space-between; font-size:13px; gap:10px; }
+  .pr-item-top span{ font-size:11px; color:#555; white-space:nowrap; }
+  .pr-item p{ font-size:12px; color:#333; margin:3px 0 0; }
+  .pr-tags{ font-size:10.5px !important; color:#666 !important; font-style:italic; }
+  .pr-line{ font-size:12px; margin:0 0 5px; color:#222; }
 }
 
 /* ============ MATRIX MODE ============ */
