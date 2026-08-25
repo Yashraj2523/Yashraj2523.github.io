@@ -1392,7 +1392,11 @@ function initPrintResumeButton(){
   if (!btn) return;
   btn.addEventListener('click', () => {
     buildPrintResume();
+    document.documentElement.classList.add('printing-resume');
     window.print();
+  });
+  window.addEventListener('afterprint', () => {
+    document.documentElement.classList.remove('printing-resume');
   });
 }
 
