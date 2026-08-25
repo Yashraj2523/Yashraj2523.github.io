@@ -1039,12 +1039,22 @@ body.recruiter-mode .hero-stats{ opacity:1; }
 @media print{
   #wallpaper, #constellation, .grain, .navbar, .back-to-top,
   #paletteOverlay, #projectModalOverlay, #certModalOverlay, .scroll-cue,
-  #connect, #hobbies, .hero-actions a.btn-glass, .footer, .icon-btn, #customCursor, #fireflyCanvas, .font-size-control, #introSplash { display:none !important; }
+  #connect, #hobbies, .hero-actions, .footer, .icon-btn, #customCursor,
+  #fireflyCanvas, .font-size-control, #introSplash,
+  .recruiter-mode-pill, .recruiter-callout, #scrollProgress,
+  #gameLauncherBtn, #hintsBtn, #hintsPanel, #quizLauncherBtn, #quizOverlay,
+  #gameOverlay, #floatingStar, #badgeToast, #matrixCanvas, #visitorGateOverlay,
+  #hireMeOverlay, #hireMeBtn, .avatar-container, #qrShare,
+  .hero-photo-wrap, .scroll-cue, .btn-pulse { display:none !important; }
   body{ background:#fff !important; color:#111 !important; }
   .panel, .glass{ background:#fff !important; border:1px solid #ddd !important; backdrop-filter:none !important; box-shadow:none !important; }
-  .hero{ min-height:auto; padding:20px 0; }
-  .section{ padding:24px 0 0; max-width:100%; }
+  .hero{ min-height:auto; padding:10px 0 20px; }
+  .hero-grid{ display:block; }
+  .section{ padding:18px 0 0; max-width:100%; page-break-inside:avoid; }
+  .section-head h2, h1, h2, h3{ text-shadow:none !important; color:#111 !important; }
   a{ color:#111 !important; }
+  .tag{ color:#555 !important; }
+  .tilt-card:hover{ transform:none !important; }
 }
 
 /* ============ MATRIX MODE ============ */

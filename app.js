@@ -1317,6 +1317,12 @@ function initNavScrollSpy(){
 /* ====================================================================
    16. RECRUITER MODE (hides non-essential sections client-side)
    ==================================================================== */
+function initPrintResumeButton(){
+  const btn = document.getElementById('printResumeBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => window.print());
+}
+
 function initRecruiterMode(){
   const btn = document.getElementById('recruiterModeBtn');
   const label = btn.querySelector('.recruiter-label') || (() => {
@@ -2311,6 +2317,7 @@ function initSectionAccordion(){
   initCopyEmail();
   initLogoHome();
   initRecruiterMode();
+  initPrintResumeButton();
   renderNavLinks();
   initFloatingUIOffset();
   initSoundToggle();
