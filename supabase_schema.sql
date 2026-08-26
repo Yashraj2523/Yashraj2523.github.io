@@ -92,7 +92,17 @@ drop policy if exists "Only admin can read site events" on site_events;
 create policy "Only admin can read site events" on site_events for select using ( auth.role() = 'authenticated' );
 
 -- ===== LIVE SYNC: lets index.html update instantly when admin.html saves =====
-alter publication supabase_realtime add table site_content;
+-- Wrapped in a check so re-running this file never fails even if it's
+-- already been added in a previous run.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'site_content'
+  ) then
+    alter publication supabase_realtime add table site_content;
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------
 -- Why you got the "policy already exists" error last time:
