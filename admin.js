@@ -206,6 +206,37 @@ async function loadHireInquiries(){
   renderDataTable('hireInquiriesTableWrap', hireInquiriesCache, HIRE_COLUMNS);
 }
 
+async function loadAnalytics(){
+  if (!supa) return;
+  const summaryWrap = document.getElementById('analyticsSummaryCards');
+  const topWrap = document.getElementById('analyticsTopProjects');
+  summaryWrap.innerHTML = `<p class="settings-hint">Loading…</p>`;
+
+  const { data, error } = await supa.from('site_events').select('event_type, meta, created_at');
+  if (error){
+    summaryWrap.innerHTML = `<p class="settings-hint">Could not load — run the latest supabase_schema.sql in your Supabase SQL editor (it creates the site_events table). Error: ${error.message}</p>`;
+    topWrap.innerHTML = '';
+    return;
+  }
+  const rows = data || [];
+  const pageViews = rows.filter(r => r.event_type === 'page_view').length;
+  const resumeDownloads = rows.filter(r => r.event_type === 'resume_download').length;
+  const projectClicks = rows.filter(r => r.event_type === 'project_click');
+
+  summaryWrap.innerHTML = `
+    <div class="analytics-card"><div class="analytics-num">${pageViews}</div><div class="analytics-label">Page views</div></div>
+    <div class="analytics-card"><div class="analytics-num">${resumeDownloads}</div><div class="analytics-label">Résumé downloads</div></div>
+    <div class="analytics-card"><div class="analytics-num">${projectClicks.length}</div><div class="analytics-label">Project card opens</div></div>
+  `;
+
+  const counts = {};
+  projectClicks.forEach(r => { const name = r.meta || 'Unknown'; counts[name] = (counts[name] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  topWrap.innerHTML = sorted.length
+    ? `<table class="admin-data-table"><thead><tr><th>Project</th><th>Opens</th></tr></thead><tbody>${sorted.map(([name, count]) => `<tr><td>${escapeHtml(name)}</td><td>${count}</td></tr>`).join('')}</tbody></table>`
+    : `<p class="settings-hint">No project clicks logged yet — they'll appear here as visitors open project cards.</p>`;
+}
+
 document.getElementById('downloadVisitorsBtn').addEventListener('click', () => downloadCSV('game-quiz-players.csv', visitorLeadsCache, VISITOR_COLUMNS));
 document.getElementById('downloadHiresBtn').addEventListener('click', () => downloadCSV('hire-inquiries.csv', hireInquiriesCache, HIRE_COLUMNS));
 
@@ -219,6 +250,7 @@ function initTabs(){
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (tab.dataset.tab === 'visitors') loadVisitorLeads();
       if (tab.dataset.tab === 'hires') loadHireInquiries();
+      if (tab.dataset.tab === 'analytics') loadAnalytics();
     });
   });
 }
@@ -471,7 +503,7 @@ function initRepeaters(){
 
   makeRepeater({
     wrapId: 'projectsRepeatWrap', dataKey: 'projects', addBtnId: 'addProjectBtn',
-    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [] },
+    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [], approach: '', challenges: '', result: '', lessons: '' },
     labelFn: (item) => item.title || 'Project',
     fields: [
       { key: 'title', label: 'Title', type: 'text' },
@@ -480,6 +512,10 @@ function initRepeaters(){
       { key: 'tags', label: 'Tags (one per line)', type: 'list' },
       { key: 'metrics', label: 'Metrics — one per line as "Label: Value" (e.g. Accuracy: 95%)', type: 'metrics' },
       { key: 'features', label: 'Features (one per line)', type: 'list' },
+      { key: 'approach', label: 'Case study — Approach (optional, leave blank to hide)', type: 'textarea' },
+      { key: 'challenges', label: 'Case study — Challenges faced (optional)', type: 'textarea' },
+      { key: 'result', label: 'Case study — Result / outcome (optional)', type: 'textarea' },
+      { key: 'lessons', label: 'Case study — What I learned (optional)', type: 'textarea' },
       { key: 'github', label: 'GitHub link', type: 'text' },
       { key: 'demo', label: 'Live demo link', type: 'text' },
       { key: 'screenshots', label: 'Screenshot image URLs (one per line — upload via Photos tab or paste a link)', type: 'list' },

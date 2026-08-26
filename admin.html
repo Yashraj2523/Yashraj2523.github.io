@@ -56,6 +56,7 @@
     <button class="admin-tab" data-tab="settings">Settings</button>
     <button class="admin-tab" data-tab="visitors">Game/Quiz Players</button>
     <button class="admin-tab" data-tab="hires">Hire Me Inquiries</button>
+    <button class="admin-tab" data-tab="analytics">Analytics</button>
   </div>
 
   <div class="admin-panel-content">
@@ -345,6 +346,19 @@
       <p class="settings-hint">Everyone who filled out the "Hire Me" popup.</p>
       <button id="downloadHiresBtn" class="btn btn-glass" style="margin:10px 0;">⬇ Download as CSV</button>
       <div id="hireInquiriesTableWrap" class="admin-data-table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- ---- ANALYTICS ---- -->
+  <section class="admin-panel-section" data-panel="analytics">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">At a glance</h3>
+      <p class="settings-hint">Lightweight, privacy-friendly counters — no cookies, no third-party tracker. Just counts of things that happened on your site.</p>
+      <div id="analyticsSummaryCards" class="analytics-summary-row"></div>
+    </div>
+    <div class="glass panel admin-card admin-card-full">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Most-clicked projects</h3>
+      <div id="analyticsTopProjects" class="admin-data-table-wrap"></div>
     </div>
   </section>
 

@@ -76,6 +76,21 @@ create policy "Anyone can submit a hire inquiry" on hire_inquiries for insert wi
 drop policy if exists "Only admin can read hire inquiries" on hire_inquiries;
 create policy "Only admin can read hire inquiries" on hire_inquiries for select using ( auth.role() = 'authenticated' );
 
+-- ===== SITE EVENTS (lightweight visitor analytics — page views, project clicks, résumé downloads) =====
+create table if not exists site_events (
+  id uuid primary key default gen_random_uuid(),
+  event_type text not null,
+  meta text,
+  created_at timestamp with time zone default now()
+);
+alter table site_events enable row level security;
+
+drop policy if exists "Anyone can log a site event" on site_events;
+create policy "Anyone can log a site event" on site_events for insert with check ( true );
+
+drop policy if exists "Only admin can read site events" on site_events;
+create policy "Only admin can read site events" on site_events for select using ( auth.role() = 'authenticated' );
+
 -- ===== LIVE SYNC: lets index.html update instantly when admin.html saves =====
 alter publication supabase_realtime add table site_content;
 

@@ -740,6 +740,28 @@ function initProjectModal(){
       featuresWrap.style.display = 'block';
     } else featuresWrap.style.display = 'none';
 
+    // Case-study fields — each shown only if that project has content for it
+    const caseFields = [
+      ['Approach', 'approach', 'projModalApproachBlock', 'projModalApproach'],
+      ['Challenges', 'challenges', 'projModalChallengesBlock', 'projModalChallenges'],
+      ['Result', 'result', 'projModalResultBlock', 'projModalResult'],
+      ['Lessons', 'lessons', 'projModalLessonsBlock', 'projModalLessons'],
+    ];
+    let anyCaseContent = false;
+    caseFields.forEach(([label, key, blockId, textId]) => {
+      const block = document.getElementById(blockId);
+      const textEl = document.getElementById(textId);
+      if (p[key] && String(p[key]).trim()){
+        textEl.textContent = p[key];
+        block.style.display = 'block';
+        anyCaseContent = true;
+      } else {
+        block.style.display = 'none';
+      }
+    });
+    const caseWrap = document.getElementById('projModalCaseStudyWrap');
+    if (caseWrap) caseWrap.style.display = anyCaseContent ? 'block' : 'none';
+
     const shotsWrap = document.getElementById('projModalShotsWrap');
     const shotsGrid = document.getElementById('projModalShots');
     if (p.screenshots && p.screenshots.length){
@@ -1485,6 +1507,36 @@ function initSkillMatchAnalyzer(){
 }
 function escapeHtmlLocal(s){
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ====================================================================
+   NEW: LIGHTWEIGHT VISITOR ANALYTICS (page views, résumé downloads,
+   project clicks) — logged to Supabase, visible only in admin.html.
+   No third-party tracker, no cookies, just a few insert-only rows.
+   ==================================================================== */
+function logSiteEvent(eventType, meta){
+  if (!supa) return;
+  supa.from('site_events').insert({ event_type: eventType, meta: meta || null }).then(() => {}, () => {});
+}
+function initAnalyticsLogging(){
+  // one page-view log per browser tab session (not per scroll/interaction)
+  if (!sessionStorage.getItem('pv_logged')){
+    sessionStorage.setItem('pv_logged', '1');
+    logSiteEvent('page_view', location.pathname);
+  }
+  const resumeBtn = document.getElementById('resumeDownloadBtn');
+  if (resumeBtn) resumeBtn.addEventListener('click', () => logSiteEvent('resume_download'));
+
+  const grid = document.getElementById('projectsGrid');
+  if (grid){
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('.project-card');
+      if (!card) return;
+      const idx = +card.dataset.index;
+      const title = liveData.projects?.[idx]?.title || ('project #' + idx);
+      logSiteEvent('project_click', title);
+    });
+  }
 }
 
 function initPrintResumeButton(){
@@ -2496,6 +2548,7 @@ function initSectionAccordion(){
   initRecruiterMode();
   initPrintResumeButton();
   initSaveContactCard();
+  initAnalyticsLogging();
   initSkillMatchAnalyzer();
   renderNavLinks();
   initFloatingUIOffset();
