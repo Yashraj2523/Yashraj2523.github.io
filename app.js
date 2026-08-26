@@ -1263,7 +1263,7 @@ function initFontSizeControl(){
    ==================================================================== */
 const NAV_FULL_LABELS = {
   about: 'About', experience: 'Experience', timeline: 'Timeline', skills: 'Skills',
-  projects: 'Projects', repos: 'GitHub', certs: 'Certifications',
+  skillMatch: 'Job Match', projects: 'Projects', repos: 'GitHub', certs: 'Certifications',
   hobbies: 'Hobbies', achievements: 'Achievements', connect: 'Connect', contact: 'Contact',
 };
 function renderNavLinks(){
@@ -1385,6 +1385,106 @@ function buildPrintResume(){
       ${certs.map(c => `<p class="pr-line"><strong>${esc(c.name)}</strong> — ${esc(c.issuer)} (${esc(c.year)})</p>`).join('')}
     </section>` : ''}
   `;
+}
+
+/* ====================================================================
+   NEW: DOWNLOADABLE VCARD (save contact directly to phone)
+   ==================================================================== */
+function initSaveContactCard(){
+  const btn = document.getElementById('saveContactBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const name = liveData.hero_name || 'Yashwanth R';
+    const email = liveData.email || 'yashwanthriya25@gmail.com';
+    const phone = liveData.phone || '';
+    const linkedin = liveData.linkedin_url || '';
+    const github = liveData.github_username ? `https://github.com/${liveData.github_username}` : '';
+    const title = liveData.hero_sub ? liveData.hero_sub.split('.')[0] : 'Software Engineer';
+
+    const vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `FN:${name}`,
+      `TITLE:${title}`,
+      email ? `EMAIL;TYPE=INTERNET:${email}` : '',
+      phone ? `TEL;TYPE=CELL:${phone}` : '',
+      linkedin ? `URL;TYPE=LinkedIn:${linkedin}` : '',
+      github ? `URL;TYPE=GitHub:${github}` : '',
+      'END:VCARD'
+    ].filter(Boolean).join('\r\n');
+
+    const blob = new Blob([vcard], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name.replace(/\s+/g, '_')}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    if (typeof sfxSuccess === 'function') sfxSuccess();
+    if (typeof awardBadge === 'function') awardBadge('Contact Saved 📇');
+  });
+}
+
+/* ====================================================================
+   NEW: JOB DESCRIPTION SKILL-MATCH ANALYZER (client-side only)
+   ==================================================================== */
+function initSkillMatchAnalyzer(){
+  const btn = document.getElementById('analyzeJdBtn');
+  const input = document.getElementById('jdInput');
+  const scoreEl = document.getElementById('jdMatchScore');
+  const resultsEl = document.getElementById('jdMatchResults');
+  if (!btn || !input) return;
+
+  function allMySkills(){
+    const set = new Set();
+    (liveData.skills || []).forEach(group => (group.items || []).forEach(item => set.add(item.toLowerCase().trim())));
+    return Array.from(set);
+  }
+
+  btn.addEventListener('click', () => {
+    const jd = (input.value || '').toLowerCase();
+    if (!jd.trim()){
+      scoreEl.textContent = 'Paste a job description first.';
+      resultsEl.innerHTML = '';
+      return;
+    }
+    const mySkills = allMySkills();
+    const matched = [];
+    const missing = [];
+    mySkills.forEach(skill => {
+      // word-boundary-ish match so "R" doesn't match every word containing r
+      const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i');
+      if (pattern.test(jd)) matched.push(skill); else missing.push(skill);
+    });
+
+    const pct = mySkills.length ? Math.round((matched.length / mySkills.length) * 100) : 0;
+    scoreEl.innerHTML = `<strong style="color:var(--accent-1); font-size:1.1rem;">${pct}% match</strong> — ${matched.length} of ${mySkills.length} listed skills found in this description.`;
+
+    resultsEl.innerHTML = `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div>
+          <p style="font-size:.82rem; color:var(--accent-1); font-weight:600; margin-bottom:8px;">✓ Matched (${matched.length})</p>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${matched.map(s => `<span class="skill-tag" style="border-color:var(--accent-1);">${escapeHtmlLocal(s)}</span>`).join('') || '<span class="muted" style="font-size:.82rem;">None found</span>'}
+          </div>
+        </div>
+        <div>
+          <p style="font-size:.82rem; color:var(--ink-2); font-weight:600; margin-bottom:8px;">Not mentioned (${missing.length})</p>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${missing.map(s => `<span class="skill-tag" style="opacity:.5;">${escapeHtmlLocal(s)}</span>`).join('') || '<span class="muted" style="font-size:.82rem;">None — full match!</span>'}
+          </div>
+        </div>
+      </div>`;
+
+    if (typeof fireConfetti === 'function' && pct >= 70) fireConfetti();
+    if (typeof awardBadge === 'function') awardBadge('Job Match Checked 🎯');
+  });
+}
+function escapeHtmlLocal(s){
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function initPrintResumeButton(){
@@ -2395,6 +2495,8 @@ function initSectionAccordion(){
   initLogoHome();
   initRecruiterMode();
   initPrintResumeButton();
+  initSaveContactCard();
+  initSkillMatchAnalyzer();
   renderNavLinks();
   initFloatingUIOffset();
   initSoundToggle();
