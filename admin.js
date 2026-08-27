@@ -273,6 +273,9 @@ function populateForms(){
   byId('f_youtube_subs').value = liveData.youtube_subs || '';
 
   const s = liveData.settings || {};
+  byId('s_availabilityStatus').value = s.availabilityStatus || 'green';
+  byId('s_availabilityText').value = s.availabilityText || 'Open to opportunities';
+  byId('s_bookingUrl').value = s.bookingUrl || '';
   bindSlider('s_iconButtonSize', 'v_iconButtonSize', s.iconButtonSize || 36, 'px');
   bindSlider('s_avatarSize', 'v_avatarSize', s.avatarSize || 320, 'px');
   bindSlider('s_cardRadius', 'v_cardRadius', s.cardRadius || 18, 'px');
@@ -365,6 +368,9 @@ function collectSimpleFields(){
     cursorTrail: byId('s_cursorTrail').checked,
     recruiterHiddenSections: (liveData.settings && liveData.settings.recruiterHiddenSections) || ['hobbies','connect','achievements','timeline'],
     navVisibleSections: (liveData.settings && liveData.settings.navVisibleSections) || Object.keys(SECTION_LABELS).filter(k => k !== 'contact'),
+    availabilityStatus: byId('s_availabilityStatus').value,
+    availabilityText: byId('s_availabilityText').value.trim(),
+    bookingUrl: byId('s_bookingUrl').value.trim(),
   };
 }
 

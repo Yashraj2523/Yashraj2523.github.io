@@ -1020,7 +1020,10 @@ function applyDynamicGreeting(){
   if (!el) return;
   const hour = new Date().getHours();
   const greeting = hour < 5 ? 'Burning the midnight oil too?' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Working late?';
-  el.innerHTML = `● <span class="eyebrow-wish">${greeting}</span> — open to opportunities, M.Tech Software Engineering 2026`;
+  const settings = (liveData && liveData.settings) || {};
+  const statusColor = settings.availabilityStatus === 'yellow' ? '#eab308' : settings.availabilityStatus === 'gray' ? '#9ca3af' : '#22c55e';
+  const statusText = settings.availabilityText || 'Open to opportunities';
+  el.innerHTML = `<span class="eyebrow-dot" style="color:${statusColor};">●</span> <span class="eyebrow-wish">${greeting}</span> — ${escapeHtmlLocal(statusText)}`;
 }
 
 /* ====================================================================
@@ -1412,6 +1415,18 @@ function buildPrintResume(){
 /* ====================================================================
    NEW: DOWNLOADABLE VCARD (save contact directly to phone)
    ==================================================================== */
+function initBookingButton(){
+  const btn = document.getElementById('bookCallBtn');
+  if (!btn) return;
+  const url = (liveData.settings && liveData.settings.bookingUrl) || '';
+  if (url){
+    btn.href = url;
+    btn.style.display = 'inline-flex';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
 function initSaveContactCard(){
   const btn = document.getElementById('saveContactBtn');
   if (!btn) return;
@@ -1499,7 +1514,33 @@ function initSkillMatchAnalyzer(){
             ${missing.map(s => `<span class="skill-tag" style="opacity:.5;">${escapeHtmlLocal(s)}</span>`).join('') || '<span class="muted" style="font-size:.82rem;">None — full match!</span>'}
           </div>
         </div>
+      </div>
+      <div id="jdPitchCard" class="jd-pitch-card">
+        <p id="jdPitchText" class="jd-pitch-text"></p>
+        <button id="jdCopyPitchBtn" type="button" class="btn btn-glass" style="margin-top:12px; font-size:.82rem;">📋 Copy this summary</button>
       </div>`;
+
+    // Generate a one-paragraph, shareable pitch a recruiter could forward internally
+    const name = (liveData.hero_name || 'This candidate').split(' ')[0];
+    const topMatched = matched.slice(0, 4);
+    const strengthLine = topMatched.length
+      ? `especially in ${topMatched.slice(0, -1).map(s => capitalizeLocal(s)).join(', ')}${topMatched.length > 1 ? ' and ' + capitalizeLocal(topMatched[topMatched.length - 1]) : capitalizeLocal(topMatched[0])}`
+      : 'across a broad general skill set';
+    const verdict = pct >= 70 ? 'a strong fit worth an interview'
+      : pct >= 40 ? 'a reasonable fit worth a closer look'
+      : 'a partial fit, though the core skills may still transfer';
+    const pitchText = `${name} matches ${pct}% of this role's listed requirements, ${strengthLine}. Based on this overlap, ${name} looks like ${verdict}.`;
+    document.getElementById('jdPitchText').textContent = pitchText;
+
+    document.getElementById('jdCopyPitchBtn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pitchText);
+        const b = document.getElementById('jdCopyPitchBtn');
+        const original = b.textContent;
+        b.textContent = '✓ Copied!';
+        setTimeout(() => { b.textContent = original; }, 1800);
+      } catch (e) { /* clipboard may be blocked in some contexts; fail silently */ }
+    });
 
     if (typeof fireConfetti === 'function' && pct >= 70) fireConfetti();
     if (typeof awardBadge === 'function') awardBadge('Job Match Checked 🎯');
@@ -1507,6 +1548,9 @@ function initSkillMatchAnalyzer(){
 }
 function escapeHtmlLocal(s){
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function capitalizeLocal(s){
+  return String(s || '').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 /* ====================================================================
@@ -2548,6 +2592,7 @@ function initSectionAccordion(){
   initRecruiterMode();
   initPrintResumeButton();
   initSaveContactCard();
+  initBookingButton();
   initAnalyticsLogging();
   initSkillMatchAnalyzer();
   renderNavLinks();

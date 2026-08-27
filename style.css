@@ -336,6 +336,14 @@ html[data-theme="light"] .modal-box input, html[data-theme="light"] .modal-box t
   98%{ opacity:.55; }
 }
 @media (prefers-reduced-motion: reduce){ .eyebrow-wish{ animation:none; } }
+.eyebrow-dot{
+  animation: statusPulse 2s ease-in-out infinite;
+}
+@keyframes statusPulse{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:.45; }
+}
+@media (prefers-reduced-motion: reduce){ .eyebrow-dot{ animation:none; } }
 .hero-name{
   font-family:var(--font-display); font-weight:700;
   font-size:clamp(3rem, 9vw, 6.2rem); letter-spacing:-.02em; line-height:1;
@@ -695,6 +703,12 @@ html[data-theme="light"] .modal-box input, html[data-theme="light"] .modal-box t
 
 .admin-data-table-wrap{ margin-top:6px; width:100%; }
 .analytics-summary-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; }
+.jd-pitch-card{
+  margin-top:20px; padding:18px 20px; border-radius:14px;
+  background:linear-gradient(135deg, rgba(110,231,216,.08), rgba(167,139,250,.08));
+  border:1px solid var(--glass-border);
+}
+.jd-pitch-text{ font-size:.92rem; line-height:1.6; color:var(--ink-0); font-style:italic; }
 .analytics-card{
   background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:14px;
   padding:16px 22px; min-width:140px; text-align:center;

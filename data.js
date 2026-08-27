@@ -233,5 +233,14 @@ const SITE_DATA = {
     clockStyle: "digital", // "digital" | "neon" | "analog" — editable in admin.html → Settings
 
     navVisibleSections: ["about", "experience", "timeline", "skills", "projects", "repos", "certs", "hobbies", "achievements", "connect"], // editable in admin.html → Sections
+
+    // Availability status shown next to the hero eyebrow dot.
+    // "green" = actively interviewing, "yellow" = open to offers, "gray" = not looking.
+    availabilityStatus: "green",
+    availabilityText: "Open to opportunities",
+
+    // "Book a call" link — paste your Calendly/Cal.com link here to show a
+    // booking button in the Contact section. Leave empty to hide it.
+    bookingUrl: "",
   },
 };

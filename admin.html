@@ -228,6 +228,29 @@
       <p class="settings-hint" id="resumeCurrentLink"></p>
     </div>
     <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Availability status</h3>
+      <p class="settings-hint">Shown as a colored dot next to your greeting on the homepage. Saves instantly.</p>
+      <div class="admin-field">
+        <label>Status color</label>
+        <select id="s_availabilityStatus" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+          <option value="green">🟢 Actively interviewing</option>
+          <option value="yellow">🟡 Open to offers</option>
+          <option value="gray">⚪ Not currently looking</option>
+        </select>
+      </div>
+      <div class="admin-field">
+        <label>Status text (shown after the dot)</label>
+        <input id="s_availabilityText" type="text" placeholder="e.g. Open to opportunities" />
+      </div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Book a call link</h3>
+      <p class="settings-hint">Paste a free Calendly/Cal.com scheduling link — a "📅 Book a 15-min call" button will appear in your Contact section. Leave blank to hide the button.</p>
+      <div class="admin-field">
+        <input id="s_bookingUrl" type="text" placeholder="https://calendly.com/your-name/15min" />
+      </div>
+    </div>
+    <div class="glass panel admin-card">
       <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background style</h3>
       <p class="settings-hint">Choose the animated background behind the whole site. "Space" gives a drifting starfield/galaxy feel; "Dots" is the original constellation look.</p>
       <select id="s_bgStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
