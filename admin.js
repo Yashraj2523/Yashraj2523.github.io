@@ -503,7 +503,7 @@ function initRepeaters(){
     labelFn: (item) => item.category || 'Category',
     fields: [
       { key: 'category', label: 'Category name', type: 'text' },
-      { key: 'items', label: 'Skills (one per line)', type: 'list' },
+      { key: 'items', label: 'Skills (one per line). Add ":NN" for a proficiency %, e.g. "Python:92" — plain names still work and default to 80%.', type: 'list' },
     ]
   });
 

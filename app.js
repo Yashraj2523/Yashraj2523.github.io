@@ -168,12 +168,20 @@ function renderAll(){
   document.querySelectorAll('[data-edit="about_text"]').forEach(el => el.innerHTML = liveData.about_text_html);
   document.querySelectorAll('[data-edit="linkedin_blurb"]').forEach(el => el.textContent = liveData.linkedin_blurb);
 
-  // Skills
+  // Skills — animated proficiency bars. Backward-compatible: plain skill
+  // names ("Python") still work and get a sensible default bar level;
+  // optionally add ":NN" per line ("Python:92") to set an exact level.
   const skillsGrid = document.getElementById('skillsGrid');
   skillsGrid.innerHTML = liveData.skills.map(group => `
     <div class="glass skill-card panel reveal reveal-zoom tilt-card">
       <h4>${esc(group.category)}</h4>
-      <div class="skill-tags">${group.items.map(i => `<span class="skill-tag">${esc(i)}</span>`).join('')}</div>
+      <div class="skill-bars">${group.items.map(raw => {
+        const parsed = parseSkillLevel(raw);
+        return `<div class="skill-bar-row">
+          <div class="skill-bar-label"><span>${esc(parsed.name)}</span><span class="skill-bar-pct">${parsed.level}%</span></div>
+          <div class="skill-bar-track"><div class="skill-bar-fill" data-level="${parsed.level}" style="width:0%"></div></div>
+        </div>`;
+      }).join('')}</div>
     </div>`).join('');
 
   // Projects — sorted by date (latest first); undated ones keep their relative order at the end
@@ -518,6 +526,32 @@ function initReveal(){
     });
   }, { threshold: 0.12 });
   els.forEach(el => obs.observe(el));
+  initSkillBarAnimation();
+}
+
+function parseSkillLevel(raw){
+  const str = String(raw || '').trim();
+  const match = str.match(/^(.*?):(\d{1,3})$/);
+  if (match){
+    const level = Math.min(100, Math.max(0, parseInt(match[2], 10)));
+    return { name: match[1].trim(), level };
+  }
+  return { name: str, level: 80 };
+}
+
+function initSkillBarAnimation(){
+  const bars = document.querySelectorAll('.skill-bar-fill:not([data-animated])');
+  if (!bars.length) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      el.dataset.animated = '1';
+      requestAnimationFrame(() => { el.style.width = el.dataset.level + '%'; });
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.3 });
+  bars.forEach(bar => obs.observe(bar));
 }
 
 function initCounters(){
@@ -612,17 +646,44 @@ async function loadGithubRepos(){
 function initTheme(){
   const root = document.documentElement;
   const saved = localStorage.getItem('site_theme');
-  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  const initial = saved || (prefersLight ? 'light' : 'dark');
-  applyTheme(initial);
+  const media = window.matchMedia('(prefers-color-scheme: light)');
+  const initial = saved || (media.matches ? 'light' : 'dark');
+  applyTheme(initial, true);
 
   document.getElementById('themeToggle').addEventListener('click', () => {
     const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    applyTheme(next);
+    crossFadeTheme(next);
     localStorage.setItem('site_theme', next);
   });
+
+  // Live-follow the OS theme if the visitor hasn't manually chosen one yet
+  media.addEventListener('change', (e) => {
+    if (localStorage.getItem('site_theme')) return; // respect explicit user choice
+    crossFadeTheme(e.matches ? 'light' : 'dark');
+  });
 }
-function applyTheme(theme){
+
+function crossFadeTheme(next){
+  const overlay = getThemeFadeOverlay();
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion){ applyTheme(next); return; }
+  overlay.style.opacity = '1';
+  setTimeout(() => {
+    applyTheme(next);
+    requestAnimationFrame(() => { overlay.style.opacity = '0'; });
+  }, 180);
+}
+function getThemeFadeOverlay(){
+  let el = document.getElementById('themeFadeOverlay');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'themeFadeOverlay';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function applyTheme(theme, isInitial){
   document.documentElement.setAttribute('data-theme', theme);
   document.getElementById('themeIconMoon').style.display = theme === 'light' ? 'block' : 'none';
   document.getElementById('themeIconSun').style.display = theme === 'light' ? 'none' : 'block';

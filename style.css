@@ -61,6 +61,10 @@ html, body, .panel, .navbar, .btn, .skill-tag, .repo-card, .cert-item, .hobby-ch
 }
 html{ transition: none; }
 body{ transition: background .5s var(--ease), color .5s var(--ease); }
+#themeFadeOverlay{
+  position:fixed; inset:0; z-index:9998; pointer-events:none;
+  background:var(--bg-0); opacity:0; transition:opacity .2s ease;
+}
 
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -442,6 +446,18 @@ html[data-theme="light"] .modal-box input, html[data-theme="light"] .modal-box t
   border:1px solid var(--glass-border); color:var(--ink-1); transition:.3s var(--ease);
 }
 .skill-tag:hover{border-color:var(--accent-2); color:var(--ink-0); transform:translateY(-2px);}
+.skill-bars{ display:flex; flex-direction:column; gap:14px; }
+.skill-bar-row{ display:flex; flex-direction:column; gap:6px; }
+.skill-bar-label{ display:flex; justify-content:space-between; font-size:.85rem; color:var(--ink-1); }
+.skill-bar-pct{ color:var(--accent-1); font-family:var(--font-mono); font-size:.78rem; }
+.skill-bar-track{ height:7px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; }
+html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
+.skill-bar-fill{
+  height:100%; border-radius:999px; width:0%;
+  background:linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  transition:width 1.1s cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-reduced-motion: reduce){ .skill-bar-fill{ transition:none; } }
 
 /* ============ PROJECTS ============ */
 .projects-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px;}
