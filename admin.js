@@ -107,6 +107,7 @@ async function initAuth(){
     populateForms();
     initRepeaters();
     initUploads();
+    pollHiresBadgeSilently();
   }
 }
 
@@ -204,6 +205,33 @@ async function loadHireInquiries(){
   }
   hireInquiriesCache = data || [];
   renderDataTable('hireInquiriesTableWrap', hireInquiriesCache, HIRE_COLUMNS);
+  markHiresSeen(hireInquiriesCache.length);
+}
+
+function updateHiresBadge(currentCount){
+  const badge = document.getElementById('hiresBadge');
+  if (!badge) return;
+  const seen = parseInt(localStorage.getItem('hires_seen_count') || '0', 10);
+  const unseen = Math.max(0, currentCount - seen);
+  if (unseen > 0){
+    badge.textContent = unseen > 9 ? '9+' : String(unseen);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+function markHiresSeen(currentCount){
+  // Only mark as seen once the Hire Me tab is actually opened, not on a
+  // background poll — called from loadHireInquiries which only runs on tab click.
+  localStorage.setItem('hires_seen_count', String(currentCount));
+  const badge = document.getElementById('hiresBadge');
+  if (badge) badge.classList.add('hidden');
+}
+async function pollHiresBadgeSilently(){
+  if (!supa) return;
+  const { count, error } = await supa.from('hire_inquiries').select('*', { count: 'exact', head: true });
+  if (error || count === null || count === undefined) return;
+  updateHiresBadge(count);
 }
 
 async function loadAnalytics(){
@@ -252,6 +280,52 @@ function initTabs(){
       if (tab.dataset.tab === 'hires') loadHireInquiries();
       if (tab.dataset.tab === 'analytics') loadAnalytics();
     });
+  });
+  initNavGroups();
+  initAdminJumpSearch();
+}
+
+function initNavGroups(){
+  const groups = document.querySelectorAll('.admin-nav-group');
+  groups.forEach(group => {
+    const head = group.querySelector('.admin-group-head');
+    head.addEventListener('click', () => {
+      group.classList.toggle('collapsed');
+    });
+  });
+  // Content group open by default (matches the default "hero" active tab);
+  // everything else starts collapsed to keep the sidebar short.
+  groups.forEach(group => {
+    if (group.dataset.group !== 'content') group.classList.add('collapsed');
+  });
+}
+
+function initAdminJumpSearch(){
+  const input = document.getElementById('adminJumpInput');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    const tabs = document.querySelectorAll('.admin-tab');
+    if (!q){
+      tabs.forEach(t => t.style.display = '');
+      document.querySelectorAll('.admin-nav-group').forEach(g => g.style.display = '');
+      return;
+    }
+    document.querySelectorAll('.admin-nav-group').forEach(group => {
+      let anyMatch = false;
+      group.querySelectorAll('.admin-tab').forEach(tab => {
+        const match = tab.textContent.toLowerCase().includes(q);
+        tab.style.display = match ? '' : 'none';
+        if (match) anyMatch = true;
+      });
+      group.style.display = anyMatch ? '' : 'none';
+      if (anyMatch) group.classList.remove('collapsed');
+    });
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const visibleTabs = Array.from(document.querySelectorAll('.admin-tab')).filter(t => t.style.display !== 'none');
+    if (visibleTabs.length) visibleTabs[0].click();
   });
 }
 
