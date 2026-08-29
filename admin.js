@@ -468,7 +468,7 @@ function makeRepeater(opts){
         </div>
         <button class="admin-remove-btn" data-action="remove">✕</button>
         <div class="admin-repeat-body">
-          ${fields.map(f => fieldHtml(f, item, idx)).join('')}
+          ${renderFieldsWithGroups(fields, item, idx)}
         </div>
       </div>`).join('') || '<p class="empty-state">Nothing here yet — use the button below to add one.</p>';
 
@@ -504,6 +504,21 @@ function makeRepeater(opts){
     });
 
     initDragReorder(wrap, list, render);
+  }
+
+  function renderFieldsWithGroups(fields, item, idx){
+    let html = '';
+    let lastGroup = null;
+    fields.forEach(f => {
+      if (f.group && f.group !== lastGroup){
+        html += `<div class="admin-field-group-heading">${escapeHtml(f.group)}</div>`;
+        lastGroup = f.group;
+      } else if (!f.group){
+        lastGroup = null;
+      }
+      html += fieldHtml(f, item, idx);
+    });
+    return html;
   }
 
   function fieldHtml(f, item, idx){
@@ -586,19 +601,19 @@ function initRepeaters(){
     blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [], approach: '', challenges: '', result: '', lessons: '' },
     labelFn: (item) => item.title || 'Project',
     fields: [
-      { key: 'title', label: 'Title', type: 'text' },
-      { key: 'date', label: 'Date completed (e.g. "Jun 2025") — used to sort projects latest-first', type: 'text' },
-      { key: 'desc', label: 'Description', type: 'textarea' },
-      { key: 'tags', label: 'Tags (one per line)', type: 'list' },
-      { key: 'metrics', label: 'Metrics — one per line as "Label: Value" (e.g. Accuracy: 95%)', type: 'metrics' },
-      { key: 'features', label: 'Features (one per line)', type: 'list' },
-      { key: 'approach', label: 'Case study — Approach (optional, leave blank to hide)', type: 'textarea' },
-      { key: 'challenges', label: 'Case study — Challenges faced (optional)', type: 'textarea' },
-      { key: 'result', label: 'Case study — Result / outcome (optional)', type: 'textarea' },
-      { key: 'lessons', label: 'Case study — What I learned (optional)', type: 'textarea' },
-      { key: 'github', label: 'GitHub link', type: 'text' },
-      { key: 'demo', label: 'Live demo link', type: 'text' },
-      { key: 'screenshots', label: 'Screenshot image URLs (one per line — upload via Photos tab or paste a link)', type: 'list' },
+      { key: 'title', label: 'Title', group: 'Basics', type: 'text' },
+      { key: 'date', label: 'Date completed (e.g. "Jun 2025") — used to sort projects latest-first', group: 'Basics', type: 'text' },
+      { key: 'desc', label: 'Description', group: 'Basics', type: 'textarea' },
+      { key: 'tags', label: 'Tags (one per line)', group: 'Basics', type: 'list' },
+      { key: 'metrics', label: 'Metrics — one per line as "Label: Value" (e.g. Accuracy: 95%)', group: 'Basics', type: 'metrics' },
+      { key: 'features', label: 'Features (one per line)', group: 'Basics', type: 'list' },
+      { key: 'approach', label: 'Approach (optional, leave blank to hide)', group: 'Case study (optional)', type: 'textarea' },
+      { key: 'challenges', label: 'Challenges faced (optional)', group: 'Case study (optional)', type: 'textarea' },
+      { key: 'result', label: 'Result / outcome (optional)', group: 'Case study (optional)', type: 'textarea' },
+      { key: 'lessons', label: 'What I learned (optional)', group: 'Case study (optional)', type: 'textarea' },
+      { key: 'github', label: 'GitHub link', group: 'Links & media', type: 'text' },
+      { key: 'demo', label: 'Live demo link', group: 'Links & media', type: 'text' },
+      { key: 'screenshots', label: 'Screenshot image URLs (one per line — upload via Photos tab or paste a link)', group: 'Links & media', type: 'list' },
     ]
   });
 

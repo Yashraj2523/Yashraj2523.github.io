@@ -789,6 +789,11 @@ html[data-theme="light"] .admin-field input, html[data-theme="light"] .admin-fie
 .admin-field textarea{min-height:90px; resize:vertical;}
 .admin-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;}
 .admin-card-title{ font-family:var(--font-display); font-size:1rem; margin-bottom:10px; }
+.admin-field-group-heading{
+  font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--accent-1);
+  font-family:var(--font-mono); margin:16px 0 8px; padding-top:14px; border-top:1px solid var(--glass-border);
+}
+.admin-field-group-heading:first-child{ margin-top:0; padding-top:0; border-top:none; }
 .admin-card + .admin-card{ margin-top:16px; }
 .admin-checkbox-row{ display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px; font-size:.88rem; }
 .admin-checkbox-row input{ width:18px; height:18px; accent-color:var(--accent-1); flex-shrink:0; }
