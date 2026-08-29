@@ -77,7 +77,19 @@
         <span>🎨 Appearance</span><span class="admin-group-chevron">⌄</span>
       </button>
       <div class="admin-group-body">
-        <button class="admin-tab" data-tab="settings">Theme, Wallpaper &amp; Sizing</button>
+        <button class="admin-tab" data-tab="settings-theme">Theme &amp; Backgrounds</button>
+        <button class="admin-tab" data-tab="settings-sizing">Sizing &amp; Layout</button>
+        <button class="admin-tab" data-tab="settings-effects">Cursor &amp; Effects</button>
+      </div>
+    </div>
+
+    <div class="admin-nav-group" data-group="behavior">
+      <button class="admin-group-head" data-group-toggle="behavior">
+        <span>⚙️ Site Behavior</span><span class="admin-group-chevron">⌄</span>
+      </button>
+      <div class="admin-group-body">
+        <button class="admin-tab" data-tab="settings-downloads">Résumé &amp; Quiz Video</button>
+        <button class="admin-tab" data-tab="settings-availability">Availability &amp; Booking</button>
       </div>
     </div>
 
@@ -87,6 +99,15 @@
       </button>
       <div class="admin-group-body">
         <button class="admin-tab" data-tab="sections">Sections</button>
+      </div>
+    </div>
+
+    <div class="admin-nav-group" data-group="advanced">
+      <button class="admin-group-head" data-group-toggle="advanced">
+        <span>🛠️ Advanced</span><span class="admin-group-chevron">⌄</span>
+      </button>
+      <div class="admin-group-body">
+        <button class="admin-tab" data-tab="settings-danger">Danger Zone</button>
       </div>
     </div>
 
@@ -107,12 +128,18 @@
   <!-- ---- HERO & ABOUT ---- -->
   <section class="admin-panel-section active" data-panel="hero">
     <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Identity</h3>
       <div class="admin-field"><label>Hero name</label><input id="f_hero_name" type="text" /></div>
       <div class="admin-field"><label>Hero subtitle</label><textarea id="f_hero_sub"></textarea></div>
       <div class="admin-field"><label>Rotating role words (one per line)</label><textarea id="f_roles"></textarea></div>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">About &amp; Contact</h3>
       <div class="admin-field"><label>About paragraph(s) — one per line, becomes separate paragraphs</label><textarea id="f_about" style="min-height:140px;"></textarea></div>
-      <div class="admin-field"><label>Email</label><input id="f_email" type="email" /></div>
-      <div class="admin-field"><label>Phone</label><input id="f_phone" type="text" /></div>
+      <div class="admin-row">
+        <div class="admin-field"><label>Email</label><input id="f_email" type="email" /></div>
+        <div class="admin-field"><label>Phone</label><input id="f_phone" type="text" /></div>
+      </div>
     </div>
   </section>
 
@@ -260,43 +287,17 @@
   </section>
 
   <!-- ---- SETTINGS ---- -->
-  <section class="admin-panel-section" data-panel="settings">
+  <!-- ---- APPEARANCE: THEME & BACKGROUNDS ---- -->
+  <section class="admin-panel-section" data-panel="settings-theme">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Résumé</h3>
-      <p class="settings-hint">This is the exact file your "Download résumé" button on the homepage links to. Upload a new version any time you update it — saves immediately, no need to touch "Save changes".</p>
-      <div class="upload-row">
-        <input id="resumeUploadInput" type="file" accept=".pdf" />
-        <span id="resumeUploadStatus" class="settings-hint"></span>
-      </div>
-      <p class="settings-hint" id="resumeCurrentLink"></p>
+      <h3 class="admin-card-title">Theme palette</h3>
+      <p class="settings-hint">Changes the accent colors used across the whole site (independent of light/dark mode). Saves instantly.</p>
+      <div id="themePaletteRow" class="theme-palette-row"></div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Availability status</h3>
-      <p class="settings-hint">Shown as a colored dot next to your greeting on the homepage. Saves instantly.</p>
-      <div class="admin-field">
-        <label>Status color</label>
-        <select id="s_availabilityStatus" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
-          <option value="green">🟢 Actively interviewing</option>
-          <option value="yellow">🟡 Open to offers</option>
-          <option value="gray">⚪ Not currently looking</option>
-        </select>
-      </div>
-      <div class="admin-field">
-        <label>Status text (shown after the dot)</label>
-        <input id="s_availabilityText" type="text" placeholder="e.g. Open to opportunities" />
-      </div>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Book a call link</h3>
-      <p class="settings-hint">Paste a free Calendly/Cal.com scheduling link — a "📅 Book a 15-min call" button will appear in your Contact section. Leave blank to hide the button.</p>
-      <div class="admin-field">
-        <input id="s_bookingUrl" type="text" placeholder="https://calendly.com/your-name/15min" />
-      </div>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background style</h3>
+      <h3 class="admin-card-title">Background style</h3>
       <p class="settings-hint">Choose the animated background behind the whole site. "Space" gives a drifting starfield/galaxy feel; "Dots" is the original constellation look.</p>
-      <select id="s_bgStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
+      <select id="s_bgStyle">
         <option value="dots">Dots (constellation)</option>
         <option value="space">Space / Galaxy drift</option>
         <option value="nebula">Nebula clouds</option>
@@ -304,7 +305,7 @@
       <p class="settings-hint" id="bgStyleSavedLabel" style="margin-top:8px;"></p>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Background wallpaper</h3>
+      <h3 class="admin-card-title">Background wallpaper</h3>
       <p class="settings-hint">Upload your own image, or pick a ready-made preset below. Leave empty to use just the animated background style above.</p>
       <div class="upload-row">
         <input id="wallpaperUploadInput" type="file" accept="image/*" />
@@ -319,8 +320,78 @@
       </div>
       <p class="settings-hint" id="wallpaperSaveHint" style="margin-top:8px;"></p>
     </div>
+  </section>
+
+  <!-- ---- APPEARANCE: SIZING & LAYOUT ---- -->
+  <section class="admin-panel-section" data-panel="settings-sizing">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Quiz reward video</h3>
+      <h3 class="admin-card-title">Sizing &amp; spacing</h3>
+      <p class="settings-hint">Drag any slider — the live site animates smoothly to the new size instead of snapping (once you save).</p>
+      <div class="admin-row appearance-slider-row">
+        <div class="admin-field slider-field"><label>Icon button size <span class="slider-val" id="v_iconButtonSize"></span></label><input id="s_iconButtonSize" type="range" min="24" max="64" /></div>
+        <div class="admin-field slider-field"><label>Profile photo size <span class="slider-val" id="v_avatarSize"></span></label><input id="s_avatarSize" type="range" min="160" max="600" /></div>
+        <div class="admin-field slider-field"><label>Card corner radius <span class="slider-val" id="v_cardRadius"></span></label><input id="s_cardRadius" type="range" min="0" max="48" /></div>
+        <div class="admin-field slider-field"><label>Glass blur strength <span class="slider-val" id="v_glassBlur"></span></label><input id="s_glassBlur" type="range" min="0" max="40" /></div>
+        <div class="admin-field slider-field"><label>Section spacing <span class="slider-val" id="v_sectionSpacing"></span></label><input id="s_sectionSpacing" type="range" min="40" max="240" /></div>
+      </div>
+      <button id="resetAppearanceBtn" class="btn btn-glass" style="margin-top:12px;">↺ Reset appearance to default</button>
+      <p class="settings-hint" style="margin-top:6px;">Only resets sizes/blur/spacing/cursor/background style — your projects, certs, bio and everything else stay untouched.</p>
+    </div>
+  </section>
+
+  <!-- ---- APPEARANCE: CURSOR & EFFECTS ---- -->
+  <section class="admin-panel-section" data-panel="settings-effects">
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Cursor style</h3>
+      <p class="settings-hint">Site-wide custom cursor + optional particle trail. Both are automatically switched off whenever a visitor turns on Recruiter Mode, so the site always looks clean and professional for that audience.</p>
+      <select id="s_cursorStyle">
+        <option value="default">Default (browser cursor)</option>
+        <option value="dot">Minimal dot</option>
+        <option value="ring">Glowing ring</option>
+        <option value="crosshair">Crosshair</option>
+        <option value="diamond">Diamond</option>
+        <option value="comet">Comet</option>
+        <option value="pixel">Retro pixel</option>
+        <option value="ghost">Soft ghost blur</option>
+        <option value="target">Target lock</option>
+      </select>
+      <label class="admin-checkbox-row">
+        <input type="checkbox" id="s_cursorTrail" />
+        Enable particle trail following the cursor
+      </label>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Live clock style</h3>
+      <p class="settings-hint">Choose how the fixed clock at the top of the site looks. Date is always shown underneath.</p>
+      <select id="s_clockStyle">
+        <option value="digital">Digital — teal LED</option>
+        <option value="neon">Digital — neon pink/gold</option>
+        <option value="analog">Analog clock face</option>
+      </select>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Easter eggs &amp; mini-games</h3>
+      <p class="settings-hint">Site-wide on/off switch for every easter egg, gimmick, and mini-game. Visitors never see this control — only you do, here.</p>
+      <label class="admin-checkbox-row">
+        <input type="checkbox" id="s_eggsEnabled" />
+        Enable easter eggs, gimmicks &amp; mini-games for visitors
+      </label>
+    </div>
+  </section>
+
+  <!-- ---- SITE BEHAVIOR: DOWNLOADS & MEDIA ---- -->
+  <section class="admin-panel-section" data-panel="settings-downloads">
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Résumé</h3>
+      <p class="settings-hint">This is the exact file your "Download résumé" button on the homepage links to. Upload a new version any time you update it — saves immediately, no need to touch "Save changes".</p>
+      <div class="upload-row">
+        <input id="resumeUploadInput" type="file" accept=".pdf" />
+        <span id="resumeUploadStatus" class="settings-hint"></span>
+      </div>
+      <p class="settings-hint" id="resumeCurrentLink"></p>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Quiz reward video</h3>
       <p class="settings-hint">The video shown when a visitor answers the tech quiz correctly. Upload your own .mp4/.webm/.mov to play it as a local file, in-panel — this is the fix if a YouTube video ever refuses to autoplay/embed in the popup. Leave empty for the default YouTube video.</p>
       <div class="upload-row">
         <input id="quizVideoUploadInput" type="file" accept="video/mp4,video/webm,video/quicktime" />
@@ -333,63 +404,39 @@
       </div>
       <button id="clearQuizVideoBtn" class="btn btn-glass" style="margin-top:8px;">Reset to default video</button>
     </div>
+  </section>
+
+  <!-- ---- SITE BEHAVIOR: AVAILABILITY & BOOKING ---- -->
+  <section class="admin-panel-section" data-panel="settings-availability">
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Cursor style</h3>
-      <p class="settings-hint">Site-wide custom cursor + optional particle trail. Both are automatically switched off whenever a visitor turns on Recruiter Mode, so the site always looks clean and professional for that audience.</p>
-      <select id="s_cursorStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
-        <option value="default">Default (browser cursor)</option>
-        <option value="dot">Minimal dot</option>
-        <option value="ring">Glowing ring</option>
-        <option value="crosshair">Crosshair</option>
-        <option value="diamond">Diamond</option>
-        <option value="comet">Comet</option>
-        <option value="pixel">Retro pixel</option>
-        <option value="ghost">Soft ghost blur</option>
-        <option value="target">Target lock</option>
-      </select>
-      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px;">
-        <input type="checkbox" id="s_cursorTrail" style="width:18px; height:18px; accent-color:var(--accent-1);" />
-        Enable particle trail following the cursor
-      </label>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Live clock style</h3>
-      <p class="settings-hint">Choose how the fixed clock at the top of the site looks. Date is always shown underneath.</p>
-      <select id="s_clockStyle" style="width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0);">
-        <option value="digital">Digital — teal LED</option>
-        <option value="neon">Digital — neon pink/gold</option>
-        <option value="analog">Analog clock face</option>
-      </select>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Easter eggs &amp; mini-games</h3>
-      <p class="settings-hint">Site-wide on/off switch for every easter egg, gimmick, and mini-game. Visitors never see this control — only you do, here.</p>
-      <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-        <input type="checkbox" id="s_eggsEnabled" style="width:18px; height:18px; accent-color:var(--accent-1);" />
-        Enable easter eggs, gimmicks &amp; mini-games for visitors
-      </label>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Theme palette</h3>
-      <p class="settings-hint">Changes the accent colors used across the whole site (independent of light/dark mode). Saves instantly.</p>
-      <div id="themePaletteRow" class="theme-palette-row"></div>
-    </div>
-    <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px;">Appearance settings</h3>
-      <p class="settings-hint">These control sizes across the live site — change a number and save, no code edits needed.</p>
-      <p class="settings-hint">Drag any slider — the live site animates smoothly to the new size instead of snapping (once you save).</p>
-      <div class="admin-row appearance-slider-row">
-        <div class="admin-field slider-field"><label>Icon button size <span class="slider-val" id="v_iconButtonSize"></span></label><input id="s_iconButtonSize" type="range" min="24" max="64" /></div>
-        <div class="admin-field slider-field"><label>Profile photo size <span class="slider-val" id="v_avatarSize"></span></label><input id="s_avatarSize" type="range" min="160" max="600" /></div>
-        <div class="admin-field slider-field"><label>Card corner radius <span class="slider-val" id="v_cardRadius"></span></label><input id="s_cardRadius" type="range" min="0" max="48" /></div>
-        <div class="admin-field slider-field"><label>Glass blur strength <span class="slider-val" id="v_glassBlur"></span></label><input id="s_glassBlur" type="range" min="0" max="40" /></div>
-        <div class="admin-field slider-field"><label>Section spacing <span class="slider-val" id="v_sectionSpacing"></span></label><input id="s_sectionSpacing" type="range" min="40" max="240" /></div>
+      <h3 class="admin-card-title">Availability status</h3>
+      <p class="settings-hint">Shown as a colored dot next to your greeting on the homepage. Saves instantly.</p>
+      <div class="admin-field">
+        <label>Status color</label>
+        <select id="s_availabilityStatus">
+          <option value="green">🟢 Actively interviewing</option>
+          <option value="yellow">🟡 Open to offers</option>
+          <option value="gray">⚪ Not currently looking</option>
+        </select>
       </div>
-      <button id="resetAppearanceBtn" class="btn btn-glass" style="margin-top:12px;">↺ Reset appearance to default</button>
-      <p class="settings-hint" style="margin-top:6px;">Only resets sizes/blur/spacing/cursor/background style above — your projects, certs, bio and everything else stay untouched.</p>
+      <div class="admin-field">
+        <label>Status text (shown after the dot)</label>
+        <input id="s_availabilityText" type="text" placeholder="e.g. Open to opportunities" />
+      </div>
     </div>
     <div class="glass panel admin-card">
-      <h3 style="font-family:var(--font-display); margin-bottom:6px; color:#f06464;">Danger zone</h3>
+      <h3 class="admin-card-title">Book a call link</h3>
+      <p class="settings-hint">Paste a free Calendly/Cal.com scheduling link — a "📅 Book a 15-min call" button will appear in your Contact section. Leave blank to hide the button.</p>
+      <div class="admin-field">
+        <input id="s_bookingUrl" type="text" placeholder="https://calendly.com/your-name/15min" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- ADVANCED: DANGER ZONE ---- -->
+  <section class="admin-panel-section" data-panel="settings-danger">
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title" style="color:#f06464;">Danger zone</h3>
       <p class="settings-hint">This overwrites your live database with whatever is currently written in <code>data.js</code>. Use this only if you want to discard everything and start fresh.</p>
       <button id="resetDefaultsBtn" class="btn btn-glass" style="border-color:rgba(240,80,80,.4); color:#f06464;">Reset to data.js defaults</button>
     </div>

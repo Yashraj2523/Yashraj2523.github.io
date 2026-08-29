@@ -788,6 +788,19 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
 html[data-theme="light"] .admin-field input, html[data-theme="light"] .admin-field textarea{ background:rgba(255,255,255,.6); }
 .admin-field textarea{min-height:90px; resize:vertical;}
 .admin-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;}
+.admin-card-title{ font-family:var(--font-display); font-size:1rem; margin-bottom:10px; }
+.admin-card + .admin-card{ margin-top:16px; }
+.admin-checkbox-row{ display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px; font-size:.88rem; }
+.admin-checkbox-row input{ width:18px; height:18px; accent-color:var(--accent-1); flex-shrink:0; }
+select#s_bgStyle, select#s_cursorStyle, select#s_clockStyle,
+select#s_availabilityStatus{
+  width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18);
+  border:1px solid var(--glass-border); color:var(--ink-0); font-size:.9rem; font-family:var(--font-body);
+}
+html[data-theme="light"] select#s_bgStyle, html[data-theme="light"] select#s_cursorStyle,
+html[data-theme="light"] select#s_clockStyle, html[data-theme="light"] select#s_availabilityStatus{
+  background:rgba(255,255,255,.6);
+}
 
 /* ---- Animated appearance sliders ---- */
 .slider-field label{ display:flex; justify-content:space-between; align-items:center; }
