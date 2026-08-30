@@ -1623,6 +1623,46 @@ function logSiteEvent(eventType, meta){
   if (!supa) return;
   supa.from('site_events').insert({ event_type: eventType, meta: meta || null }).then(() => {}, () => {});
 }
+let mobileBottomBarObserver = null;
+function initMobileBottomBar(){
+  const bar = document.getElementById('mobileBottomBar');
+  if (!bar) return;
+  const tabs = Array.from(bar.querySelectorAll('.mbb-tab'));
+
+  // Hide any tab whose target section doesn't exist or is turned off
+  tabs.forEach(tab => {
+    const id = tab.dataset.section;
+    const target = document.getElementById(id);
+    const isVisible = target && getComputedStyle(target).display !== 'none';
+    tab.style.display = isVisible ? '' : 'none';
+  });
+
+  const visibleTabs = tabs.filter(t => t.style.display !== 'none');
+  if (!visibleTabs.length) return;
+
+  if (mobileBottomBarObserver) mobileBottomBarObserver.disconnect();
+
+  const sectionMap = new Map(visibleTabs.map(t => [t.dataset.section, t]));
+  mobileBottomBarObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const tab = sectionMap.get(entry.target.id);
+      if (!tab) return;
+      if (entry.isIntersecting){
+        tabs.forEach(t => t.classList.remove('mbb-active'));
+        tab.classList.add('mbb-active');
+      }
+    });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+  sectionMap.forEach((tab, id) => {
+    const el = document.getElementById(id);
+    if (el) mobileBottomBarObserver.observe(el);
+  });
+
+  // First tab (hero) active by default before any scrolling
+  visibleTabs[0].classList.add('mbb-active');
+}
+
 function initAnalyticsLogging(){
   // one page-view log per browser tab session (not per scroll/interaction)
   if (!sessionStorage.getItem('pv_logged')){
@@ -1677,6 +1717,7 @@ function initRecruiterMode(){
     label.textContent = on ? 'Recruiter Mode: ON' : 'Recruiter Mode';
     localStorage.setItem('recruiter_mode', on ? '1' : '0');
     renderNavLinks();
+    initMobileBottomBar();
     // Cursor styling + trail are gimmicks — always off while recruiter mode is on, no matter what's saved.
     applyCursorSettings();
   }
@@ -2655,6 +2696,7 @@ function initSectionAccordion(){
   initSaveContactCard();
   initBookingButton();
   initAnalyticsLogging();
+  initMobileBottomBar();
   initSkillMatchAnalyzer();
   renderNavLinks();
   initFloatingUIOffset();
