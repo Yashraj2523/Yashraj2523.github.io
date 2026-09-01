@@ -427,6 +427,21 @@ html[data-theme="light"] .modal-box input, html[data-theme="light"] .modal-box t
 .btn-glass{background:var(--glass-bg-strong); border:1px solid var(--glass-border); color:var(--ink-0); backdrop-filter:blur(10px);}
 .btn-glass:hover{transform:translateY(-3px); border-color:var(--accent-1);}
 .btn-block{width:100%; justify-content:center; margin-top:18px;}
+.btn-magnetic{ will-change:transform; }
+
+/* Hero parallax: transform is set inline via JS, this just hints the browser */
+.hero-text, .hero-photo-wrap{ will-change:transform; }
+
+/* Section nav transition: brief fade+lift when a section is navigated to
+   via an in-page link, layered on top of the existing scroll-reveal system */
+.section-nav-enter{ animation:sectionNavEnter .65s var(--ease); }
+@keyframes sectionNavEnter{
+  0%{ opacity:.55; transform:translateY(14px); }
+  100%{ opacity:1; transform:translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .section-nav-enter{ animation:none; }
+}
 
 /* ============ SECTION SHELL ============ */
 .section{max-width:var(--maxw); margin:0 auto; padding:var(--section-spacing, 130px) 24px 0; transition: padding .7s var(--ease);}
@@ -765,7 +780,45 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
   display:flex; align-items:center; justify-content:space-between;
 }
 .admin-tab.active{background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#08090d; border-color:transparent;}
-.admin-panel-content{ margin-left:270px; padding-right:24px; }
+.admin-panel-content{ margin-left:270px; padding-right:24px; margin-right:360px; transition:margin-right .3s var(--ease); }
+body.preview-hidden .admin-panel-content{ margin-right:24px; }
+
+.admin-preview-panel{
+  position:fixed; top:100px; right:24px; bottom:24px; width:330px; z-index:60;
+  display:flex; flex-direction:column; border-radius:16px; overflow:hidden;
+  background:var(--glass-bg-strong); border:1px solid var(--glass-border);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.5);
+  transition:transform .3s var(--ease), opacity .3s var(--ease);
+}
+body.preview-hidden .admin-preview-panel{ transform:translateX(360px); opacity:0; pointer-events:none; }
+.admin-preview-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; font-size:.78rem; font-weight:600; color:var(--ink-1);
+  border-bottom:1px solid var(--glass-border); flex-shrink:0;
+}
+.admin-preview-actions{ display:flex; gap:6px; }
+.admin-preview-actions button{
+  width:26px; height:26px; border-radius:8px; border:1px solid var(--glass-border);
+  background:transparent; color:var(--ink-2); cursor:pointer; font-size:.8rem;
+  transition:.25s var(--ease);
+}
+.admin-preview-actions button:hover{ color:var(--accent-1); border-color:var(--accent-1); }
+#previewIframe{
+  flex:1; width:100%; border:0; background:#0a0d14;
+  transform:scale(0.5); transform-origin:top left;
+  width:200%; height:200%;
+}
+.admin-preview-show-btn{
+  position:fixed; bottom:24px; right:24px; z-index:60; padding:10px 16px; border-radius:999px;
+  background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#08090d; border:none;
+  font-weight:600; font-size:.8rem; cursor:pointer; box-shadow:0 10px 26px -10px rgba(0,0,0,.5);
+}
+.admin-preview-show-btn.hidden{ display:none; }
+@media (max-width:1500px){
+  .admin-panel-content{ margin-left:270px; margin-right:24px; }
+  .admin-preview-panel{ display:none; }
+  .admin-preview-show-btn{ display:none; }
+}
 .admin-panel-section{display:none;}
 .admin-panel-section.active{
   display:block; column-width:380px; column-gap:18px;
@@ -795,7 +848,6 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
 .admin-data-table td{ color:var(--ink-1); }
 .admin-card.admin-card-full{ column-span:all; display:block; width:100%; }
 .admin-save-bar{ width:100%; }
-@media (max-width:1500px){ .admin-panel-content{ margin-left:270px; } }
 @media (max-width:860px){ .admin-panel-section.active{ column-width:auto; column-count:1; } }
 @media (max-width:900px){
   .admin-tabs{
@@ -1031,6 +1083,13 @@ body.custom-cursor-active, body.custom-cursor-active *{ cursor:none !important; 
 .cursor-style-target::before{
   content:''; position:absolute; inset:8px; border-radius:50%; background:var(--accent-1);
 }
+
+.admin-bulk-toolbar{ display:flex; gap:8px; margin-bottom:10px; }
+.admin-bulk-toolbar button{
+  font-size:.76rem; padding:6px 12px; border-radius:999px; border:1px solid var(--glass-border);
+  background:var(--glass-bg); color:var(--ink-2); cursor:pointer; transition:.25s var(--ease);
+}
+.admin-bulk-toolbar button:hover{ color:var(--accent-1); border-color:var(--accent-1); }
 
 .admin-repeat-item{
   border:1px solid var(--glass-border); border-radius:14px; padding:18px; margin-bottom:14px; position:relative;

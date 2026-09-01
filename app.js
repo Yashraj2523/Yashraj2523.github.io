@@ -1624,6 +1624,90 @@ function logSiteEvent(eventType, meta){
   supa.from('site_events').insert({ event_type: eventType, meta: meta || null }).then(() => {}, () => {});
 }
 let mobileBottomBarObserver = null;
+/* ====================================================================
+   MAGNETIC BUTTONS — primary CTAs subtly pull toward the cursor as it
+   approaches, snapping back on mouse-leave. Skipped entirely on touch
+   devices (no hover concept) and honors prefers-reduced-motion.
+   ==================================================================== */
+function initMagneticButtons(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(hover: none)').matches) return; // touch devices
+
+  const buttons = document.querySelectorAll('.btn-magnetic');
+  const strength = 0.35;
+  const maxOffset = 10;
+
+  buttons.forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      btn.style.transition = 'transform 0.05s linear';
+      const rect = btn.getBoundingClientRect();
+      const relX = e.clientX - (rect.left + rect.width / 2);
+      const relY = e.clientY - (rect.top + rect.height / 2);
+      const x = Math.max(-maxOffset, Math.min(maxOffset, relX * strength));
+      const y = Math.max(-maxOffset, Math.min(maxOffset, relY * strength));
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transition = 'transform 0.4s cubic-bezier(.34,1.56,.64,1)';
+      btn.style.transform = '';
+    });
+  });
+}
+
+/* ====================================================================
+   HERO PARALLAX — hero text and photo drift at slightly different
+   speeds while scrolling past the hero, for a subtle sense of depth.
+   Uses rAF-throttled scroll, disabled under reduced-motion.
+   ==================================================================== */
+function initHeroParallax(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const hero = document.getElementById('hero');
+  const text = hero ? hero.querySelector('.hero-text') : null;
+  const photo = hero ? hero.querySelector('.hero-photo-wrap') : null;
+  if (!hero || (!text && !photo)) return;
+
+  let ticking = false;
+  function update(){
+    const rect = hero.getBoundingClientRect();
+    // Only animate while the hero is at least partially in view, and only
+    // for the natural scroll range of the hero itself (not the whole page).
+    if (rect.bottom < 0 || rect.top > window.innerHeight){ ticking = false; return; }
+    const progress = Math.min(Math.max(-rect.top / (rect.height || 1), 0), 1);
+    if (text) text.style.transform = `translateY(${progress * 40}px)`;
+    if (photo) photo.style.transform = `translateY(${progress * 70}px)`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+}
+
+/* ====================================================================
+   SECTION NAV TRANSITION — clicking any in-page nav link (desktop nav,
+   mobile bottom bar, or footer/anchor links) gives the destination
+   section a brief, designed fade+lift as it arrives, instead of a bare
+   jump. Purely additive on top of the existing scroll-reveal system.
+   ==================================================================== */
+function initSectionNavTransition(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Event delegation on document — works for the desktop nav (which is
+  // regenerated dynamically by renderNavLinks), the mobile bottom bar,
+  // and any other in-page anchor link, without needing to re-bind listeners.
+  document.addEventListener('click', e => {
+    const link = e.target.closest('a[href^="#"]');
+    if (!link) return;
+    const id = link.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.classList.remove('section-nav-enter');
+    void target.offsetWidth; // force reflow so replaying the same section retriggers the animation
+    target.classList.add('section-nav-enter');
+    setTimeout(() => target.classList.remove('section-nav-enter'), 700);
+  });
+}
+
 function initMobileBottomBar(){
   const bar = document.getElementById('mobileBottomBar');
   if (!bar) return;
@@ -2697,6 +2781,9 @@ function initSectionAccordion(){
   initBookingButton();
   initAnalyticsLogging();
   initMobileBottomBar();
+  initMagneticButtons();
+  initHeroParallax();
+  initSectionNavTransition();
   initSkillMatchAnalyzer();
   renderNavLinks();
   initFloatingUIOffset();
