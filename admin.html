@@ -295,6 +295,22 @@
       <div id="themePaletteRow" class="theme-palette-row"></div>
     </div>
     <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Hero layout</h3>
+      <p class="settings-hint">"Centered" is the current default. "Split-screen" gives your photo a full-height half of the hero instead of a card, for a more editorial look.</p>
+      <select id="s_heroLayout">
+        <option value="centered">Centered (default)</option>
+        <option value="split">Split-screen</option>
+      </select>
+    </div>
+    <div class="glass panel admin-card">
+      <h3 class="admin-card-title">Timeline layout</h3>
+      <p class="settings-hint">"Vertical" is the current default stacked timeline. "Horizontal scroller" turns it into a swipeable strip of milestones, which feels less like a plain résumé list.</p>
+      <select id="s_timelineLayout">
+        <option value="vertical">Vertical (default)</option>
+        <option value="horizontal">Horizontal scroller</option>
+      </select>
+    </div>
+    <div class="glass panel admin-card">
       <h3 class="admin-card-title">Background style</h3>
       <p class="settings-hint">Choose the animated background behind the whole site. "Space" gives a drifting starfield/galaxy feel; "Dots" is the original constellation look.</p>
       <select id="s_bgStyle">
@@ -476,7 +492,20 @@
   </section>
 
   </div>
+
+  <div class="admin-preview-panel" id="adminPreviewPanel">
+    <div class="admin-preview-header">
+      <span>Live preview</span>
+      <div class="admin-preview-actions">
+        <button id="previewRefreshBtn" type="button" title="Refresh preview">🔄</button>
+        <button id="previewToggleBtn" type="button" title="Hide/show preview">✕</button>
+      </div>
+    </div>
+    <iframe id="previewIframe" src="index.html" title="Live site preview" loading="lazy"></iframe>
   </div>
+  </div>
+
+  <button id="previewShowBtn" class="admin-preview-show-btn hidden" type="button" title="Show live preview">👁 Preview</button>
 
   <div class="admin-save-bar">
     <span class="admin-save-status" id="bottomSaveStatus"></span>

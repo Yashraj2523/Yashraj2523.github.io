@@ -108,6 +108,7 @@ async function initAuth(){
     initRepeaters();
     initUploads();
     pollHiresBadgeSilently();
+    initPreviewPanel();
   }
 }
 
@@ -140,6 +141,42 @@ async function saveContent(message){
   const msg = error ? ('Error: ' + error.message) : (message || 'Saved ✓ — live on the site now');
   bottomStatus.textContent = msg;
   setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
+  if (!error) refreshPreview();
+}
+
+/* ====================================================================
+   LIVE PREVIEW PANEL (embeds the real index.html in an iframe, so
+   what you see is the actual site, not an approximation — refreshes
+   itself automatically after every successful save)
+   ==================================================================== */
+function refreshPreview(){
+  const frame = document.getElementById('previewIframe');
+  if (!frame) return;
+  // small delay so Supabase has definitely committed before the site re-fetches
+  setTimeout(() => { frame.src = frame.src; }, 500);
+}
+function initPreviewPanel(){
+  const refreshBtn = document.getElementById('previewRefreshBtn');
+  const toggleBtn = document.getElementById('previewToggleBtn');
+  const showBtn = document.getElementById('previewShowBtn');
+  if (!refreshBtn) return;
+
+  refreshBtn.addEventListener('click', refreshPreview);
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.add('preview-hidden');
+    showBtn.classList.remove('hidden');
+    localStorage.setItem('admin_preview_hidden', '1');
+  });
+  showBtn.addEventListener('click', () => {
+    document.body.classList.remove('preview-hidden');
+    showBtn.classList.add('hidden');
+    localStorage.removeItem('admin_preview_hidden');
+    refreshPreview();
+  });
+  if (localStorage.getItem('admin_preview_hidden') === '1'){
+    document.body.classList.add('preview-hidden');
+    showBtn.classList.remove('hidden');
+  }
 }
 
 /* ====================================================================
@@ -370,6 +407,18 @@ function populateForms(){
     await saveContent('Background style saved ✓');
     updateBgSavedLabel();
   };
+  byId('s_heroLayout').value = s.heroLayout || 'centered';
+  byId('s_heroLayout').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.heroLayout = byId('s_heroLayout').value;
+    await saveContent('Hero layout saved ✓ — check the live site (and Preview panel) to see it.');
+  };
+  byId('s_timelineLayout').value = s.timelineLayout || 'vertical';
+  byId('s_timelineLayout').onchange = async () => {
+    liveData.settings = liveData.settings || {};
+    liveData.settings.timelineLayout = byId('s_timelineLayout').value;
+    await saveContent('Timeline layout saved ✓');
+  };
   byId('s_eggsEnabled').checked = s.eggsEnabled !== false;
   byId('s_eggsEnabled').onchange = async () => {
     liveData.settings = liveData.settings || {};
@@ -453,9 +502,28 @@ function collectSimpleFields(){
    Each repeater renders a list of objects as editable cards with a
    remove button, plus an "add" button that appends a blank object.
    ==================================================================== */
+function ensureBulkToolbar(wrap, wrapId){
+  if (!wrap || wrap.previousElementSibling?.dataset?.bulkToolbarFor === wrapId) return;
+  const bar = document.createElement('div');
+  bar.className = 'admin-bulk-toolbar';
+  bar.dataset.bulkToolbarFor = wrapId;
+  bar.innerHTML = `
+    <button type="button" data-bulk="expand">⌄ Expand all</button>
+    <button type="button" data-bulk="collapse">⌃ Collapse all</button>
+  `;
+  wrap.parentNode.insertBefore(bar, wrap);
+  bar.querySelector('[data-bulk="expand"]').addEventListener('click', () => {
+    wrap.querySelectorAll('.admin-repeat-item').forEach(el => el.classList.remove('collapsed'));
+  });
+  bar.querySelector('[data-bulk="collapse"]').addEventListener('click', () => {
+    wrap.querySelectorAll('.admin-repeat-item').forEach(el => el.classList.add('collapsed'));
+  });
+}
+
 function makeRepeater(opts){
   const { wrapId, dataKey, fields, blank, addBtnId, labelFn } = opts;
   const wrap = document.getElementById(wrapId);
+  ensureBulkToolbar(wrap, wrapId);
 
   function render(){
     const list = liveData[dataKey] || (liveData[dataKey] = []);
@@ -484,10 +552,12 @@ function makeRepeater(opts){
       const titleEl = itemEl.querySelector('.admin-repeat-title');
       fields.forEach(f => {
         const input = itemEl.querySelector(`[data-field="${f.key}"]`);
-        input.addEventListener('input', () => {
+        const eventName = f.type === 'checkbox' ? 'change' : 'input';
+        input.addEventListener(eventName, () => {
           if (f.type === 'list') list[idx][f.key] = input.value.split('\n').map(s => s.trim()).filter(Boolean);
           else if (f.type === 'metrics') list[idx][f.key] = parseMetrics(input.value);
           else if (f.type === 'number') list[idx][f.key] = +input.value;
+          else if (f.type === 'checkbox') list[idx][f.key] = input.checked;
           else list[idx][f.key] = input.value;
           if (labelFn && titleEl) titleEl.textContent = labelFn(list[idx], idx);
         });
@@ -536,6 +606,9 @@ function makeRepeater(opts){
         </div>
         ${display ? (/\.pdf($|\?)/i.test(display) ? `<a href="${display}" target="_blank" class="settings-hint">📄 View current PDF</a>` : `<div class="upload-preview-item" style="margin-top:8px;"><img src="${display}" /></div>`) : ''}
       </div>`;
+    }
+    if (f.type === 'checkbox'){
+      return `<div class="admin-field"><label class="admin-checkbox-row"><input type="checkbox" data-field="${f.key}" ${val ? 'checked' : ''} />${f.label}</label></div>`;
     }
     if (f.type === 'textarea' || f.type === 'list' || f.type === 'metrics'){
       return `<div class="admin-field"><label>${f.label}</label><textarea data-field="${f.key}">${escapeHtml(display)}</textarea></div>`;
@@ -598,10 +671,11 @@ function initRepeaters(){
 
   makeRepeater({
     wrapId: 'projectsRepeatWrap', dataKey: 'projects', addBtnId: 'addProjectBtn',
-    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [], approach: '', challenges: '', result: '', lessons: '' },
-    labelFn: (item) => item.title || 'Project',
+    blank: { title: 'New project', desc: '', tags: [], date: '', metrics: [], features: [], github: '', demo: '', screenshots: [], approach: '', challenges: '', result: '', lessons: '', featured: false },
+    labelFn: (item) => (item.featured ? '★ ' : '') + (item.title || 'Project'),
     fields: [
       { key: 'title', label: 'Title', group: 'Basics', type: 'text' },
+      { key: 'featured', label: 'Feature this project as a larger bento tile in the Projects grid', group: 'Basics', type: 'checkbox' },
       { key: 'date', label: 'Date completed (e.g. "Jun 2025") — used to sort projects latest-first', group: 'Basics', type: 'text' },
       { key: 'desc', label: 'Description', group: 'Basics', type: 'textarea' },
       { key: 'tags', label: 'Tags (one per line)', group: 'Basics', type: 'list' },

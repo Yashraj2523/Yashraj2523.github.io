@@ -139,6 +139,9 @@ function applySettings(){
   document.body.classList.remove('bg-space','bg-nebula');
   if (s.bgStyle === 'space') document.body.classList.add('bg-space');
   if (s.bgStyle === 'nebula') document.body.classList.add('bg-nebula');
+  // hero layout variant — "split" gives a full-bleed photo half instead
+  // of the default centered/card style; purely a CSS reflow of the same markup
+  document.body.classList.toggle('hero-split', s.heroLayout === 'split');
   root.setProperty('--icon-btn-size', (s.iconButtonSize || 36) + 'px');
   root.setProperty('--avatar-size', (s.avatarSize || 320) + 'px');
   root.setProperty('--card-radius', (s.cardRadius || 18) + 'px');
@@ -184,18 +187,25 @@ function renderAll(){
       }).join('')}</div>
     </div>`).join('');
 
-  // Projects — sorted by date (latest first); undated ones keep their relative order at the end
+  // Projects — sorted by date (latest first); undated ones keep their relative order at the end.
+  // Bento-grid: projects explicitly marked "featured" (or, if none are marked,
+  // the most recent one) render as a larger tile to visually signal best work.
   const projectsGrid = document.getElementById('projectsGrid');
   const sortedProjects = sortByDateDesc(liveData.projects, p => p.date);
-  projectsGrid.innerHTML = sortedProjects.map(({ item: p, idx }, i) => `
-    <div class="glass project-card panel reveal tilt-card card-clickable ${i % 2 === 0 ? 'reveal-left' : 'reveal-right'}" data-index="${idx}" tabindex="0" role="button" aria-label="Open full details for ${esc(p.title)}">
+  const anyExplicitlyFeatured = sortedProjects.some(({ item }) => item.featured);
+  projectsGrid.innerHTML = sortedProjects.map(({ item: p, idx }, i) => {
+    const isFeatured = anyExplicitlyFeatured ? !!p.featured : i === 0;
+    return `
+    <div class="glass project-card panel reveal tilt-card card-clickable ${isFeatured ? 'project-card-featured' : ''} ${i % 2 === 0 ? 'reveal-left' : 'reveal-right'}" data-index="${idx}" tabindex="0" role="button" aria-label="Open full details for ${esc(p.title)}">
+      ${isFeatured ? '<span class="project-featured-tag">★ Featured</span>' : ''}
       <div class="project-card-top">
         <h3>${esc(p.title)}</h3>
         <span class="cert-arrow" aria-hidden="true">→</span>
       </div>
       <p class="card-preview-desc">${esc(p.desc)}</p>
-      <div class="project-tags">${(p.tags||[]).slice(0,4).map(t => `<span>${esc(t)}</span>`).join('')}</div>
-    </div>`).join('');
+      <div class="project-tags">${(p.tags||[]).slice(0, isFeatured ? 6 : 4).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
 
   // Certifications — grouped by issuer, each group sorted by year (latest first)
   const certsList = document.getElementById('certsList');
@@ -334,8 +344,10 @@ function renderTimeline(){
     return;
   }
   items.sort((a, b) => parseDateKey(b.period) - parseDateKey(a.period));
-  track.innerHTML = items.map(it => `
-    <div class="timeline-node reveal reveal-left">
+  const horizontal = (liveData.settings && liveData.settings.timelineLayout === 'horizontal');
+  track.classList.toggle('timeline-track-horizontal', horizontal);
+  track.innerHTML = items.map((it, i) => `
+    <div class="timeline-node reveal ${horizontal ? 'reveal-zoom' : 'reveal-left'}">
       <span class="tl-tag">${esc(it.tag)}</span>
       <div class="tl-period">${esc(it.period)}</div>
       <h4>${esc(it.title)}</h4>

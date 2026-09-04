@@ -307,6 +307,32 @@ html[data-theme="light"] .modal-box input, html[data-theme="light"] .modal-box t
   .hero-photo-wrap{order:-1;}
 }
 
+/* ---- HERO LAYOUT VARIANT: split-screen ---- */
+body.hero-split .hero{
+  padding:0; min-height:100vh; align-items:stretch; justify-content:stretch;
+}
+body.hero-split .hero-inner.hero-grid{
+  max-width:none; width:100%; margin:0; display:grid;
+  grid-template-columns:1fr 1fr; gap:0; align-items:stretch;
+}
+body.hero-split .hero-text{
+  padding:120px 56px 80px; justify-content:center;
+}
+body.hero-split .hero-photo-wrap{
+  padding:0; margin:0; align-items:stretch; height:100%; min-height:100vh;
+}
+body.hero-split .avatar-flip{
+  width:100%; height:100%; min-height:100vh; aspect-ratio:auto; border-radius:0;
+}
+body.hero-split .slideshow{ border-radius:0; }
+body.hero-split .avatar-flip-front, body.hero-split .avatar-flip-back{ border-radius:0; }
+@media (max-width:860px){
+  body.hero-split .hero-inner.hero-grid{ grid-template-columns:1fr; }
+  body.hero-split .hero-photo-wrap{ min-height:60vh; order:-1; }
+  body.hero-split .avatar-flip{ min-height:60vh; }
+  body.hero-split .hero-text{ padding:60px 24px 60px; }
+}
+
 /* ---- PROFILE SLIDESHOW ---- */
 .slideshow{
   position:relative; width:min(var(--avatar-size, 320px), 80vw); aspect-ratio:1/1; border-radius:32px; overflow:hidden;
@@ -501,8 +527,25 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
 @media (prefers-reduced-motion: reduce){ .skill-bar-fill{ transition:none; } }
 
 /* ============ PROJECTS ============ */
-.projects-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px;}
-.project-card{border-radius:var(--radius-md); padding:18px 20px; display:flex; flex-direction:column; gap:8px;}
+.projects-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; grid-auto-flow:dense;}
+.project-card{border-radius:var(--radius-md); padding:18px 20px; display:flex; flex-direction:column; gap:8px; position:relative;}
+.project-card-featured{
+  grid-column:span 2; grid-row:span 2;
+  padding:26px 28px; justify-content:center;
+  background:linear-gradient(135deg, rgba(110,231,216,.06), rgba(167,139,250,.06));
+  border-color:rgba(110,231,216,.25);
+}
+.project-card-featured h3{ font-size:1.3rem; }
+.project-card-featured .card-preview-desc{ font-size:.95rem; -webkit-line-clamp:5; }
+.project-featured-tag{
+  position:absolute; top:14px; right:14px; font-size:.68rem; font-weight:700; letter-spacing:.03em;
+  color:var(--accent-1); background:rgba(110,231,216,.12); border:1px solid rgba(110,231,216,.3);
+  padding:3px 9px; border-radius:999px;
+}
+@media (max-width:640px){
+  .project-card-featured{ grid-column:span 1; grid-row:span 1; padding:18px 20px; }
+  .project-card-featured h3{ font-size:1.05rem; }
+}
 .project-card-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .project-card-top h3{ font-size:1rem; margin:0; }
 .project-card .card-preview-desc{ -webkit-line-clamp:2; font-size:.83rem; margin-bottom:2px; }
@@ -723,6 +766,24 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
   color:var(--ink-2); border:1px solid var(--glass-border); padding:2px 8px; border-radius:6px; margin-bottom:5px;
 }
 
+/* ---- Timeline layout variant: horizontal scroller ---- */
+.timeline-track-horizontal{
+  flex-direction:row; padding-left:0; padding-bottom:20px; border-left:none;
+  overflow-x:auto; overflow-y:hidden; gap:0; scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+}
+.timeline-track-horizontal::-webkit-scrollbar{ height:8px; }
+.timeline-track-horizontal .timeline-node{
+  flex:0 0 auto; width:260px; scroll-snap-align:start;
+  padding:0 28px 0 0; border-top:2px solid var(--glass-border); padding-top:24px; margin-right:4px;
+}
+.timeline-track-horizontal .timeline-node::before{
+  left:0; top:-7px; box-shadow:0 0 0 4px var(--bg-0);
+}
+@media (max-width:640px){
+  .timeline-track-horizontal .timeline-node{ width:220px; }
+}
+
 /* ============ ADMIN DASHBOARD (admin.html) ============ */
 .admin-shell{width:100%; padding:110px 24px 100px;}
 .nav-admin-title{
@@ -876,12 +937,13 @@ html[data-theme="light"] .admin-field input, html[data-theme="light"] .admin-fie
 .admin-checkbox-row{ display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:12px; font-size:.88rem; }
 .admin-checkbox-row input{ width:18px; height:18px; accent-color:var(--accent-1); flex-shrink:0; }
 select#s_bgStyle, select#s_cursorStyle, select#s_clockStyle,
-select#s_availabilityStatus{
+select#s_availabilityStatus, select#s_heroLayout, select#s_timelineLayout{
   width:100%; padding:11px 14px; border-radius:10px; background:rgba(0,0,0,.18);
   border:1px solid var(--glass-border); color:var(--ink-0); font-size:.9rem; font-family:var(--font-body);
 }
 html[data-theme="light"] select#s_bgStyle, html[data-theme="light"] select#s_cursorStyle,
-html[data-theme="light"] select#s_clockStyle, html[data-theme="light"] select#s_availabilityStatus{
+html[data-theme="light"] select#s_clockStyle, html[data-theme="light"] select#s_availabilityStatus,
+html[data-theme="light"] select#s_heroLayout, html[data-theme="light"] select#s_timelineLayout{
   background:rgba(255,255,255,.6);
 }
 
