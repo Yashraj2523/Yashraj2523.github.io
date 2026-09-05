@@ -1641,6 +1641,72 @@ let mobileBottomBarObserver = null;
    approaches, snapping back on mouse-leave. Skipped entirely on touch
    devices (no hover concept) and honors prefers-reduced-motion.
    ==================================================================== */
+/* ====================================================================
+   COMPACT MODE — viewer-facing toggle that tightens spacing/padding
+   site-wide so a skimming recruiter sees more content per screen.
+   Purely a CSS class + remembered locally; doesn't touch admin settings.
+   ==================================================================== */
+function initCompactMode(){
+  const btn = document.getElementById('compactModeBtn');
+  if (!btn) return;
+  function apply(on){
+    document.body.classList.toggle('compact-mode', on);
+    btn.classList.toggle('icon-btn-active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    localStorage.setItem('compact_mode', on ? '1' : '0');
+  }
+  btn.addEventListener('click', () => apply(!document.body.classList.contains('compact-mode')));
+  if (localStorage.getItem('compact_mode') === '1') apply(true);
+}
+
+/* ====================================================================
+   ONE-PAGE MINI-MAP MODE — a floating vertical dot-nav, one dot per
+   visible section, active dot highlighted as you scroll. Reuses the
+   exact same section list/visibility rules as the main nav so it never
+   shows a dot for a hidden or recruiter-suppressed section.
+   ==================================================================== */
+let minimapObserver = null;
+function buildMinimapDots(){
+  const nav = document.getElementById('minimapNav');
+  if (!nav) return;
+  const recruiterOn = document.body.classList.contains('recruiter-mode');
+  const recruiterHidden = (liveData.settings && liveData.settings.recruiterHiddenSections) || [];
+  const navShown = (liveData.settings && liveData.settings.navVisibleSections) || Object.keys(NAV_FULL_LABELS).filter(k => k !== 'contact');
+  const ids = Object.keys(NAV_FULL_LABELS).filter(id => {
+    if (!navShown.includes(id)) return false;
+    if (liveData.sectionVisibility?.[id] === false) return false;
+    if (recruiterOn && recruiterHidden.includes(id)) return false;
+    return document.getElementById(id);
+  });
+  nav.innerHTML = ids.map(id => `<a href="#${id}" class="minimap-dot" data-section="${id}" title="${escapeHtmlLocal(NAV_FULL_LABELS[id])}"></a>`).join('');
+
+  if (minimapObserver) minimapObserver.disconnect();
+  const dots = Array.from(nav.querySelectorAll('.minimap-dot'));
+  const map = new Map(dots.map(d => [d.dataset.section, d]));
+  minimapObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const dot = map.get(entry.target.id);
+      if (dot && entry.isIntersecting) dots.forEach(d => d.classList.toggle('minimap-dot-active', d === dot));
+    });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+  ids.forEach(id => { const el = document.getElementById(id); if (el) minimapObserver.observe(el); });
+}
+function initMinimapMode(){
+  const btn = document.getElementById('minimapModeBtn');
+  const nav = document.getElementById('minimapNav');
+  if (!btn || !nav) return;
+  function apply(on){
+    document.body.classList.toggle('minimap-mode', on);
+    nav.classList.toggle('hidden', !on);
+    btn.classList.toggle('icon-btn-active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    localStorage.setItem('minimap_mode', on ? '1' : '0');
+    if (on) buildMinimapDots();
+  }
+  btn.addEventListener('click', () => apply(!document.body.classList.contains('minimap-mode')));
+  if (localStorage.getItem('minimap_mode') === '1') apply(true);
+}
+
 function initMagneticButtons(){
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (window.matchMedia('(hover: none)').matches) return; // touch devices
@@ -1814,6 +1880,7 @@ function initRecruiterMode(){
     localStorage.setItem('recruiter_mode', on ? '1' : '0');
     renderNavLinks();
     initMobileBottomBar();
+    if (document.body.classList.contains('minimap-mode')) buildMinimapDots();
     // Cursor styling + trail are gimmicks — always off while recruiter mode is on, no matter what's saved.
     applyCursorSettings();
   }
@@ -2794,6 +2861,8 @@ function initSectionAccordion(){
   initAnalyticsLogging();
   initMobileBottomBar();
   initMagneticButtons();
+  initCompactMode();
+  initMinimapMode();
   initHeroParallax();
   initSectionNavTransition();
   initSkillMatchAnalyzer();

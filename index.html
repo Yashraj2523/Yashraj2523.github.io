@@ -96,6 +96,8 @@
       <span class="recruiter-label">Recruiter Mode</span>
     </button>
     <button id="soundToggleBtn" class="icon-btn" title="Toggle sound">🔊</button>
+    <button id="compactModeBtn" class="icon-btn" title="Compact view — tighter spacing, see more at once">▤</button>
+    <button id="minimapModeBtn" class="icon-btn" title="One-page mode — floating section mini-map">🗺</button>
     <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
@@ -125,6 +127,9 @@
 </nav>
 
 <button id="backToTop" class="back-to-top hidden" title="Back to top">↑</button>
+
+<!-- ================= ONE-PAGE MINI-MAP (dot nav) ================= -->
+<nav id="minimapNav" class="minimap-nav hidden" aria-label="Section mini-map"></nav>
 
 <!-- ================= COMMAND PALETTE / GLOBAL SEARCH (Ctrl+K) ================= -->
 <div id="paletteOverlay" class="modal-overlay hidden">

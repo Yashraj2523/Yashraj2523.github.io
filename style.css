@@ -235,6 +235,41 @@ html{ scrollbar-width:thin; scrollbar-color: var(--accent-1) transparent; }
 }
 .icon-btn svg{width:17px; height:17px;}
 .icon-btn:hover{color:var(--accent-1); border-color:var(--accent-1); transform:translateY(-2px);}
+.icon-btn-active{ color:var(--accent-1); border-color:var(--accent-1); background:rgba(110,231,216,.1); }
+
+/* ============ COMPACT MODE ============ */
+body.compact-mode{ --section-spacing:56px !important; }
+body.compact-mode .panel{ padding:16px 18px !important; }
+body.compact-mode .section-head{ margin-bottom:22px !important; }
+body.compact-mode .hero{ min-height:auto !important; padding:100px 24px 40px !important; }
+body.compact-mode .projects-grid, body.compact-mode .skills-grid,
+body.compact-mode .certs-grid, body.compact-mode .achievements-grid{ gap:10px !important; }
+body.compact-mode .avatar-container, body.compact-mode .scroll-cue{ display:none !important; }
+body.compact-mode .hero-stats{ margin-top:10px !important; }
+body.compact-mode .project-card-featured{ grid-column:span 1; grid-row:span 1; padding:18px 20px; }
+body.compact-mode .timeline-track{ gap:14px !important; }
+body.compact-mode .hero-text, body.compact-mode .hero-photo-wrap{ transform:none !important; }
+
+/* ============ ONE-PAGE MINI-MAP ============ */
+.minimap-nav{
+  position:fixed; right:22px; top:50%; transform:translateY(-50%); z-index:70;
+  display:flex; flex-direction:column; gap:10px; align-items:center;
+}
+.minimap-nav.hidden{ display:none; }
+.minimap-dot{
+  width:9px; height:9px; border-radius:50%; background:var(--glass-border);
+  border:1px solid transparent; transition:.3s var(--ease); position:relative;
+}
+.minimap-dot::after{
+  content:attr(title); position:absolute; right:18px; top:50%; transform:translateY(-50%) translateX(6px);
+  font-size:.72rem; white-space:nowrap; background:var(--glass-bg-strong); color:var(--ink-0);
+  padding:4px 10px; border-radius:8px; border:1px solid var(--glass-border);
+  opacity:0; pointer-events:none; transition:.25s var(--ease);
+}
+.minimap-dot:hover::after{ opacity:1; transform:translateY(-50%) translateX(0); }
+.minimap-dot:hover{ background:var(--ink-1); }
+.minimap-dot-active{ background:var(--accent-1); width:11px; height:11px; box-shadow:0 0 0 3px rgba(110,231,216,.2); }
+@media (max-width:900px){ .minimap-nav{ display:none !important; } }
 
 /* ============ LOGIN MODAL ============ */
 .modal-overlay{
