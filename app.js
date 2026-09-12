@@ -1200,13 +1200,34 @@ function initHireMe(){
   document.getElementById('hireMeClose').addEventListener('click', () => hideOverlay(overlay));
   overlay.addEventListener('click', e => { if (e.target === overlay) hideOverlay(overlay); });
 
+  let hireMeSubmitting = false;
   document.getElementById('hireMeSubmit').addEventListener('click', async () => {
+    if (hireMeSubmitting) return; // guards against rapid double-clicks firing two inserts
+
+    // Honeypot: real visitors never see/fill this field (hidden via CSS).
+    // If it's filled, it's almost certainly a bot — accept silently, do nothing.
+    const honeypot = document.getElementById('hireWebsite');
+    if (honeypot && honeypot.value.trim()){
+      hideOverlay(overlay);
+      return;
+    }
+
     const name = document.getElementById('hireName').value.trim();
     const company = document.getElementById('hireCompany').value.trim();
     const contact = document.getElementById('hireContact').value.trim();
     const message = document.getElementById('hireMessage').value.trim();
     if (!name || !contact){ status.textContent = 'Name and email/phone are required.'; return; }
+
+    const rl = checkRateLimit('hire_me_submit', 3, 15 * 60 * 1000);
+    if (!rl.allowed){
+      status.textContent = `You've sent a few messages already — please wait ${formatRetryAfter(rl.retryAfterMs)} before sending another.`;
+      return;
+    }
+
     status.textContent = '';
+    hireMeSubmitting = true;
+    const submitBtn = document.getElementById('hireMeSubmit');
+    submitBtn.disabled = true;
 
     let emailed = false;
     const hasEmailJs = window.emailjs && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY;
@@ -1222,6 +1243,8 @@ function initHireMe(){
       try { await supa.from('hire_inquiries').insert({ name, company, contact, message, page: location.href }); }
       catch(e){ console.warn('Supabase insert failed', e); }
     }
+    hireMeSubmitting = false;
+    submitBtn.disabled = false;
     sfxSuccess();
     hideOverlay(overlay);
     document.getElementById('hireName').value = '';
@@ -1646,6 +1669,34 @@ let mobileBottomBarObserver = null;
    site-wide so a skimming recruiter sees more content per screen.
    Purely a CSS class + remembered locally; doesn't touch admin settings.
    ==================================================================== */
+/* ====================================================================
+   CLIENT-SIDE RATE LIMITING — generic localStorage-based throttle for
+   any form that writes to Supabase (Hire Me, visitor gate, etc.). This
+   is a deterrent, not a hard security boundary — real enforcement lives
+   in the DB-level CHECK constraints from supabase_schema.sql, since any
+   client-side check can technically be bypassed by someone calling the
+   Supabase API directly. Together they cover both the casual-spam case
+   (this) and the "junk data via raw API call" case (the DB constraints).
+   ==================================================================== */
+function checkRateLimit(key, maxAttempts, windowMs){
+  const now = Date.now();
+  const storageKey = 'rl_' + key;
+  let attempts = [];
+  try { attempts = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e){ attempts = []; }
+  attempts = attempts.filter(t => now - t < windowMs);
+  if (attempts.length >= maxAttempts){
+    const retryAfterMs = windowMs - (now - attempts[0]);
+    return { allowed: false, retryAfterMs };
+  }
+  attempts.push(now);
+  localStorage.setItem(storageKey, JSON.stringify(attempts));
+  return { allowed: true, retryAfterMs: 0 };
+}
+function formatRetryAfter(ms){
+  const mins = Math.ceil(ms / 60000);
+  return mins <= 1 ? 'a minute' : `${mins} minutes`;
+}
+
 function initCompactMode(){
   const btn = document.getElementById('compactModeBtn');
   if (!btn) return;
@@ -2575,14 +2626,20 @@ function requireVisitorGate(onUnlocked){
   const closeBtn = document.getElementById('visitorGateClose');
 
   showOverlay(overlay);
+  let submitting = false;
   const handler = async () => {
+    if (submitting) return;
     const name = nameInput.value.trim();
     const contact = contactInput.value.trim();
     if (!name || !contact){ status.textContent = 'Please fill in both fields.'; return; }
+    submitting = true;
+    submitBtn.disabled = true;
     status.textContent = 'Saving…';
     try{
       if (supa) await supa.from('visitor_leads').insert({ name, contact, page: location.href });
     } catch(err){ console.warn('Visitor lead save skipped:', err); }
+    submitting = false;
+    submitBtn.disabled = false;
     localStorage.setItem('visitor_info_submitted', '1');
     status.textContent = '';
     hideOverlay(overlay);

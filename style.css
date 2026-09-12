@@ -287,6 +287,10 @@ body.compact-mode .hero-text, body.compact-mode .hero-photo-wrap{ transform:none
 .modal-overlay.show .modal-box{transform:translateY(0) scale(1);}
 .modal-box h3{font-family:var(--font-display); font-size:1.25rem; margin-bottom:6px;}
 .modal-sub{font-size:.82rem; margin-bottom:18px;}
+.honeypot-field{
+  position:absolute !important; left:-9999px !important; width:1px !important; height:1px !important;
+  opacity:0 !important; pointer-events:none !important;
+}
 .modal-box input, .modal-box textarea{
   width:100%; padding:11px 14px; margin-bottom:10px; border-radius:10px;
   background:rgba(0,0,0,.18); border:1px solid var(--glass-border); color:var(--ink-0); font-size:.9rem;

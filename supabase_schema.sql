@@ -112,3 +112,60 @@ end $$;
 -- then recreates it, so the whole file is safe to run as many times as
 -- you like — including right now, on your existing database.
 -- ---------------------------------------------------------------------
+
+-- ===== SECURITY HARDENING: DB-level sanity limits =====
+-- Client-side rate limiting (in app.js) stops casual spam through the
+-- website itself, but anyone could still call the Supabase API directly
+-- (bypassing the website entirely) with huge or junk payloads. These
+-- CHECK constraints are the real backstop: even a raw API call can't
+-- insert an absurdly long name/message, or an event_type that isn't one
+-- of the ones this site actually logs. Wrapped in DO blocks so this file
+-- stays safe to re-run any number of times.
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'visitor_leads_length_check') then
+    alter table visitor_leads
+      add constraint visitor_leads_length_check
+      check ( char_length(name) <= 200 and char_length(contact) <= 200 and char_length(coalesce(page,'')) <= 500 );
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'hire_inquiries_length_check') then
+    alter table hire_inquiries
+      add constraint hire_inquiries_length_check
+      check (
+        char_length(name) <= 200 and char_length(coalesce(company,'')) <= 200
+        and char_length(contact) <= 200 and char_length(coalesce(message,'')) <= 4000
+        and char_length(coalesce(page,'')) <= 500
+      );
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'site_events_type_check') then
+    alter table site_events
+      add constraint site_events_type_check
+      check ( event_type in ('page_view', 'resume_download', 'project_click') )
+      not valid; -- 'not valid' = only enforced for NEW rows, doesn't choke on any old rows already in the table
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'site_events_meta_length_check') then
+    alter table site_events
+      add constraint site_events_meta_length_check
+      check ( char_length(coalesce(meta,'')) <= 300 );
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------
+-- If you ever add a new event type in app.js (beyond page_view /
+-- resume_download / project_click), update the list in
+-- site_events_type_check above too, or new-style events will be silently
+-- rejected by the database with a constraint-violation error.
+-- ---------------------------------------------------------------------
