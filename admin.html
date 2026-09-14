@@ -107,6 +107,7 @@
         <span>🛠️ Advanced</span><span class="admin-group-chevron">⌄</span>
       </button>
       <div class="admin-group-body">
+        <button class="admin-tab" data-tab="version-history">Version History</button>
         <button class="admin-tab" data-tab="settings-danger">Danger Zone</button>
       </div>
     </div>
@@ -446,6 +447,15 @@
       <div class="admin-field">
         <input id="s_bookingUrl" type="text" placeholder="https://calendly.com/your-name/15min" />
       </div>
+    </div>
+  </section>
+
+  <!-- ---- ADVANCED: VERSION HISTORY ---- -->
+  <section class="admin-panel-section" data-panel="version-history">
+    <div class="glass panel admin-card admin-card-full">
+      <h3 class="admin-card-title">Version history</h3>
+      <p class="settings-hint">Every time you save, a snapshot of what your site looked like <em>right before</em> that save is kept here automatically — the last 10 are stored. Restoring a version immediately overwrites your live site with it (and that current state is itself saved as a new snapshot first, so restoring is always reversible too).</p>
+      <div id="versionHistoryList" class="version-history-list"></div>
     </div>
   </section>
 

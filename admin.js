@@ -137,11 +137,88 @@ async function loadContent(){
 async function saveContent(message){
   const bottomStatus = document.getElementById('bottomSaveStatus');
   bottomStatus.textContent = 'Saving…';
+
+  // Snapshot whatever is currently live BEFORE overwriting it, so every
+  // save automatically creates an undo point. Best-effort: if this fails
+  // (e.g. table doesn't exist yet because supabase_schema.sql hasn't been
+  // re-run), the actual save still proceeds — history is a safety net,
+  // not a blocker.
+  try {
+    const { data: current } = await supa.from('site_content').select('content').eq('id', 'main').single();
+    if (current && current.content){
+      await supa.from('site_content_history').insert({ content: current.content });
+      cleanupOldHistory();
+    }
+  } catch (e) { console.warn('Version history snapshot skipped:', e); }
+
   const { error } = await supa.from('site_content').upsert({ id: 'main', content: liveData });
   const msg = error ? ('Error: ' + error.message) : (message || 'Saved ✓ — live on the site now');
   bottomStatus.textContent = msg;
   setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
   if (!error) refreshPreview();
+}
+
+async function cleanupOldHistory(){
+  // Keep only the most recent 10 snapshots so this table never grows unbounded.
+  try {
+    const { data: rows } = await supa.from('site_content_history').select('id').order('created_at', { ascending: false });
+    if (rows && rows.length > 10){
+      const idsToDelete = rows.slice(10).map(r => r.id);
+      await supa.from('site_content_history').delete().in('id', idsToDelete);
+    }
+  } catch (e) { console.warn('History cleanup skipped:', e); }
+}
+
+/* ====================================================================
+   VERSION HISTORY PANEL
+   ==================================================================== */
+async function loadVersionHistory(){
+  const wrap = document.getElementById('versionHistoryList');
+  if (!wrap || !supa) return;
+  wrap.innerHTML = '<p class="settings-hint">Loading…</p>';
+  const { data, error } = await supa.from('site_content_history').select('*').order('created_at', { ascending: false }).limit(10);
+  if (error){
+    wrap.innerHTML = `<p class="settings-hint">Could not load — run the latest supabase_schema.sql in your Supabase SQL editor (it creates the site_content_history table). Error: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    wrap.innerHTML = '<p class="settings-hint">No history yet — snapshots start appearing after your next save.</p>';
+    return;
+  }
+  wrap.innerHTML = data.map((row, i) => {
+    const date = new Date(row.created_at);
+    const label = date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    const preview = (row.content && row.content.hero_name) ? row.content.hero_name : 'Snapshot';
+    return `
+      <div class="version-history-item">
+        <div>
+          <div class="version-history-date">${escapeHtml(label)}</div>
+          <div class="version-history-preview">${i === 0 ? 'Most recent snapshot — right before your last save' : escapeHtml(preview)}</div>
+        </div>
+        <button type="button" class="btn btn-glass" data-restore-id="${row.id}">↺ Restore this version</button>
+      </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-restore-id]').forEach(btn => {
+    btn.addEventListener('click', () => restoreVersion(btn.dataset.restoreId, data));
+  });
+}
+
+async function restoreVersion(id, cachedRows){
+  const row = (cachedRows || []).find(r => String(r.id) === String(id));
+  if (!row){
+    showToast('Could not find that version — try reloading the list.');
+    return;
+  }
+  const when = new Date(row.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  if (!confirm(`Restore your site to how it looked on ${when}? Your current content will be saved as a new snapshot first, so this can always be undone.`)) return;
+
+  liveData = mergeWithDefaults(row.content);
+  populateForms();
+  initRepeaters();
+  await saveContent(`Restored to version from ${when} ✓`);
+  loadVersionHistory();
+  showToast('✓ Version restored — live on the site now');
 }
 
 /* ====================================================================
@@ -316,6 +393,7 @@ function initTabs(){
       if (tab.dataset.tab === 'visitors') loadVisitorLeads();
       if (tab.dataset.tab === 'hires') loadHireInquiries();
       if (tab.dataset.tab === 'analytics') loadAnalytics();
+      if (tab.dataset.tab === 'version-history') loadVersionHistory();
     });
   });
   initNavGroups();

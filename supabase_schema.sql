@@ -21,6 +21,24 @@ create policy "Only signed-in owner can insert site content" on site_content for
 drop policy if exists "Only signed-in owner can update site content" on site_content;
 create policy "Only signed-in owner can update site content" on site_content for update to authenticated using ( true );
 
+-- ===== SITE CONTENT HISTORY (auto-snapshot before every save, admin-only) =====
+create table if not exists site_content_history (
+  id uuid primary key default gen_random_uuid(),
+  content jsonb not null,
+  created_at timestamp with time zone default now()
+);
+alter table site_content_history enable row level security;
+
+-- No public access at all — this is purely an editing safety net for you.
+drop policy if exists "Only signed-in owner can read history" on site_content_history;
+create policy "Only signed-in owner can read history" on site_content_history for select to authenticated using ( true );
+
+drop policy if exists "Only signed-in owner can insert history" on site_content_history;
+create policy "Only signed-in owner can insert history" on site_content_history for insert to authenticated with check ( true );
+
+drop policy if exists "Only signed-in owner can delete history" on site_content_history;
+create policy "Only signed-in owner can delete history" on site_content_history for delete to authenticated using ( true );
+
 -- ===== STORAGE BUCKET (for photo / certificate / screenshot uploads from admin.html) =====
 insert into storage.buckets (id, name, public)
 values ('portfolio-media', 'portfolio-media', true)
