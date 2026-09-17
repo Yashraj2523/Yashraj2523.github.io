@@ -13,7 +13,14 @@ create table if not exists site_content (
 alter table site_content enable row level security;
 
 drop policy if exists "Public can read site content" on site_content;
-create policy "Public can read site content" on site_content for select using ( true );
+-- Scoped to id='main' only: the published site. This is what keeps your
+-- draft row private — anyone with the anon key could otherwise read
+-- unpublished draft content directly via the Supabase API, bypassing the
+-- website entirely. Signed-in reads (below) can still see everything.
+create policy "Public can read published site content" on site_content for select using ( id = 'main' );
+
+drop policy if exists "Only signed-in owner can read any site content" on site_content;
+create policy "Only signed-in owner can read any site content" on site_content for select to authenticated using ( true );
 
 drop policy if exists "Only signed-in owner can insert site content" on site_content;
 create policy "Only signed-in owner can insert site content" on site_content for insert to authenticated with check ( true );

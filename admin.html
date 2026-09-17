@@ -511,7 +511,7 @@
         <button id="previewToggleBtn" type="button" title="Hide/show preview">✕</button>
       </div>
     </div>
-    <iframe id="previewIframe" src="index.html" title="Live site preview" loading="lazy"></iframe>
+    <iframe id="previewIframe" src="index.html?preview=draft" title="Draft preview" loading="lazy"></iframe>
   </div>
   </div>
 
@@ -519,7 +519,8 @@
 
   <div class="admin-save-bar">
     <span class="admin-save-status" id="bottomSaveStatus"></span>
-    <button id="saveAllBtn" class="btn btn-primary">Save changes</button>
+    <button id="saveAllBtn" class="btn btn-glass">💾 Save draft</button>
+    <button id="publishAllBtn" class="btn btn-primary">🚀 Publish</button>
   </div>
 </div>
 

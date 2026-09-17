@@ -126,23 +126,50 @@ function showToast(msg){
 }
 
 /* ====================================================================
-   LOAD / SAVE
+   LOAD / SAVE (draft/publish model)
+   Everything you edit lives in the id='draft' row — it never touches the
+   live public site until you explicitly hit "Publish". This lets you make
+   a batch of changes, preview them in the panel, and only go live when
+   you're ready, instead of every keystroke-triggered save being instant.
    ==================================================================== */
 async function loadContent(){
-  const { data, error } = await supa.from('site_content').select('content').eq('id', 'main').single();
-  if (!error && data && data.content) liveData = mergeWithDefaults(data.content);
-  else { await supa.from('site_content').upsert({ id: 'main', content: SITE_DATA }); liveData = mergeWithDefaults(SITE_DATA); }
+  const { data, error } = await supa.from('site_content').select('content').eq('id', 'draft').single();
+  if (!error && data && data.content){
+    liveData = mergeWithDefaults(data.content);
+    return;
+  }
+  // No draft yet — seed it from whatever is currently published (or from
+  // data.js defaults if nothing has ever been published either).
+  const { data: mainRow } = await supa.from('site_content').select('content').eq('id', 'main').single();
+  const seed = (mainRow && mainRow.content) ? mainRow.content : SITE_DATA;
+  await supa.from('site_content').upsert({ id: 'draft', content: seed });
+  if (!mainRow || !mainRow.content){
+    await supa.from('site_content').upsert({ id: 'main', content: SITE_DATA });
+  }
+  liveData = mergeWithDefaults(seed);
 }
 
 async function saveContent(message){
   const bottomStatus = document.getElementById('bottomSaveStatus');
-  bottomStatus.textContent = 'Saving…';
+  bottomStatus.textContent = 'Saving draft…';
+  const { error } = await supa.from('site_content').upsert({ id: 'draft', content: liveData });
+  const msg = error ? ('Error: ' + error.message) : (message || 'Draft saved — not live yet. Hit "🚀 Publish" when ready.');
+  bottomStatus.textContent = msg;
+  setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
+  if (!error) refreshPreview();
+}
 
-  // Snapshot whatever is currently live BEFORE overwriting it, so every
-  // save automatically creates an undo point. Best-effort: if this fails
-  // (e.g. table doesn't exist yet because supabase_schema.sql hasn't been
-  // re-run), the actual save still proceeds — history is a safety net,
-  // not a blocker.
+async function publishContent(){
+  const bottomStatus = document.getElementById('bottomSaveStatus');
+  bottomStatus.textContent = 'Publishing…';
+
+  // Always persist whatever is currently in memory to the draft first,
+  // so Publish never loses an edit you forgot to explicitly save.
+  await supa.from('site_content').upsert({ id: 'draft', content: liveData });
+
+  // Snapshot whatever is currently LIVE before overwriting it — this is
+  // the real "undo my last publish" safety net (see Version History tab).
+  // Best-effort: if it fails, publishing still proceeds.
   try {
     const { data: current } = await supa.from('site_content').select('content').eq('id', 'main').single();
     if (current && current.content){
@@ -152,9 +179,9 @@ async function saveContent(message){
   } catch (e) { console.warn('Version history snapshot skipped:', e); }
 
   const { error } = await supa.from('site_content').upsert({ id: 'main', content: liveData });
-  const msg = error ? ('Error: ' + error.message) : (message || 'Saved ✓ — live on the site now');
+  const msg = error ? ('Error: ' + error.message) : 'Published ✓ — live on the real site now';
   bottomStatus.textContent = msg;
-  setTimeout(() => { bottomStatus.textContent = ''; }, 4000);
+  setTimeout(() => { bottomStatus.textContent = ''; }, 5000);
   if (!error) refreshPreview();
 }
 
@@ -211,14 +238,14 @@ async function restoreVersion(id, cachedRows){
     return;
   }
   const when = new Date(row.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-  if (!confirm(`Restore your site to how it looked on ${when}? Your current content will be saved as a new snapshot first, so this can always be undone.`)) return;
+  if (!confirm(`Load your site as it looked on ${when} into your draft for review? This does not go live until you hit "🚀 Publish".`)) return;
 
   liveData = mergeWithDefaults(row.content);
   populateForms();
   initRepeaters();
-  await saveContent(`Restored to version from ${when} ✓`);
+  await saveContent(`Version from ${when} loaded into your draft ✓ — review it, then hit Publish to go live.`);
   loadVersionHistory();
-  showToast('✓ Version restored — live on the site now');
+  showToast('✓ Loaded into draft — check the Preview panel, then hit Publish when ready');
 }
 
 /* ====================================================================
@@ -489,7 +516,7 @@ function populateForms(){
   byId('s_heroLayout').onchange = async () => {
     liveData.settings = liveData.settings || {};
     liveData.settings.heroLayout = byId('s_heroLayout').value;
-    await saveContent('Hero layout saved ✓ — check the live site (and Preview panel) to see it.');
+    await saveContent('Hero layout saved to draft ✓ — check the Preview panel, then Publish to go live.');
   };
   byId('s_timelineLayout').value = s.timelineLayout || 'vertical';
   byId('s_timelineLayout').onchange = async () => {
@@ -867,9 +894,9 @@ function initRepeaters(){
   });
 
   document.getElementById('resetDefaultsBtn').addEventListener('click', async () => {
-    if (!confirm('This will overwrite your live database with the contents of data.js. Continue?')) return;
+    if (!confirm('This will load the contents of data.js into your draft for review. It will NOT go live until you hit "🚀 Publish". Continue?')) return;
     liveData = mergeWithDefaults(SITE_DATA);
-    await saveContent('Reset to defaults ✓');
+    await saveContent('data.js defaults loaded into your draft ✓ — review, then hit Publish to go live.');
     populateForms();
     initRepeaters();
   });
@@ -1124,7 +1151,7 @@ function initUploads(){
     if (url){
       liveData.resume_url = url;
       byId('resumeCurrentLink').innerHTML = `Current file: <a href="${url}" target="_blank">${url}</a>`;
-      await saveContent('Résumé updated ✓ — live on the download button now');
+      await saveContent('Résumé updated in draft ✓ — hit Publish to make it live.');
     }
     e.target.value = '';
   });
@@ -1208,6 +1235,11 @@ function initSaveAll(){
   document.getElementById('saveAllBtn').addEventListener('click', async () => {
     collectSimpleFields();
     await saveContent();
+  });
+  document.getElementById('publishAllBtn').addEventListener('click', async () => {
+    if (!confirm('Publish your current draft? This makes it live for every visitor immediately.')) return;
+    collectSimpleFields();
+    await publishContent();
   });
 }
 

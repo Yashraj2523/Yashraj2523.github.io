@@ -18,13 +18,19 @@ function supabaseReady(){
 async function loadContent(){
   if (supabaseReady()){
     supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data, error } = await supa.from('site_content').select('content').eq('id', 'main').single();
+    // Admin's live-preview panel opens this page with ?preview=draft so it
+    // can show unpublished draft edits before you hit "Publish". Real
+    // visitors never have this in the URL, so they always see the
+    // published ('main') content — this branch never affects them.
+    const isDraftPreview = new URLSearchParams(location.search).get('preview') === 'draft';
+    const rowId = isDraftPreview ? 'draft' : 'main';
+    const { data, error } = await supa.from('site_content').select('content').eq('id', rowId).single();
     if (!error && data && data.content){
       liveData = mergeWithDefaults(data.content);
       return;
     }
     // no row yet -> seed it with data.js defaults
-    await supa.from('site_content').upsert({ id: 'main', content: SITE_DATA });
+    await supa.from('site_content').upsert({ id: rowId, content: SITE_DATA });
     liveData = SITE_DATA;
     return;
   }
