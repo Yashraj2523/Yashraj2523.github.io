@@ -88,17 +88,17 @@
   <a href="#" id="logoHome" class="logo">YR<span class="logo-dot">.</span></a>
   <div class="navlinks" id="navLinks"></div>
   <div class="nav-actions">
-    <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)">
+    <button id="searchBtn" class="icon-btn" title="Search (Ctrl+K)" aria-label="Search and commands">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     </button>
     <button id="recruiterModeBtn" class="recruiter-mode-pill" aria-pressed="false" title="Recruiter Mode — see only the essentials: projects, skills, experience, certs, contact">
       <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
       <span class="recruiter-label">Recruiter Mode</span>
     </button>
-    <button id="soundToggleBtn" class="icon-btn" title="Toggle sound">🔊</button>
-    <button id="compactModeBtn" class="icon-btn" title="Compact view — tighter spacing, see more at once">▤</button>
-    <button id="minimapModeBtn" class="icon-btn" title="One-page mode — floating section mini-map">🗺</button>
-    <button id="themeToggle" class="icon-btn" title="Toggle light/dark">
+    <button id="soundToggleBtn" class="icon-btn" title="Toggle sound" aria-label="Toggle sound effects" aria-pressed="true">🔊</button>
+    <button id="compactModeBtn" class="icon-btn" title="Compact view — tighter spacing, see more at once" aria-label="Toggle compact view" aria-pressed="false">▤</button>
+    <button id="minimapModeBtn" class="icon-btn" title="One-page mode — floating section mini-map" aria-label="Toggle one-page mini-map navigation" aria-pressed="false">🗺</button>
+    <button id="themeToggle" class="icon-btn" title="Toggle light/dark" aria-label="Toggle light and dark theme">
       <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
       <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
     </button>
@@ -132,7 +132,7 @@
 <nav id="minimapNav" class="minimap-nav hidden" aria-label="Section mini-map"></nav>
 
 <!-- ================= COMMAND PALETTE / GLOBAL SEARCH (Ctrl+K) ================= -->
-<div id="paletteOverlay" class="modal-overlay hidden">
+<div id="paletteOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Search and commands">
   <div class="glass modal-box palette-box">
     <input id="paletteInput" type="text" placeholder="Search projects, skills, certifications… or type a command" autocomplete="off" />
     <div id="paletteResults" class="palette-results"></div>
@@ -388,7 +388,7 @@
 <button id="quizLauncherBtn" class="floating-quiz-btn gated-icon hidden" title="Quick tech quiz">🧠</button>
 
 <!-- ================= TECH QUIZ ================= -->
-<div id="quizOverlay" class="modal-overlay hidden">
+<div id="quizOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Tech quiz">
   <div class="glass modal-box quiz-box">
     <button id="quizCloseBtn" class="modal-close" aria-label="Close">✕</button>
     <div id="quizQuestionView">
@@ -447,7 +447,7 @@
 </div>
 
 <!-- ================= HIRE ME ================= -->
-<div id="hireMeOverlay" class="modal-overlay hidden">
+<div id="hireMeOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Contact form">
   <div class="glass modal-box hire-me-box">
     <button id="hireMeClose" class="modal-close" aria-label="Close">✕</button>
     <h3>💼 Let's talk.</h3>
@@ -463,7 +463,7 @@
 </div>
 
 <!-- ================= VISITOR INFO GATE (before games/hints) ================= -->
-<div id="visitorGateOverlay" class="modal-overlay hidden">
+<div id="visitorGateOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Quick intro before you play">
   <div class="glass modal-box">
     <button id="visitorGateClose" class="modal-close" aria-label="Close">✕</button>
     <h3>👋 Quick intro before you play</h3>
@@ -476,7 +476,7 @@
 </div>
 
 <!-- ================= GAME HUB (Bug Squash / Snake / Dino) ================= -->
-<div id="gameOverlay" class="modal-overlay hidden">
+<div id="gameOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Mini-games">
   <div class="glass modal-box game-box">
     <button id="gameCloseBtn" class="modal-close" aria-label="Close">✕</button>
 

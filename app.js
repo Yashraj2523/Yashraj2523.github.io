@@ -1003,17 +1003,51 @@ function initCertModal(){
 }
 
 /* ---- shared modal show/hide helpers ---- */
+let lastFocusedBeforeOverlay = null;
 function showOverlay(overlay){
+  lastFocusedBeforeOverlay = document.activeElement;
   overlay.classList.remove('hidden');
   requestAnimationFrame(() => overlay.classList.add('show'));
   document.body.style.overflow = 'hidden';
   sfxOpen();
+  // Move keyboard focus into the modal so Tab/Shift+Tab and screen readers
+  // land inside it immediately, instead of staying on the page behind it.
+  const focusable = overlay.querySelector('input, textarea, select, button, [tabindex]:not([tabindex="-1"])');
+  if (focusable) setTimeout(() => focusable.focus(), 50);
 }
 function hideOverlay(overlay){
   overlay.classList.remove('show');
   document.body.style.overflow = '';
   setTimeout(() => overlay.classList.add('hidden'), 250);
+  // Return focus to whatever the keyboard user was on before the modal
+  // opened (usually the button that triggered it), instead of dropping
+  // focus onto <body> and disorienting keyboard/screen-reader users.
+  if (lastFocusedBeforeOverlay && typeof lastFocusedBeforeOverlay.focus === 'function'){
+    setTimeout(() => lastFocusedBeforeOverlay.focus(), 260);
+  }
 }
+
+/* ====================================================================
+   FOCUS TRAP — while any modal is open, Tab/Shift+Tab cycles only among
+   its own focusable elements instead of escaping into the page behind
+   it. One generic listener covers every modal in the site.
+   ==================================================================== */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const openOverlay = document.querySelector('.modal-overlay.show:not(.hidden)');
+  if (!openOverlay) return;
+  const focusables = Array.from(openOverlay.querySelectorAll(
+    'input, textarea, select, button, a[href], [tabindex]:not([tabindex="-1"])'
+  )).filter(el => !el.disabled && el.offsetParent !== null);
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first){
+    e.preventDefault(); last.focus();
+  } else if (!e.shiftKey && document.activeElement === last){
+    e.preventDefault(); first.focus();
+  }
+});
 
 function initLogoHome(){
   const logo = document.getElementById('logoHome');
@@ -1205,6 +1239,7 @@ function initHireMe(){
   btn.addEventListener('click', () => showOverlay(overlay));
   document.getElementById('hireMeClose').addEventListener('click', () => hideOverlay(overlay));
   overlay.addEventListener('click', e => { if (e.target === overlay) hideOverlay(overlay); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) hideOverlay(overlay); });
 
   let hireMeSubmitting = false;
   document.getElementById('hireMeSubmit').addEventListener('click', async () => {
@@ -2654,6 +2689,12 @@ function requireVisitorGate(onUnlocked){
   };
   submitBtn.addEventListener('click', handler);
   closeBtn.addEventListener('click', () => hideOverlay(overlay), { once: true });
+  function escHandler(e){
+    if (e.key !== 'Escape' || overlay.classList.contains('hidden')) return;
+    hideOverlay(overlay);
+    document.removeEventListener('keydown', escHandler);
+  }
+  document.addEventListener('keydown', escHandler);
 }
 
 function applyEggsVisibility(){
@@ -2691,7 +2732,11 @@ function sfxOpen(){ playTone(420,0.07,'triangle',0.04); }
 function initSoundToggle(){
   const btn = document.getElementById('soundToggleBtn');
   if (!btn) return;
-  function applyIcon(){ btn.textContent = soundEnabled() ? '🔊' : '🔇'; }
+  function applyIcon(){
+    const on = soundEnabled();
+    btn.textContent = on ? '🔊' : '🔇';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
   applyIcon();
   btn.addEventListener('click', () => {
     localStorage.setItem('sound_off', soundEnabled() ? '1' : '0');
@@ -2823,6 +2868,7 @@ function initTechQuiz(){
   });
   document.getElementById('quizCloseBtn').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
   document.getElementById('quizPlayAgainBtn').addEventListener('click', newQuestion);
   document.getElementById('quizRetryBtn').addEventListener('click', newQuestion);
   document.getElementById('quizSkipBtn').addEventListener('click', close);
