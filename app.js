@@ -1370,9 +1370,18 @@ function initAdminLockPopup(){
   const passInput = document.getElementById('loginPass');
   if (!lockBtn) return;
 
-  lockBtn.addEventListener('click', e => { e.stopPropagation(); popup.classList.toggle('hidden'); });
+  lockBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    // lockBtn now lives inside the "More" dropdown — close that menu first,
+    // then show the login popup in the same corner of the screen.
+    const morePopup = document.getElementById('navMorePopup');
+    const moreBtn = document.getElementById('navMoreBtn');
+    if (morePopup) morePopup.classList.add('hidden');
+    if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+    popup.classList.toggle('hidden');
+  });
   document.addEventListener('click', e => {
-    if (!popup.classList.contains('hidden') && !e.target.closest('.nav-auth-wrap')) popup.classList.add('hidden');
+    if (!popup.classList.contains('hidden') && !e.target.closest('.nav-more-wrap')) popup.classList.add('hidden');
   });
 
   submitBtn.addEventListener('click', async () => {
@@ -1736,6 +1745,41 @@ function checkRateLimit(key, maxAttempts, windowMs){
 function formatRetryAfter(ms){
   const mins = Math.ceil(ms / 60000);
   return mins <= 1 ? 'a minute' : `${mins} minutes`;
+}
+
+/* ====================================================================
+   NAV "MORE" DROPDOWN — consolidates the utility controls (theme, sound,
+   compact view, mini-map, owner sign-in) behind one ⋯ button so the top
+   bar stays minimal: only Search, Recruiter Mode, ⋯ More, and Hire me
+   remain inline. Closes on outside-click or Escape; stays open while
+   toggling items so several can be changed in one visit to the menu.
+   ==================================================================== */
+function initNavMoreMenu(){
+  const btn = document.getElementById('navMoreBtn');
+  const popup = document.getElementById('navMorePopup');
+  if (!btn || !popup) return;
+
+  function open(){
+    popup.classList.remove('hidden');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  function close(){
+    popup.classList.add('hidden');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    popup.classList.contains('hidden') ? open() : close();
+  });
+  document.addEventListener('click', e => {
+    if (!popup.classList.contains('hidden') && !e.target.closest('.nav-more-wrap')) close();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !popup.classList.contains('hidden')){
+      close();
+      btn.focus();
+    }
+  });
 }
 
 function initCompactMode(){
@@ -2734,7 +2778,11 @@ function initSoundToggle(){
   if (!btn) return;
   function applyIcon(){
     const on = soundEnabled();
-    btn.textContent = on ? '🔊' : '🔇';
+    // Only swap the emoji span — the button now also contains a text label
+    // ("Sound effects") inside the More dropdown, which textContent would wipe.
+    const iconEl = btn.querySelector('.nav-more-icon');
+    if (iconEl) iconEl.textContent = on ? '🔊' : '🔇';
+    else btn.textContent = on ? '🔊' : '🔇';
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
   applyIcon();
@@ -2970,6 +3018,7 @@ function initSectionAccordion(){
   initAnalyticsLogging();
   initMobileBottomBar();
   initMagneticButtons();
+  initNavMoreMenu();
   initCompactMode();
   initMinimapMode();
   initHeroParallax();

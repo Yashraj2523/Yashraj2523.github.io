@@ -95,17 +95,32 @@
       <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 7.5L4.5 6 12 2.5 19.5 6 12 9.5ZM2 13l10 5 10-5v6l-10 5-10-5v-6Z"/></svg>
       <span class="recruiter-label">Recruiter Mode</span>
     </button>
-    <button id="soundToggleBtn" class="icon-btn" title="Toggle sound" aria-label="Toggle sound effects" aria-pressed="true">🔊</button>
-    <button id="compactModeBtn" class="icon-btn" title="Compact view — tighter spacing, see more at once" aria-label="Toggle compact view" aria-pressed="false">▤</button>
-    <button id="minimapModeBtn" class="icon-btn" title="One-page mode — floating section mini-map" aria-label="Toggle one-page mini-map navigation" aria-pressed="false">🗺</button>
-    <button id="themeToggle" class="icon-btn" title="Toggle light/dark" aria-label="Toggle light and dark theme">
-      <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
-      <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
-    </button>
-    <div class="nav-auth-wrap">
-      <button id="adminLockBtn" class="icon-btn" type="button" title="Owner sign in">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+
+    <div class="nav-more-wrap">
+      <button id="navMoreBtn" class="icon-btn" type="button" title="More options" aria-label="More options" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
+      <div id="navMorePopup" class="nav-more-popup hidden" role="menu" aria-label="More options">
+        <button id="themeToggle" class="nav-more-item" type="button" role="menuitem" aria-label="Toggle light and dark theme">
+          <svg id="themeIconMoon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+          <svg id="themeIconSun" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="display:none"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.64 5.64 4.22 4.22m15.56 1.42 1.42-1.42M5.64 18.36l-1.42 1.42m15.56-1.42 1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
+          <span>Light / dark theme</span>
+        </button>
+        <button id="soundToggleBtn" class="nav-more-item" type="button" role="menuitem" aria-label="Toggle sound effects" aria-pressed="true">
+          <span class="nav-more-icon">🔊</span><span>Sound effects</span>
+        </button>
+        <button id="compactModeBtn" class="nav-more-item" type="button" role="menuitem" aria-label="Toggle compact view" aria-pressed="false">
+          <span class="nav-more-icon">▤</span><span>Compact view</span>
+        </button>
+        <button id="minimapModeBtn" class="nav-more-item" type="button" role="menuitem" aria-label="Toggle one-page mini-map navigation" aria-pressed="false">
+          <span class="nav-more-icon">🗺</span><span>Mini-map nav</span>
+        </button>
+        <div class="nav-more-divider"></div>
+        <button id="adminLockBtn" class="nav-more-item" type="button" role="menuitem" title="Owner sign in">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+          <span>Owner sign in</span>
+        </button>
+      </div>
       <div id="loginPopup" class="login-popup hidden">
         <div class="admin-field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" /></div>
         <div class="admin-field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
@@ -113,6 +128,7 @@
         <p id="loginStatus" class="modal-status"></p>
       </div>
     </div>
+
     <button id="hireMeBtn" type="button" class="navcta btn-magnetic">Hire me</button>
   </div>
 </nav>

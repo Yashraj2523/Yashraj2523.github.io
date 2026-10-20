@@ -831,7 +831,26 @@ html[data-theme="light"] .skill-bar-track{ background:rgba(20,25,45,.08); }
   white-space:nowrap; pointer-events:none;
 }
 .nav-admin-title.hidden{ display:none; }
-.nav-auth-wrap{ position:relative; }
+.nav-auth-wrap, .nav-more-wrap{ position:relative; }
+
+/* ============ NAV "MORE" DROPDOWN (consolidated utility controls) ============ */
+.nav-more-popup{
+  position:absolute; top:calc(100% + 10px); right:0; min-width:210px; z-index:200;
+  background:var(--glass-bg-strong); border:1px solid var(--glass-border); border-radius:16px;
+  padding:8px; backdrop-filter:blur(16px); box-shadow:0 16px 40px rgba(0,0,0,.4);
+  display:flex; flex-direction:column; gap:2px;
+  opacity:1; transform:translateY(0); transition:opacity .2s var(--ease), transform .2s var(--ease);
+}
+.nav-more-popup.hidden{ display:none; }
+.nav-more-item{
+  display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border-radius:10px;
+  background:transparent; border:none; color:var(--ink-1); font-size:.85rem; cursor:pointer; text-align:left;
+  transition:background .2s var(--ease), color .2s var(--ease);
+}
+.nav-more-item:hover, .nav-more-item:focus-visible{ background:rgba(110,231,216,.08); color:var(--ink-0); }
+.nav-more-item[aria-pressed="true"]{ color:var(--accent-1); }
+.nav-more-icon{ width:16px; text-align:center; font-size:.95rem; }
+.nav-more-divider{ height:1px; background:var(--glass-border); margin:6px 8px; }
 #navSignInBtn.hidden, #signOutBtn.hidden{ display:none; }
 .login-popup{
   position:absolute; top:calc(100% + 10px); right:0; width:260px; z-index:200;
@@ -1528,9 +1547,6 @@ body.rainbow-burst{ animation:rainbowBurst 1.8s ease; }
 }
 @keyframes recruiterPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(167,139,250,.35); } 50%{ box-shadow:0 0 0 6px rgba(167,139,250,0); } }
 @media (max-width:920px){ .recruiter-mode-pill span, .recruiter-mode-pill{ font-size:.74rem; padding:8px 12px; } }
-
-/* ============ SOUND TOGGLE ============ */
-#soundToggleBtn{ font-size:1.1rem; }
 
 /* ============ RECRUITER MODE CALLOUT (first visit only) ============ */
 .recruiter-callout{
